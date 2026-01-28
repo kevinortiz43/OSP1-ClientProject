@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url)); // get current directory where this script file is located
+const __dirname = path.dirname(fileURLToPath(import.meta.url)); // current working directory (where this file located)located
 const dataDir = (file: string) => path.join(__dirname, "../data", file); // path for /data folder, also getting name of JSON input file
 
 // CSV escaping function: Escaping existing quotes by doubling them is a technique used to include quotation marks within a string without terminating the string prematurely, commonly used in CSV files, SQL
@@ -72,11 +72,17 @@ export function convertAllJSONFilesInDataFolder(): Record<string, any> {
   try {
     // read all files in data folder
     const files = fs.readdirSync(path.join(__dirname, "../data"));
+
     const jsonFiles = files.filter((file) => file.endsWith(".json"));
 
     console.log(
       `Found ${jsonFiles.length} JSON files: ${jsonFiles.join(", ")}`,
     );
+
+    if (!jsonFiles.length) { // check to verify JSON files actually exist in /data folder
+        console.log('no files to process');
+        return results;
+    }
 
     for (const file of jsonFiles) {
       try {
@@ -121,5 +127,6 @@ export function convertAllJSONFilesInDataFolder(): Record<string, any> {
 if (import.meta.url === `file://${process.argv[1]}`) {
   // run generic function (all JSON files inside of /data folder)
   const results = convertAllJSONFilesInDataFolder();
+  console.log(results);
   console.log(`Processed ${Object.keys(results).length} files.`);
 }
