@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "concurrently \"npm run start\" \"npm run server\"",
-    "start":"vite",
-    "server":"tsx --watch ./src/server/server.ts",
+    "start": "vite",
+    "server": "tsx --watch ./src/server/server.ts",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
@@ -16,6 +16,7 @@
     "cors": "^2.8.6",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
+    "pg": "^8.17.2",
     "postgres": "^3.4.8",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
