@@ -9,7 +9,9 @@
     "server": "tsx --watch ./src/server/server.ts",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "csv": "tsx ./src/server/sql_db/convertData.ts",
+    "seed": "tsx ./src/server/sql_db/seed.ts"
   },
   "dependencies": {
     "concurrently": "^9.2.1",
