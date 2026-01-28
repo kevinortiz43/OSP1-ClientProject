@@ -1,0 +1,224 @@
+{
+    "data": {
+        "allTrustControls": {
+            "totalCount": 16,
+            "edgeCount": 16,
+            "pageInfo": {
+                "hasNextPage": false,
+                "hasPreviousPage": false,
+                "startCursor": "YXJyYXljb25uZWN0aW9uOjA=",
+                "endCursor": "YXJyYXljb25uZWN0aW9uOjE1"
+            },
+            "edges": [
+                {
+                    "cursor": "YXJyYXljb25uZWN0aW9uOjA=",
+                    "node": {
+                        "id": "VHJ1c3RDb250cm9sOjQ1Njc1ODk5LWE4YTYtNDcxMC05MTVkLTYxZmQ2OTA4MzcwNQ==",
+                        "category": "Organizational Security",
+                        "short": "CyQu has an incident response plan (IRP) in place",
+                        "long": "CyQu has a documented incident response plan (IRP) that outlines the processes and procedures for responding to security incidents.",
+                        "createdAt": "2025-12-16T23:31:08.453040+00:00",
+                        "createdBy": "alan.turing@email.com",
+                        "updatedAt": "2026-01-16T19:52:47.760245+00:00",
+                        "updatedBy": "grace.hopper@email.com"
+                    }
+                },
+                {
+                    "cursor": "YXJyYXljb25uZWN0aW9uOjE=",
+                    "node": {
+                        "id": "VHJ1c3RDb250cm9sOmZkZTU0MjAxLTE3ZmItNGFiNS1iMTc0LTJkYzQ4NDVlMzIyYg==",
+                        "category": "Cloud Security",
+                        "short": "Data is divided between multiple AWS regions",
+                        "long": "CyQu data is divided between three AWS regions: US, Ireland, and Australia",
+                        "createdAt": "2025-12-16T23:31:08.465520+00:00",
+                        "createdBy": "ada.lovelace@email.com",
+                        "updatedAt": "2026-01-16T19:52:47.766265+00:00",
+                        "updatedBy": "linus.torvalds@email.com"
+                    }
+                },
+                {
+                    "cursor": "YXJyYXljb25uZWN0aW9uOjI=",
+                    "node": {
+                        "id": "VHJ1c3RDb250cm9sOmJiMGIzODIzLTQwY2MtNGQ2ZC1hOGU2LTY5YjgwZmM2NmZiOQ==",
+                        "category": "Cloud Security",
+                        "short": "All compute runs within a private VPS and subnet",
+                        "long": "All CyQu compute resources run within a private VPC and subnet ensuring isolation from public networks.",
+                        "createdAt": "2025-12-16T23:31:08.477068+00:00",
+                        "createdBy": "tim.berners-lee@email.com",
+                        "updatedAt": "2026-01-16T19:52:47.772752+00:00",
+                        "updatedBy": "guido.vanrossum@email.com"
+                    }
+                },
+                {
+                    "cursor": "YXJyYXljb25uZWN0aW9uOjM=",
+                    "node": {
+                        "id": "VHJ1c3RDb250cm9sOjc3MzVhN2ZlLTFkZjUtNDYwYi1iOTYyLTAwMzFkMTc0NGIwNA==",
+                        "category": "Cloud Security",
+                        "short": "CyQu logs are monitored 24/7",
+                        "long": "CyQu logs are monitored 24/7/365 by the Aon AC3 team (Aon Cybersecurity Command Center), which functions as SOC equivalent.",
+                        "createdAt": "2025-12-16T23:31:08.489535+00:00",
+                        "createdBy": "margaret.hamilton@email.com",
+                        "updatedAt": "2026-01-16T19:52:47.779830+00:00",
+                        "updatedBy": "dennis.ritchie@email.com"
+                    }
+                },
+                {
+                    "cursor": "YXJyYXljb25uZWN0aW9uOjQ=",
+                    "node": {
+                        "id": "VHJ1c3RDb250cm9sOmE1NmE3YmI0LTJjNmEtNGVmZC1hNGFiLWEwY2RlMTg0YjQ4Zg==",
+                        "category": "Cloud Security",
+                        "short": "CyQu API sits behind a WAF",
+                        "long": "CyQu API is protected by a Web Application Firewall (WAF) to filter and monitor HTTP requests.",
+                        "createdAt": "2025-12-16T23:31:08.501907+00:00",
+                        "createdBy": "ken.thompson@email.com",
+                        "updatedAt": "2026-01-16T19:52:47.786605+00:00",
+                        "updatedBy": "bjarne.stroustrup@email.com"
+                    }
+                },
+                {
+                    "cursor": "YXJyYXljb25uZWN0aW9uOjU=",
+                    "node": {
+                        "id": "VHJ1c3RDb250cm9sOjI1ZGU0NDUyLTA4MzEtNDhmYS1iOGRmLTJhNTMyZDlhMmZkZQ==",
+                        "category": "Cloud Security",
+                        "short": "CyQu receives a yearly external pentest",
+                        "long": "CyQu engages third-party security firms to conduct annual penetration tests to identify and remediate vulnerabilities.",
+                        "createdAt": "2025-12-16T23:31:08.513323+00:00",
+                        "createdBy": "james.gosling@email.com",
+                        "updatedAt": "2026-01-16T19:52:47.793912+00:00",
+                        "updatedBy": "brendan.eich@email.com"
+                    }
+                },
+                {
+                    "cursor": "YXJyYXljb25uZWN0aW9uOjY=",
+                    "node": {
+                        "id": "VHJ1c3RDb250cm9sOjQ0NmZmN2VkLTQzZjgtNGY0YS1iMjI3LTYyNTAwNzczNzkzZQ==",
+                        "category": "Secure Development",
+                        "short": "CyQu is secure by design and by default.",
+                        "long": "CyQu incorporates security best practices into the design and development process, ensuring that security is considered at every stage.",
+                        "createdAt": "2025-12-16T23:31:08.525471+00:00",
+                        "createdBy": "john.mccarthy@email.com",
+                        "updatedAt": "2026-01-16T19:52:47.801381+00:00",
+                        "updatedBy": "donald.knuth@email.com"
+                    }
+                },
+                {
+                    "cursor": "YXJyYXljb25uZWN0aW9uOjc=",
+                    "node": {
+                        "id": "VHJ1c3RDb250cm9sOjJjZThiMGFlLWU5MDYtNDgyMy04NGQ3LWUzYTE2MWUwNTY3Zg==",
+                        "category": "Data Security",
+                        "short": "Data is encrypted while in transit",
+                        "long": "TLS 1.2 or higher is used to encrypt data in transit",
+                        "createdAt": "2025-12-16T23:31:08.318488+00:00",
+                        "createdBy": "edsger.dijkstra@email.com",
+                        "updatedAt": "2026-01-16T19:52:47.703673+00:00",
+                        "updatedBy": "alan.kay@email.com"
+                    }
+                },
+                {
+                    "cursor": "YXJyYXljb25uZWN0aW9uOjg=",
+                    "node": {
+                        "id": "VHJ1c3RDb250cm9sOmM4OTFmODhkLWQ1ZDktNGU1YS04MDExLTNhYWJlZDA0ZTQyNg==",
+                        "category": "Data Security",
+                        "short": "Data is encrypted while at rest",
+                        "long": "CyQu utilizes Amazon RDS encrypted DB instances which use the industry standard AES-256 encryption algorithm. All Aon laptops utilize full disk encryption.",
+                        "createdAt": "2025-12-16T23:31:08.332221+00:00",
+                        "createdBy": "barbara.liskov@email.com",
+                        "updatedAt": "2026-01-16T19:52:47.710913+00:00",
+                        "updatedBy": "frances.allen@email.com"
+                    }
+                },
+                {
+                    "cursor": "YXJyYXljb25uZWN0aW9uOjk=",
+                    "node": {
+                        "id": "VHJ1c3RDb250cm9sOjlhMmVmNTVkLTMyMzUtNDQxNi1iMTg0LTY1MGM2YzJkZjZlNQ==",
+                        "category": "Data Security",
+                        "short": "Aon laptops are encrypted and disposed of securely",
+                        "long": "Aon laptops are configured with full disk encryption to encrypt data at rest. Decommissioned hardware is securely wiped and/or physically destroyed.",
+                        "createdAt": "2025-12-16T23:31:08.344605+00:00",
+                        "createdBy": "radia.perlman@email.com",
+                        "updatedAt": "2026-01-16T19:52:47.717004+00:00",
+                        "updatedBy": "katherine.johnson@email.com"
+                    }
+                },
+                {
+                    "cursor": "YXJyYXljb25uZWN0aW9uOjEw",
+                    "node": {
+                        "id": "VHJ1c3RDb250cm9sOmM2N2JkMjdjLTcwZTktNDNlNS05MGFkLTQ0ZTg3MjQxMTNkZg==",
+                        "category": "Secure Development",
+                        "short": "All CyQu engineers receive secure development training",
+                        "long": "All CyQu engineers undergo regular training on secure development practices, including threat modeling, secure coding techniques, and vulnerability management.",
+                        "createdAt": "2025-12-16T23:31:08.356747+00:00",
+                        "createdBy": "douglas.engelbart@email.com",
+                        "updatedAt": "2026-01-16T19:52:47.723428+00:00",
+                        "updatedBy": "vint.cerf@email.com"
+                    }
+                },
+                {
+                    "cursor": "YXJyYXljb25uZWN0aW9uOjEx",
+                    "node": {
+                        "id": "VHJ1c3RDb250cm9sOmU3MDM1YTlkLTlkZjgtNGJhOC04NzJhLTJkN2Y3NWVhMzdhNw==",
+                        "category": "Secure Development",
+                        "short": "Code reviews are conducted for all changes",
+                        "long": "All code changes undergo peer review to ensure adherence to secure coding practices and to identify potential vulnerabilities.",
+                        "createdAt": "2025-12-16T23:31:08.369477+00:00",
+                        "createdBy": "bob.kahn@email.com",
+                        "updatedAt": "2026-01-16T19:52:47.729607+00:00",
+                        "updatedBy": "richard.stallman@email.com"
+                    }
+                },
+                {
+                    "cursor": "YXJyYXljb25uZWN0aW9uOjEy",
+                    "node": {
+                        "id": "VHJ1c3RDb250cm9sOmQyY2ExMjIzLTdlZjgtNGJkNS1hN2E2LTM1YmM3NjZjOTY2ZA==",
+                        "category": "Secure Development",
+                        "short": "CyQu is regularly scanned for vulnerabilities",
+                        "long": "CyQu utilizes SAST and other scanning technologies to identify potential issues during the build process.",
+                        "createdAt": "2025-12-16T23:31:08.385423+00:00",
+                        "createdBy": "yukihiro.matsumoto@email.com",
+                        "updatedAt": "2026-01-16T19:52:47.735706+00:00",
+                        "updatedBy": "rasmus.lerdorf@email.com"
+                    }
+                },
+                {
+                    "cursor": "YXJyYXljb25uZWN0aW9uOjEz",
+                    "node": {
+                        "id": "VHJ1c3RDb250cm9sOjk4YTU3MDcyLTZkNjYtNDZjMi05ZjcyLWQ3NDUxYmU5YTc5Yw==",
+                        "category": "Secure Development",
+                        "short": "All software is deployed via an automated continuous integration service.",
+                        "long": "All software is deployed via an automated continuous integration service to ensure secure, repeatable builds.",
+                        "createdAt": "2025-12-16T23:31:08.404889+00:00",
+                        "createdBy": "ryan.dahl@email.com",
+                        "updatedAt": "2026-01-16T19:52:47.741859+00:00",
+                        "updatedBy": "dan.abramov@email.com"
+                    }
+                },
+                {
+                    "cursor": "YXJyYXljb25uZWN0aW9uOjE0",
+                    "node": {
+                        "id": "VHJ1c3RDb250cm9sOjliZmM2OTQxLTFmMTctNGM2OS05OWI1LWEwMDUxODkxYzRlNA==",
+                        "category": "Organizational Security",
+                        "short": "Background checks are conducted for all job applicants",
+                        "long": "Aon’s policy is to conduct pre-employment background checks on all external job applicants as a condition of employment.",
+                        "createdAt": "2025-12-16T23:31:08.422548+00:00",
+                        "createdBy": "john.carmack@email.com",
+                        "updatedAt": "2026-01-16T19:52:47.748075+00:00",
+                        "updatedBy": "jordan.walke@email.com"
+                    }
+                },
+                {
+                    "cursor": "YXJyYXljb25uZWN0aW9uOjE1",
+                    "node": {
+                        "id": "VHJ1c3RDb250cm9sOmMyNDU4ODYxLWNjYmQtNGMwZS1iOTcxLTA3MTRmNGJhMWJmZQ==",
+                        "category": "Organizational Security",
+                        "short": "Aon security policies are based on industry standard frameworks",
+                        "long": "Aon security policies and standards leverage industry security frameworks such as NIST 800 and ISO 27001 and industry best practices along with, applicable laws, and regulatory requirements.",
+                        "createdAt": "2025-12-16T23:31:08.441109+00:00",
+                        "createdBy": "sophie.wilson@email.com",
+                        "updatedAt": "2026-01-16T19:52:47.754131+00:00",
+                        "updatedBy": "marissa.mayer@email.com"
+                    }
+                }
+            ]
+        }
+    }
+}
