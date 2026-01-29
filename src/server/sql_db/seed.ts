@@ -52,11 +52,11 @@ function getCSVHeadersAndFirstRow(csvPath: string): {
 function inferTypeFromValue(value: string): string {
   if (!value) return "TEXT";
 
-// Test if regex matches your dates:
-const testDate = "2025-12-31T16:47:02.587878+00:00";
-console.log('testDate type boolean:', /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(testDate)); // should be true
+// test if regex matches dates:
+// const testDate = "2025-12-31T16:47:02.587878+00:00";
+// console.log('testDate type boolean:', /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(testDate)); // should be true
 
-  console.log(`Testing regex on "${value}":`, /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value));
+//   console.log(`Testing regex on "${value}":`, /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value));
 
 //   check if ISO 8601 date/time format: YYYY-MM-DDThh:mm:ss
 //   Examples: "2026-01-16T19:52:47.817794+00:00", "2024-01-15T10:30:00.123Z"
@@ -67,6 +67,7 @@ console.log('testDate type boolean:', /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.tes
 
 
   // check if number type (if not integer, then numeric)
+  // NOTE: have NOT yet tested number data types to see if it recognizes correectly  
   const num = Number(value);
   if (!isNaN(num)) {
     return Number.isInteger(num) ? "INTEGER" : "NUMERIC";
