@@ -29,3 +29,5 @@ export default {
     return pool.query(text, params);
   },
 };
+
+export { pool }; 

@@ -11,6 +11,7 @@ const dataDir = (file: string) => path.join(__dirname, "../data", file); // path
 const escape = (str: any) =>
   str ? `"${String(str).replace(/"/g, '""')}"` : "";
 
+
 // generic conversion function to extract data inside node
 // ASSUMES structure: { data: { collectionName: { edges: [{ node: {...} }] } } }
 // Example: { data: { allTrustFaqs: { edges: [{ node: {...} }] } } }
@@ -46,12 +47,14 @@ export function convertRelayJSONToCSV(filename: string): {
 
   const csvRows = edges
     .map(
-      (e: any) => // create array of field values from current node
+      (
+        e: any, // create array of field values from current node
+      ) =>
         fields
           .map((field) => e.node[field]) // get values for all fields
           .map(escape) // escape each value for CSV
           .join(","), // join values with commas: "value1","value2","value3"
-        )
+    )
     .join("\n"); // join all rows with newlines: row1\n row2\n row3
 
   const csvContent = fields.join(",") + "\n" + csvRows; // header row + data rows
@@ -65,37 +68,46 @@ export function convertRelayJSONToCSV(filename: string): {
 
 // convert ALL JSON files in data folder
 export function convertAllJSONFilesInDataFolder(): Record<string, any> {
-  console.log(`\nStarting batch conversion of ALL JSON files from data folder...`);  
- 
+  console.log(
+    `\nStarting batch conversion of ALL JSON files from data folder...`,
+  );
+
+//   if (!fs.existsSync(dataDir)) { // checks to make sure data folder exists
+//       console.log('Data folder does not exist');
+//       return;
+//     }
+
   const results: Record<string, any> = {}; // init empty obj
 
   try {
     // read all files in data folder
     const files = fs.readdirSync(path.join(__dirname, "../data"));
 
-    const jsonFiles = files.filter((file) => file.endsWith(".json"));
+    const jsonFiles = files.filter((file) => file.endsWith(".json")); // array of JSON files
 
+    // check to verify JSON files exist in /data folder
+    if (jsonFiles.length === 0) {
+      console.log("no JSON files found");
+      return results;
+    }
+    
     console.log(
       `Found ${jsonFiles.length} JSON files: ${jsonFiles.join(", ")}`,
     );
 
-    if (!jsonFiles.length) { // check to verify JSON files actually exist in /data folder
-        console.log('no files to process');
-        return results;
-    }
-
+    // iterate over each JSON file
     for (const file of jsonFiles) {
       try {
         const result = convertRelayJSONToCSV(file); // convert EACH file
-        
-        console.log(`\nProcessing ${file}...`)
+
+        console.log(`\nProcessing ${file}...`);
 
         // Create CSV filename (same name but .csv instead of .json)
         const csvFilename = file.replace(".json", ".csv");
         fs.writeFileSync(dataDir(csvFilename), result.csvContent);
 
         results[file] = {
-          // get metadata for each converted file
+          // add metadata for each converted file
           csvFilename,
           recordCount: result.recordCount,
           headers: result.headers,
@@ -110,7 +122,6 @@ export function convertAllJSONFilesInDataFolder(): Record<string, any> {
     }
 
     return results;
-
   } catch (error: any) {
     console.error(`Error reading data folder: ${error.message}`);
 

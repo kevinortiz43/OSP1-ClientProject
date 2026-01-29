@@ -11,7 +11,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "csv": "tsx ./src/server/sql_db/convertData.ts",
-    "seed": "tsx ./src/server/sql_db/seed.ts"
+    "seed-supabase": "tsx ./src/server/sql_db/seed.ts supabase"
   },
   "dependencies": {
     "concurrently": "^9.2.1",
@@ -19,6 +19,7 @@
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "pg": "^8.17.2",
+    "pg-copy-streams": "^7.0.0",
     "postgres": "^3.4.8",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
@@ -27,6 +28,7 @@
   "devDependencies": {
     "@eslint/js": "^9.39.1",
     "@types/node": "^24.10.1",
+    "@types/pg-copy-streams": "^1.2.5",
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
