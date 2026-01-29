@@ -10,10 +10,12 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "csv": "tsx ./src/server/sql_db/convertData.ts",
+    "csv-manual": "tsx ./src/server/sql_db/convertData_manual.ts",
+    "csv-module": "tsx ./src/server/sql_db/convertData_module.ts",
     "seed-supabase": "tsx ./src/server/sql_db/seed.ts supabase"
   },
   "dependencies": {
+    "@json2csv/plainjs": "^7.0.6",
     "concurrently": "^9.2.1",
     "cors": "^2.8.6",
     "csv-parse": "^6.1.0",
