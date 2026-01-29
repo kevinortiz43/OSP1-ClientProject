@@ -15,20 +15,19 @@
     "seed-supabase": "tsx ./src/server/sql_db/seed.ts supabase"
   },
   "dependencies": {
-    "@json2csv/plainjs": "^7.0.6",
-    "concurrently": "^9.2.1",
     "cors": "^2.8.6",
-    "csv-parse": "^6.1.0",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "pg": "^8.17.2",
     "pg-copy-streams": "^7.0.0",
-    "postgres": "^3.4.8",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "tsx": "^4.21.0"
+    "react-dom": "^19.2.0"
   },
   "devDependencies": {
+    "csv-parse": "^6.1.0",
+    "@json2csv/plainjs": "^7.0.6",
+    "concurrently": "^9.2.1",
+    "tsx": "^4.21.0",
     "@eslint/js": "^9.39.1",
     "@types/node": "^24.10.1",
     "@types/pg-copy-streams": "^1.2.5",

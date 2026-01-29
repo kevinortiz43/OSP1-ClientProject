@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import {from}   from "pg-copy-streams";
+import {from}   from "pg-copy-streams"; // necessary for seeding Supabase
 import { parse } from 'csv-parse/sync'; 
 
 import { Pool } from "pg"; // for offline DB
