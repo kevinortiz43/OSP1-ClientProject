@@ -26,6 +26,8 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
     "@json2csv/plainjs": "^7.0.6",
     "@types/node": "^24.10.1",
     "@types/pg-copy-streams": "^1.2.5",
