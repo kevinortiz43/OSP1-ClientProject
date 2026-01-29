@@ -1,10 +1,8 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-// import copyFrom from "pg-copy-streams";
-
-import * as pgCopyStreams from "pg-copy-streams";
-// console.log('pgCopyStreams exports:', Object.keys(pgCopyStreams));
+import {from}   from "pg-copy-streams";
+import { parse } from 'csv-parse/sync'; 
 
 import { Pool } from "pg"; // for offline DB
 import { pool } from "./db_connect.js"; // for supabased (temporary online solution)
@@ -12,29 +10,40 @@ import { pool } from "./db_connect.js"; // for supabased (temporary online solut
 const __dirname = path.dirname(fileURLToPath(import.meta.url)); // current working directory
 const dataDir = path.join(__dirname, "../data"); // data folder path
 
-// get table names from csv files
+// input: CSV filename
+// output: get table names from csv files
 function getTableNameFromCSV(filename: string): string {
   const baseName = path.basename(filename, ".csv"); // remove '.csv'
   return `"${baseName}"`; // preserve case (add " " otherwise will be all lowercase)
-}
+} // NOTE: SQL query needs " " around table name, i.e. SELECT * FROM "allTrustControls";
+// rather than SELECT * FROM alltrustcontrols (if we decide to use lowercase, then no " " around table name needed)
 
 //input: csvPath
-//output: headers and 1st row. Also check the csv file has data
+//output: headers and 1st row. Also check if csv file has data
 function getCSVHeadersAndFirstRow(csvPath: string): {
   headers: string[];
   firstRow: string[];
 } {
   const content = fs.readFileSync(csvPath, "utf8");
-  const lines = content.split("\n").filter((line) => line.trim()); // split content into rows, trim any white space
-
-  if (lines.length < 2) {
-    // check to make sure at least 2 rows (header + data)
+  
+  // parse CSV with csv-parse module
+  const records = parse(content, {
+    columns: true,  // use 1st row -> headers
+    skip_empty_lines: true,
+    trim: true
+  });
+  
+  if (records.length === 0) {
     throw new Error("CSV file has no data");
   }
-
-  const headers = lines[0].split(",").map((h) => h.trim());
-  const firstRow = lines[1].split(",").map((v) => v.trim());
-
+  
+  // get headers from 1st record
+  const headers = Object.keys(records[0]);
+  const firstRow = Object.values(records[0]) as string[];
+  
+  console.log("parsed headers:", headers);
+  console.log("parsed 1st row:", firstRow);
+  
   return { headers, firstRow };
 }
 
@@ -134,7 +143,7 @@ async function seedSupabaseWithCOPY() {
       // - HEADER: First line contains column names
       const quotedHeaders = headers.map((h) => `"${h}"`).join(", ");
       const copyStream = client.query(
-        pgCopyStreams.from(
+        from(
           `COPY ${tableName}(${quotedHeaders}) FROM STDIN CSV HEADER`,
         ),
       );
@@ -186,58 +195,3 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 
 export { seedSupabaseWithCOPY };
 
-
-
-// OFFLINE DB seeding
-// async function seedPostgreSQLWithCOPY(connectionString: string) {
-//   const targetPool = new Pool({ connectionString });
-// ... same logic as seedSupabaseWithCOPY but using targetPool
-// }
-
-
-
-// METHOD 1: COPY data values from each CSV file // COPY didn't work due to Supabase security NOT allowing COPY from local files
-//   await client.query(`
-//     COPY ${tableName}(${headers.join(', ')})
-//     FROM '${csvPath}'
-//     DELIMITER ','
-//     CSV HEADER;
-//   `);
-
-// METHOD 3
-// Because COPY block doesn't work with Supbase, trying bulk INSERT
-//       console.log(`  Importing data with bulk INSERT...`);
-
-//       const csvContent = fs.readFileSync(csvPath, "utf8");
-//       const lines = csvContent.split("\n").filter((line) => line.trim()); // split content into rows
-//       const dataRows = lines.slice(1); // skip header (row 0) and use only data rows
-
-//       let inserted = 0;
-//       for (const row of dataRows) { // simple CSV parsing (may need improvement for quoted commas)
-//         const values = row.split(",").map((v) => v.trim());
-//         const placeholders = headers.map((_, i) => `$${i + 1}`).join(", ");
-
-//         await client.query(
-//           `INSERT INTO ${tableName} (${headers.join(", ")}) VALUES (${placeholders})`,
-//           values,
-//         );
-//         inserted++;
-
-//         // Show progress every 100 rows
-//         if (inserted % 100 === 0) {
-//           console.log(`    ...${inserted} rows inserted`);
-//         }
-//       }
-
-//       const result = await client.query(`SELECT COUNT(*) FROM ${tableName};`); // count all from each table
-//       console.log(`  Imported ${result.rows[0].count} rows\n`);
-//     }
-
-//     console.log("Seeding complete");
-//   } catch (error: any) {
-//     console.error("Seeding failed:", error.message);
-//     throw error;
-//   } finally {
-//     client.release();
-//   }
-// }
