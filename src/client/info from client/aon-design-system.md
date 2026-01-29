@@ -7,7 +7,7 @@ Restrictions:
 - fonts
 - icons
 
-Youw ill not get access to Helvetica Now Display and Helvetica Now Text and commercially licences Font Awesome icon sets. Use Arial as a sub for fonts and any OS icon library.
+You will not get access to Helvetica Now Display and Helvetica Now Text and commercially licences Font Awesome icon sets. Use Arial as a sub for fonts and any OS icon library.
 
 ## Important(!)
 

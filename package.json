@@ -5,13 +5,18 @@
   "type": "module",
   "scripts": {
     "dev": "concurrently \"npm run start\" \"npm run server\"",
-    "start":"vite",
-    "server":"tsx --watch ./src/server/server.ts",
+    "start": "vite",
+    "server": "tsx --watch ./src/server/server.ts",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^7.1.0",
+    "@fortawesome/free-brands-svg-icons": "^7.1.0",
+    "@fortawesome/free-regular-svg-icons": "^7.1.0",
+    "@fortawesome/free-solid-svg-icons": "^7.1.0",
+    "@fortawesome/react-fontawesome": "^3.1.1",
     "concurrently": "^9.2.1",
     "cors": "^2.8.6",
     "dotenv": "^17.2.3",
