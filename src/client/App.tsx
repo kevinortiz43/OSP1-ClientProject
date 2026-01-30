@@ -107,7 +107,6 @@ function App({ data: initialData, fetchUrl }: AppProps) {
   const toggleFaqItem = (itemId: string) =>
     setExpandedFaqItemId((prev) => (prev === itemId ? null : itemId))
 
-  // flatten FAQs so each question is its own accordion entry (no single 'General' container)
   const flatFaqItems = useMemo(() => {
     return faqCategories.flatMap((category) =>
       category.items.map((item) => ({ ...item, category: category.label }))
@@ -161,8 +160,6 @@ function App({ data: initialData, fetchUrl }: AppProps) {
 
         <section className="column faqs-column" aria-label="Frequently asked questions">
           <h2>Frequently Asked Questions</h2>
-
-          {/* Render each FAQ question as its own accordion item (flat list) */}
           <ul className="category-list">
             {flatFaqItems.map((faqItem) => (
               <li key={faqItem.id} className="category-item">

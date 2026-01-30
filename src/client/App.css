@@ -124,7 +124,6 @@
   text-align: left;
 }
 
-/* keep header text on one line and ellipsize if too long */
 .category-list .category-item > .category-header > span:first-child {
   flex: 1 1 auto;
   min-width: 0;
@@ -133,7 +132,6 @@
   white-space: nowrap;
 }
 
-/* keep caret visible and not shrinking */
 .category-list .category-item > .category-header > .caret {
   flex: 0 0 auto;
   margin-left: 0.75rem;
@@ -145,7 +143,6 @@
   padding-left: 0;
 }
 
-/* keep existing accordion styles (if present) */
 .accordion {
   text-align: left;
 }
@@ -179,7 +176,6 @@
   cursor: pointer;
 }
 
-/* answer area styling for both controls and flat FAQ items */
 .category-list .category-item .item-answer,
 .category .item-answer {
   margin-top: 0.5rem;
@@ -191,7 +187,6 @@
 }
 
 .item-answer {
-  /* keep backward compatibility */
   color: #333;
 }
 .caret {
