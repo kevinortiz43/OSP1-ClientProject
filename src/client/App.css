@@ -40,3 +40,20 @@
 .read-the-docs {
   color: #888;
 }
+
+.searchbar{
+  display: flex;
+  padding: 25px 300px;
+  position: sticky;
+  top: 0;
+}
+
+.searchbar #s{
+  text-align: left;
+  border-radius: 10px;
+  width: 200%;
+}
+
+p{
+  line-height: 60;
+}
