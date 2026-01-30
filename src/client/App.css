@@ -40,3 +40,171 @@
 .read-the-docs {
   color: #888;
 }
+
+.dropdown {
+  position: relative;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: #f9f9f9;
+  min-width: 130px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  padding: 12px 16px;
+}
+
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+
+/* two-column layout: controls on left, faqs on right */
+.two-column {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+/* columns share space; adjust proportions */
+.controls-column {
+  flex: 1.2 1 0%;
+  min-width: 280px;
+}
+.faqs-column {
+  flex: 0.8 1 0%;
+  min-width: 240px;
+}
+
+/* stack on small screens */
+@media (max-width: 800px) {
+  .two-column {
+    flex-direction: column;
+    padding: 0.5rem;
+  }
+
+  .controls-column,
+  .faqs-column {
+    min-width: auto;
+  }
+}
+
+/* ensure lists have no bullets/indent */
+.category-list {
+  list-style: none;
+  margin: 0;
+  padding-left: 0;
+}
+
+/* Make each list item visually match the .category card */
+.category-list .category-item {
+  list-style: none;
+  margin: 0 0 0.5rem 0;
+  padding-left: 0;
+  border: 1px solid #e3e3e3;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #fff;
+}
+
+/* header/button inside a list-item should match .category-header */
+.category-list .category-item > .category-header,
+.category-list .category-item > button.category-header {
+  width: 100%;
+  background: #f7f7fb;
+  padding: 0.75rem 1rem;
+  border: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  font-weight: 600;
+  text-align: left;
+}
+
+.category-list .category-item > .category-header > span:first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.category-list .category-item > .category-header > .caret {
+  flex: 0 0 auto;
+  margin-left: 0.75rem;
+  opacity: 0.8;
+}
+
+.item-answer {
+  margin-left: 0;
+  padding-left: 0;
+}
+
+.accordion {
+  text-align: left;
+}
+.category {
+  border: 1px solid #e3e3e3;
+  margin-bottom: 0.5rem;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.category-header {
+  width: 100%;
+  background: #f7f7fb;
+  padding: 0.75rem 1rem;
+  border: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  font-weight: 600;
+}
+.item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.show-answer {
+  background: transparent;
+  border: 1px solid #ccc;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.category-list .category-item .item-answer,
+.category .item-answer {
+  margin-top: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #fafafa;
+  border-top: 1px solid #eee;
+  border-radius: 0 0 6px 6px;
+  color: #333;
+}
+
+.item-answer {
+  color: #333;
+}
+.caret {
+  margin-left: 0.75rem;
+  opacity: 0.8;
+.searchbar{
+  display: flex;
+  padding: 25px 300px;
+  position: sticky;
+  top: 0;
+}
+
+.searchbar #s{
+  text-align: left;
+  border-radius: 10px;
+  width: 200%;
+}
+
+p{
+  line-height: 60;
+}
