@@ -1,0 +1,53 @@
+services:
+  # Frontend service (Vite)
+  frontend:
+    build:
+      context: .
+      target: dev
+    ports:
+      - "5173:5173"
+    environment:
+      - NODE_ENV=development
+      - VITE_API_URL=http://backend:3000
+    command: ["npm", "run", "start"]
+    develop:
+      watch:
+        - action: sync
+          path: ./src
+          target: /app/src
+          ignore:
+            - src/server/
+        - action: sync
+          path: ./public
+          target: /app/public
+        - action: rebuild
+          path: package.json
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+  # Backend service (Express)
+  backend:
+    build:
+      context: .
+      target: dev
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+    command: ["npm", "run", "server"]
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./src/server
+          target: /app/src/server
+        - action: rebuild
+          path: package.json
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
