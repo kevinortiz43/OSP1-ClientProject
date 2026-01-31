@@ -1,10 +1,12 @@
 // import path from "path";
 import cors from "cors";
 import express, { Request, Response, NextFunction } from "express";
-import dotenv from "dotenv";
+// import dotenv from "dotenv";
+import 'dotenv/config';
 import db from "./sql_db/db_connect";
 import router from "./router/router";
-dotenv.config(); // process.env
+
+// dotenv.config(); // process.env
 
 const PORT = 3000;
 

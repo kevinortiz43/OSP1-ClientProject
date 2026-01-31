@@ -1,12 +1,15 @@
 import { Pool } from 'pg';
 import type { QueryResult } from "pg";
-import dotenv from "dotenv";
+// import dotenv from "dotenv";
+import 'dotenv/config'; 
 
-dotenv.config(); // process.env
+// dotenv.config(); // process.env
+
 
 // create a new pool here using the connection string above
 const pool = new Pool({
-  connectionString: process.env.PG_URI
+  // connectionString: process.env.PG_URI
+  connectionString: 'postgresql://postgres.kgdlviaqzszogrdtktma:cl13ntPr0j12345!@aws-0-us-west-2.pooler.supabase.com:6543/postgres'
 })
 
 
