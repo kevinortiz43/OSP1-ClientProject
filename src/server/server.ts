@@ -1,4 +1,7 @@
 // import path from "path";
+
+// docker compose exec backend npm run db:setup
+// docker compose exec backend npm run csv-module
 import cors from "cors";
 import express, { Request, Response, NextFunction } from "express";
 import dotenv from "dotenv";
