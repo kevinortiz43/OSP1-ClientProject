@@ -27,13 +27,13 @@ async function generateTypesFromDocker() {
       `, [table_name]);
 
       typesContent += `  ${table_name}: {\n`;
-      
+
       for (const col of columns) {
-        const tsType = mapPgTypeToTs(col.data_type);
+        const tsType = mapPgTypeToTs(col.data_type, col.column_name);
         const optional = col.is_nullable === 'YES' ? '?' : '';
         typesContent += `    ${col.column_name}${optional}: ${tsType};\n`;
       }
-      
+
       typesContent += `  };\n`;
     }
 
@@ -42,17 +42,17 @@ async function generateTypesFromDocker() {
     // write to separate file
     const outputPath = path.join(__dirname, 'schemas-local.ts');
     fs.writeFileSync(outputPath, typesContent);
-    
+
     console.log(`Generated Docker types for ${tables.length} tables at ${outputPath}`);
     await dockerPool.end();
-    
+
   } catch (error) {
     console.error('Failed to generate Docker types:', error);
     process.exit(1);
   }
 }
 
-function mapPgTypeToTs(pgType: string): string {
+function mapPgTypeToTs(pgType: string, columnName?: string): string {
   const typeMap: Record<string, string> = {
     'integer': 'number',
     'bigint': 'number',
@@ -63,18 +63,25 @@ function mapPgTypeToTs(pgType: string): string {
     'text': 'string',
     'varchar': 'string',
     'uuid': 'string',
-    'timestamp without time zone': 'Date',  
-    'timestamp with time zone': 'Date',     
+    'timestamp without time zone': 'Date',
+    'timestamp with time zone': 'Date',
     'timestamp': 'Date',
     'timestamptz': 'Date',
     'date': 'Date',
     'json': 'any',
     'jsonb': 'any',
   };
+
+  // handling for categories
+  if (pgType === 'jsonb' && columnName?.toLowerCase().includes('categor')) {
+    return 'string[]';  // Your categories are string arrays
+  }
+
   return typeMap[pgType] || 'any';
 }
 
-// Run if called directly
+
+// run if called directly
 if (import.meta.url === `file://${process.argv[1]}`) {
   generateTypesFromDocker();
 }

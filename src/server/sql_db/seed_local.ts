@@ -45,13 +45,37 @@ function inferTypeFromValue(value: string): string {
     return "TIMESTAMPTZ";
   }
   
+
+  // detect JSON arrays
+  if (value.trim().startsWith('[') && value.trim().endsWith(']')) {
+    console.log('JSONB TYPE returned for array');
+    return "JSONB";
+  }
+
+  // detect boolean
+  const trimmedValue = value.trim().toLowerCase();
+  if (trimmedValue === 'true' || trimmedValue === 'false') {
+    console.log('BOOLEAN detected:', trimmedValue);
+    return "BOOLEAN";
+  }
+
+// detect number - NOTE: added numeric and integer properties to test if this code works
   const num = Number(value);
-  if (!isNaN(num)) {
-    return Number.isInteger(num) ? "INTEGER" : "NUMERIC";
+  if (!isNaN(num) && value.trim() !== '') {
+    // check if integer
+    if (Number.isInteger(num) && !value.includes('.')) {
+      console.log(`INTEGER detected: ${value}`);
+      return "INTEGER";
+    } else {
+      console.log(`NUMERIC detected: ${value}`);
+      return "NUMERIC";
+    }
   }
   
+  console.log(`TEXT detected: ${value}`);
   return "TEXT";
 }
+
 
 function generateCreateTableSQL(
   tableName: string,
@@ -65,8 +89,17 @@ function generateCreateTableSQL(
     if (header.toLowerCase() === "id") {
       return `${quotedHeader} VARCHAR(255) PRIMARY KEY`;
     }
+
+    // force categories columns to JSONB if they contain arrays
+    if (header.toLowerCase().includes('categor') && type === "JSONB") {
+      return `${quotedHeader} JSONB`;
+    }
+
+
     return `${quotedHeader} ${type}`;
   });
+
+
   
   return `CREATE TABLE IF NOT EXISTS ${tableName} (\n  ${columns.join(",\n  ")}\n);`;
 }
