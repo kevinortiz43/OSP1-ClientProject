@@ -10,10 +10,14 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+        "seed-supabase": "tsx ./src/server/sql_db/seed.ts supabase",
+    "types-supabase": "tsx ./src/server/sql_db/generateSchema.ts",
     "csv-manual": "tsx ./src/server/sql_db/convertData_manual.ts",
     "csv-module": "tsx ./src/server/sql_db/convertData_module.ts",
-    "seed-supabase": "tsx ./src/server/sql_db/seed.ts supabase",
-    "types-supabase": "tsx ./src/server/sql_db/generateSchema.ts"
+    "db:create-schema": "tsx ./src/server/sql_db/createSchema.ts",
+    "db:load-csv": "tsx ./src/server/sql_db/loadCSV.ts",
+    "db:setup": "tsx ./src/server/sql_db/setupDatabase.ts",
+    "db:init": "npm run db:setup"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^7.1.0",
@@ -32,9 +36,9 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@json2csv/plainjs": "^7.0.6",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
-    "@json2csv/plainjs": "^7.0.6",
     "@types/node": "^24.10.1",
     "@types/pg-copy-streams": "^1.2.5",
     "@types/react": "^19.2.5",

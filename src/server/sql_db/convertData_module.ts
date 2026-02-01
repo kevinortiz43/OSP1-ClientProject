@@ -1,36 +1,54 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { Parser } from '@json2csv/plainjs'; // requires package
+import { Parser } from '@json2csv/plainjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const dataDir = (file: string) => path.join(__dirname, "../data", file);
+// CORRECTED PATH for windows
+const dataDir = (file: string) => path.join(__dirname, "data", file);
 
-// OPTION 1: using json2csv module
+// Ensure data directory exists
+function ensureDataDirExists(): void {
+  const dir = path.join(__dirname, "data");
+  if (!fs.existsSync(dir)) {
+    console.log(`Creating data directory at: ${dir}`);
+    fs.mkdirSync(dir, { recursive: true });
+  } else {
+    console.log(`Data directory exists at: ${dir}`);
+  }
+}
+
 export async function convertRelayJSONToCSV(
   filename: string
 ): Promise<{ csvContent: string; recordCount: number; headers: string[] }> {
-  // Read / parse JSON file
-  const parsedFile = JSON.parse(fs.readFileSync(dataDir(filename), "utf8"));
+  console.log(`Reading file: ${dataDir(filename)}`);
   
-  // extract Relay structure
+  const fileContent = fs.readFileSync(dataDir(filename), "utf8");
+  const parsedFile = JSON.parse(fileContent);
+  
+  console.log(`File parsed successfully. Keys:`, Object.keys(parsedFile));
+  
   const topLevelKeys = Object.keys(parsedFile.data || {});
   if (topLevelKeys.length === 0) {
     throw new Error(`No data found in ${filename}`);
   }
   
   const dataKey = topLevelKeys[0];
+  console.log(`Processing data key: ${dataKey}`);
+  
   const edges = parsedFile.data[dataKey].edges;
   
   if (!edges || edges.length === 0) {
     throw new Error(`No edges found in ${filename}`);
   }
   
-  // extract nodes from edges
+  console.log(`Found ${edges.length} edges`);
+  
   const nodes = edges.map((edge: any) => edge.node);
   const fields = Object.keys(nodes[0]);
   
-  // use json2csv to parse
+  console.log(`Fields detected:`, fields);
+  
   const parser = new Parser({ fields });
   const csvContent = parser.parse(nodes);
   
@@ -41,60 +59,108 @@ export async function convertRelayJSONToCSV(
   };
 }
 
-// convert all JSON files
 export async function convertAllJSONFilesInDataFolder(): Promise<Record<string, any>> {
-  console.log(`\nConverting all JSON files using json2csv module...`);
+  console.log(`\n${'='.repeat(60)}`);
+  console.log(`Converting all JSON files using json2csv module...`);
+  console.log(`${'='.repeat(60)}\n`);
+  
+  ensureDataDirExists();
 
   const results: Record<string, any> = {};
+  const dataPath = path.join(__dirname, "data");
 
   try {
-    const files = fs.readdirSync(path.join(__dirname, "../data"));
-    const jsonFiles = files.filter((file) => file.endsWith(".json"));
-
-    if (jsonFiles.length === 0) {
-      console.log("No JSON files found");
+    console.log(`Scanning directory: ${dataPath}`);
+    
+    if (!fs.existsSync(dataPath)) {
+      console.error(`ERROR: Data directory does not exist: ${dataPath}`);
       return results;
     }
     
-    console.log(`Found ${jsonFiles.length} JSON files: ${jsonFiles.join(", ")}`);
+    const files = fs.readdirSync(dataPath);
+    console.log(`All files in directory:`, files);
+    
+    const jsonFiles = files.filter((file) => file.endsWith(".json"));
+
+    if (jsonFiles.length === 0) {
+      console.log("  No JSON files found in data directory");
+      return results;
+    }
+    
+    console.log(`\nFound ${jsonFiles.length} JSON files: ${jsonFiles.join(", ")}\n`);
 
     for (const file of jsonFiles) {
       try {
-        const result = await convertRelayJSONToCSV(file);
+        console.log(`\n${'─'.repeat(60)}`);
+        console.log(`Processing: ${file}`);
+        console.log(`${'─'.repeat(60)}`);
         
-        console.log(`Processing ${file}...`);
+        const result = await convertRelayJSONToCSV(file);
 
         const csvFilename = file.replace(".json", ".csv");
-        fs.writeFileSync(dataDir(csvFilename), result.csvContent);
+        const csvPath = dataDir(csvFilename);
+        
+        console.log(`Writing CSV to: ${csvPath}`);
+        fs.writeFileSync(csvPath, result.csvContent);
+        
+        if (fs.existsSync(csvPath)) {
+          const stats = fs.statSync(csvPath);
+          console.log(`File created successfully (${stats.size} bytes)`);
+        } else {
+          console.error(`✗ File was NOT created: ${csvPath}`);
+        }
 
         results[file] = {
           csvFilename,
+          csvPath,
           recordCount: result.recordCount,
           headers: result.headers,
         };
 
         console.log(`Created ${csvFilename} with ${result.recordCount} records`);
       } catch (error: any) {
-        console.log(`Skipped ${file}: ${error.message}`);
+        console.error(`✗ Failed to process ${file}:`);
+        console.error(`  Error: ${error.message}`);
+        console.error(`  Stack: ${error.stack}`);
       }
     }
 
+    console.log(`\n${'='.repeat(60)}`);
+    console.log(`SUMMARY: Processed ${Object.keys(results).length}/${jsonFiles.length} files`);
+    console.log(`${'='.repeat(60)}\n`);
+
     return results;
   } catch (error: any) {
-    console.error(`Error reading data folder: ${error.message}`);
+    console.error(`\n✗ ERROR reading data folder: ${error.message}`);
+    console.error(`  Stack: ${error.stack}`);
     return results;
   }
 }
 
-// standalone script
 if (import.meta.url === `file://${process.argv[1]}`) {
+  console.log(`Script started at: ${new Date().toISOString()}`);
+  console.log(`Working directory: ${process.cwd()}`);
+  console.log(`Script location: ${__dirname}`);
+  console.log(`Data directory: ${path.join(__dirname, "data")}\n`);
+  
   convertAllJSONFilesInDataFolder()
     .then((results) => {
-      console.log(`\nProcessed ${Object.keys(results).length} files.`);
-      console.log("Results:", results);
+      console.log(`\nConversion completed successfully!`);
+      console.log(`Total files processed: ${Object.keys(results).length}`);
+      
+      if (Object.keys(results).length > 0) {
+        console.log(`\nResults:`);
+        Object.entries(results).forEach(([jsonFile, data]: [string, any]) => {
+          console.log(`  ${jsonFile} → ${data.csvFilename} (${data.recordCount} records)`);
+        });
+      }
+      
+      process.exit(0);
     })
     .catch((error) => {
-      console.error("Conversion failed:", error);
+      console.error("\n✗ Conversion failed!");
+      console.error(`Error: ${error.message}`);
+      console.error(`Stack: ${error.stack}`);
       process.exit(1);
     });
 }
