@@ -15,8 +15,10 @@
     "csv-agno": "tsx ./src/server/sql_db/convertData_agnostic.ts",
     "seed-supabase": "tsx ./src/server/sql_db/seed.ts supabase",
     "seed-local": "tsx ./src/server/sql_db/seed_local.ts",
+    "seed-agno": "tsx ./src/server/sql_db/seed_agnostic.ts",
     "types-supabase": "tsx ./src/server/sql_db/generateSchema.ts",
-    "types-local": "tsx ./src/server/sql_db/generateSchema_local.ts"
+    "types-local": "tsx ./src/server/sql_db/generateSchema_local.ts",
+    "types-agno": "tsx ./src/server/sql_db/generateSchema_agnostic.ts"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^7.1.0",
