@@ -1,10 +1,9 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React from 'react'
 import './App.css'
+import AppComponent from './components/source-dropdown-'
 import allTrustControls from '../server/data/allTrustControls.json'
 import allTrustFaqs from '../server/data/allTrustFaqs.json'
 
-type Control = { id: string; short?: string; long?: string }
-type Category = { id: string; label: string; items: Control[] }
 
 type Faq = { id: string; question?: string; answer?: string; category?: string }
 type FaqCategory = { id: string; label: string; items: Faq[] }
@@ -188,5 +187,10 @@ function App({ data: initialData, fetchUrl }: AppProps) {
 
   )
 }
+  {<div className="searchbar">
+   <input type="text" id="s" placeholder="Search for keywords and filter info from the FAQ and Trust Control..."></input>
+  </div>}
 
-export default App
+export default function App() {
+  return <AppComponent />
+}
