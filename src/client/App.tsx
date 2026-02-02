@@ -1,6 +1,6 @@
 import React from 'react'
 import './App.css'
-import AppComponent from './components/Appc'
+import AppComponent from './components/source-dropdown-'
 import allTrustControls from '../server/data/allTrustControls.json'
 import allTrustFaqs from '../server/data/allTrustFaqs.json'
 
