@@ -1,13 +1,17 @@
+import React from "react";
+import "./App.css";
+import AppComponent from "./components/client-components-dropdown";
+import allTrustControls from "../server/data/allTrustControls.json";
+import allTrustFaqs from "../server/data/allTrustFaqs.json";
+import Faqs from "./components/Faqs/Faqs";
+import SearchBar from "./components/Searchbar/SearchBar";
 
-import './App.css'
-
-function App() {
-
+export default function App() {
   return (
     <>
-  <h1>HEllo world</h1>
+      <SearchBar></SearchBar>
+      <AppComponent />
+      <Faqs></Faqs>
     </>
-  )
+  );
 }
-
-export default App
