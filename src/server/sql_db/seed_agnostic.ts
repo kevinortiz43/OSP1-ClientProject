@@ -3,7 +3,9 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { from } from "pg-copy-streams";
 import { parse } from 'csv-parse/sync';
-import { dockerPool } from "./db_connect_local.js"; // LOCAL DOCKER DB ONLY
+// import { dockerPool } from "./db_connect_local.js"; // LOCAL DOCKER DB ONLY
+import { dockerPool } from "./db_connect_agnostic.js";
+
 
 // Use cross-platform path handling
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
