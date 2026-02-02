@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import './App.css'
+
 import allTrustControls from '../../server/data/allTrustControls.json'
 import allTrustFaqs from '../../server/data/allTrustFaqs.json'
 
