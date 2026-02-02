@@ -12,6 +12,7 @@
     "preview": "vite preview",
     "csv-manual": "tsx ./src/server/sql_db/convertData_manual.ts",
     "csv-module": "tsx ./src/server/sql_db/convertData_module.ts",
+    "csv-agno": "tsx ./src/server/sql_db/convertData_agnostic.ts",
     "seed-supabase": "tsx ./src/server/sql_db/seed.ts supabase",
     "seed-local": "tsx ./src/server/sql_db/seed_local.ts",
     "types-supabase": "tsx ./src/server/sql_db/generateSchema.ts",
