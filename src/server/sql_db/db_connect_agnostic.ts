@@ -21,7 +21,6 @@ dockerPool.connect((err, client, release) => {
       host: process.env.DB_HOST || (isRunningInDocker ? 'db' : 'localhost'),
       port: parseInt(process.env.DB_PORT || '5432'),
       database: process.env.DB_NAME || 'test_db',
-      user: process.env.DB_USER || 'root',
     });
   } else {
     console.log('Successfully connected to Docker PostgreSQL');

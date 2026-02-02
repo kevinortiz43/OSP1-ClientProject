@@ -18,7 +18,9 @@
     "seed-agno": "tsx ./src/server/sql_db/seed_agnostic.ts",
     "types-supabase": "tsx ./src/server/sql_db/generateSchema.ts",
     "types-local": "tsx ./src/server/sql_db/generateSchema_local.ts",
-    "types-agno": "tsx ./src/server/sql_db/generateSchema_agnostic.ts"
+    "types-agno": "tsx ./src/server/sql_db/generateSchema_agnostic.ts",
+    "db-setup-agno":  "npm run csv-agno && npm run seed-agno && npm run types-agno",
+    "db-setup-localLinux":  "npm run csv-module && npm run seed-local && npm run types-local"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^7.1.0",
