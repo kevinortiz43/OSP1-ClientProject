@@ -3,9 +3,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import {from}   from "pg-copy-streams"; // necessary for seeding Supabase
 import { parse } from 'csv-parse/sync'; 
-
-import { Pool } from "pg"; // for offline DB
-import { pool } from "./db_connect.js"; // for supabased (temporary online solution)
+import { pool } from "./db_connect"; // for supabased (temporary online solution)
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url)); // current working directory
 const dataDir = path.join(__dirname, "../data"); // data folder path
