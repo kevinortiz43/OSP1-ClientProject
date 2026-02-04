@@ -2,11 +2,8 @@
 import cors from "cors";
 import express, { Request, Response, NextFunction } from "express";
 // import dotenv from "dotenv";
-import 'dotenv/config';
-import db from "./sql_db/db_connect";
+import "dotenv/config";
 import router from "./router/router";
-
-// dotenv.config(); // process.env
 
 const PORT = 3000;
 
@@ -14,6 +11,7 @@ const PORT = 3000;
 const app = express();
 
 app.use(express.json());
+
 app.use("/api", router);
 // add middleware
 const corsOptions = {
@@ -28,26 +26,7 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // if we have forms
 
-// add routes
 
-// test db route simple
-app.get("/api/test-simple", async (req: Request, res: Response) => {
-  try {
-    // should work even when db is empty, just get current time
-    const result = await db.query("SELECT NOW() as current_time");
-
-    res.status(200).json({
-      success: true,
-      message: "Connected to database",
-      current_time: result.rows[0].current_time,
-    });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      error: error.message,
-    });
-  }
-});
 
 /* start server */
 app.listen(PORT, () => {

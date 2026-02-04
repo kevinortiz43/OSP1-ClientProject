@@ -9,6 +9,8 @@
     "server": "tsx --watch ./src/server/server.ts",
     "setup":  "docker compose up -d && npm run csv-agno && npm run seed-agno && npm run types-agno",
     "watch":"docker compose up --watch",
+    "tear":"docker system prune --all --volumes --force",
+    "restart":"docker compose down && docker compose build --no-cache",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",

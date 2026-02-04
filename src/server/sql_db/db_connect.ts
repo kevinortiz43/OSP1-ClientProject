@@ -6,19 +6,30 @@ import 'dotenv/config';
 // dotenv.config(); // process.env
 
 
-// create a new pool here using the connection string above
+// // create a new pool here using the connection string above
+// const pool = new Pool({
+//   // connectionString: process.env.PG_URI
+//   connectionString: 'postgresql://postgres.kgdlviaqzszogrdtktma:cl13ntPr0j12345!@aws-0-us-west-2.pooler.supabase.com:6543/postgres'
+// })
+
+
+
 const pool = new Pool({
-  // connectionString: process.env.PG_URI
-  connectionString: 'postgresql://postgres.kgdlviaqzszogrdtktma:cl13ntPr0j12345!@aws-0-us-west-2.pooler.supabase.com:6543/postgres'
-})
+  host: process.env.DB_HOST ,
+  port: Number(process.env.DB_PORT), 
+  database: process.env.DB_NAME, 
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD ,
+});
 
 
 pool.connect( (err, client, release) => {
   if (err) {
-    console.error('Error connecting to Supabase:', err.message);
+
+    console.error('Error connecting to offline database:', err.message);
   } else {
-    console.log('Successfully connected to Supabase');
-    release(); // Release the client back to the pool
+    console.log('Successfully connected to offline database');
+    release(); 
   }
 });
 

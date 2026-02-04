@@ -16,7 +16,7 @@ const pool = new Pool({
 export default {
   getTrustControls: async (_, res, next) => {
     try {
-      const result = await pool.query('SELECT * FROM "allTrustControls"');
+      const result = await pool.query('SELECT * FROM "allTeams"');
 
       if (!result) {
         res.locals.dbResults = "No trust controller controller data";
@@ -24,7 +24,7 @@ export default {
       }
       res.locals.dbResults = result.rows;
 
-      // res.locals.dbResults = "TEST1";
+
 
       return next();
     } catch (error) {

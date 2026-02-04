@@ -35,7 +35,7 @@ USER appuser
 # Expose backend port
 EXPOSE 3000
 
-CMD ["npm", "start"]
+CMD ["npm","run", "dev"]
 
 # Development stage
 FROM base AS dev
