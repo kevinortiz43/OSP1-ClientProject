@@ -7,7 +7,7 @@ import allTeams from "../controller/teamsController";
 const router = express.Router();
 
 router.get("/test", (_, res) => {
-  return res.status(200).send("test");
+  return res.status(200).send("TEST TESTTEST ");
 });
 
 router.get("/trustControls", trustController.getTrustControls, (_, res) => {
