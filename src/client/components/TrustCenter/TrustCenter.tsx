@@ -17,12 +17,21 @@ interface Trust {
   updatedBy?: string;
 }
 
-const TrustCenter = () => {
+
+interface TrustCenterProps {
+  selectedCategories: string[];
+}
+
+
+// pass down selectedCategories from parent App.tsx
+const TrustCenter: React.FC<TrustCenterProps> = ({ selectedCategories }) => {
   const [trusts, setTrusts] = useState<Trust[]>([]); //state to hold fetched Trust Controls
+  const [filteredTrusts, setFilteredTrusts] = useState<Trust[]>([]); // state to filter Trusts list
   const [expandedId, setExpandedId] = useState<string | null>(null); //state to track expanded Trust Control (starts as null)
   const [loading, setLoading] = useState(true); //state to track loading status (starts as true)
   const [error, setError] = useState<string | null>(null); //state to track error status (starts as null which means no error)
 
+// fetch all data on component mount
   useEffect(() => {
     const fetchTrusts = async () => {
       try {
@@ -32,6 +41,7 @@ const TrustCenter = () => {
 
         const data = await response.json();
         setTrusts(data);
+        setFilteredTrusts(data); // init with all data
         setLoading(false);
       } catch (err) {
         if (err && err.message) {
@@ -45,6 +55,18 @@ const TrustCenter = () => {
 
     fetchTrusts();
   }, []);
+
+  // filter trusts when selectedCategories change
+  useEffect(() => {
+    if (selectedCategories.length === 0) {
+      setFilteredTrusts(trusts); // show all if no filters
+    } else {
+      const filtered = trusts.filter(trust => 
+        selectedCategories.includes(trust.category)
+      );
+      setFilteredTrusts(filtered);
+    }
+  }, [selectedCategories, trusts]); // re-run when filters or data changes
 
   //when clicking on Trust Control, toggle its expanded state
   const toggleTrust = (id: string) => {
@@ -64,39 +86,47 @@ const TrustCenter = () => {
         </p>
       </div>
 
-      <div className="trusts_list">
-        {trusts.map((trust) => (
-          <div key={trust.id} className="trust_card">
-            <button
-              className={`trust_button ${expandedId === trust.id ? "active" : ""}`}
-              onClick={() => toggleTrust(trust.id)}
-              aria-expanded={expandedId === trust.id}
-            >
-              <div className="trust_header">
-                <div className="trust_icon_wrapper">
+           {/* Show filter status */}
+      {selectedCategories.length > 0 && filteredTrusts.length === 0 ? (
+        <div className="no-results">
+          No Trust Controls match the selected categories.
+        </div>
+      ) : (
+        <div className="trusts_list">
+          {filteredTrusts.map((trust) => (
+            <div key={trust.id} className="trust_card">
+              <button
+                className={`trust_button ${expandedId === trust.id ? "active" : ""}`}
+                onClick={() => toggleTrust(trust.id)}
+                aria-expanded={expandedId === trust.id}
+              >
+                <div className="trust_header">
+                  <div className="trust_icon_wrapper">
+                    <FontAwesomeIcon
+                      icon={faCircleQuestion}
+                      className="trust_icon"
+                    />
+                  </div>
+                  <div className="trust_text">
+                    <h3 className="trust_question">{trust.short}</h3>
+                    {/* Optional: Show category tag */}
+                    <span className="trust-category">{trust.category}</span>
+                  </div>
                   <FontAwesomeIcon
-                    icon={faCircleQuestion}
-                    className="trust_icon"
+                    icon={faChevronDown}
+                    className={`trust_chevron ${expandedId === trust.id ? "rotated" : ""}`}
                   />
                 </div>
-                <div className="trust_text">
-                  <h3 className="trust_question">{trust.short}</h3>
+              </button>
+              {expandedId === trust.id && (
+                <div className="trust_answer">
+                  <p>{trust.long}</p>
                 </div>
-                <FontAwesomeIcon
-                  icon={faChevronDown}
-                  className={`trust_chevron ${expandedId === trust.id ? "rotated" : ""}`}
-                />
-              </div>
-            </button>
-            {/* conditional rendering if true show answer */}
-            {expandedId === trust.id && (
-              <div className="trust_answer">
-                <p>{trust.long}</p>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

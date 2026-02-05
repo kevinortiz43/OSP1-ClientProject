@@ -1,8 +1,11 @@
-// import AsyncSelect from "react-select/async";
 import Select from 'react-select';
-// import { callbackify } from "util";
 
-const MultiSelect = () => {
+
+interface MultiSelectProps {
+  onFilterChange: (selectedCategories: string[]) => void;
+}
+
+const MultiSelect: React.FC<MultiSelectProps> = ({ onFilterChange }) => { //pass in onFilterChange prop
   const options = [
     { value: "Organizational Security", label: "Organizational Security" },
     { value: "Cloud Security", label: "Cloud Security" },
@@ -11,27 +14,19 @@ const MultiSelect = () => {
   ];
 
 
-  const handleChange = (selectedOption) => {
-    console.log("handleChange", selectedOption);
+  const handleChange = (selectedOptions) => { // if selectedOptions exists, then map them, if not then empty arr
+    const selectedValues = selectedOptions ? selectedOptions.map(opt => opt.value) : [];
+    onFilterChange(selectedValues);
   };
-
   
 
-//   const loadOptions = (searchValue, callback) => {
-//     setTimeout(() => {
-//       const filteredOptions = options.filter((option) =>
-//         option.label.toLowerCase().includes(searchValue.toLowerCase()),
-//       );
-//       console.log("loadOptions", searchValue, filteredOptions);
-//       callback(filteredOptions);
-//     }, 2000);
-//   };
   return (
-
+    <div className="searchbar" >
     <Select options={options} onChange={handleChange} isMulti />
-    // <Select loadOptions={loadOptions} onChange={handleChange} isMulti />
+    </div>
   );
 };
 
 export default MultiSelect;
+
 
