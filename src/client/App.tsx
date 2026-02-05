@@ -5,13 +5,17 @@ import allTrustControls from "../server/data/allTrustControls.json";
 import allTrustFaqs from "../server/data/allTrustFaqs.json";
 import Faqs from "./components/Faqs/Faqs";
 import SearchBar from "./components/Searchbar/SearchBar";
+import TrustCenter from "./components/TrustCenter/TrustCenter";
 
 export default function App() {
   return (
     <>
-      <SearchBar></SearchBar>
-      <AppComponent />
-      <Faqs></Faqs>
+      <div className="app_container">
+        <SearchBar></SearchBar>
+        {/* <AppComponent /> */}
+        <Faqs></Faqs>
+        <TrustCenter />
+      </div>
     </>
   );
 }
