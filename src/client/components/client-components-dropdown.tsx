@@ -14,7 +14,7 @@ interface AppProps {
 
 function App({ data: initialData, fetchUrl }: AppProps) {
   const [categories, setCategories] = useState<Category[]>(initialData ?? [])
-  const [expandedCategoryId, setExpande dCategoryId] = useState<string | null>(null)
+  const [expandedCategoryId, setExpandedCategoryId] = useState<string | null>(null)
   const [expandedControlItemId, setExpandedControlItemId] = useState<string | null>(null)
 
   const [faqCategories, setFaqCategories] = useState<FaqCategory[]>([])
