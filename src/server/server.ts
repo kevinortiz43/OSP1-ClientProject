@@ -7,20 +7,19 @@ import router from "./router/router";
 dotenv.config(); // process.env
 
 const PORT = 3000;
-
-// initialize express
-const app = express();
-
-app.use(express.json());
-app.use("/api", router);
-// add middleware
 const corsOptions = {
   origin: "http://localhost:5173",
   optionsSuccessStatus: 200,
 };
 
+// initialize express
+const app = express();
 // add cors
 app.use(cors(corsOptions));
+
+app.use(express.json());
+app.use("/api", router);
+// add middleware
 
 // parsing middleware
 app.use(express.json());
