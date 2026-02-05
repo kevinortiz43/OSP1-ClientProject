@@ -196,7 +196,26 @@
   opacity: 0.8;
 }
 
+.trustFaqs_grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
 
+.trustFaqs_col {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+}
+
+@media (max-width: 900px) {
+  .trustFaqs_grid {
+    grid-template-columns: 1fr;
+  }
+}
 
 /*potential empty space bug*/
 
