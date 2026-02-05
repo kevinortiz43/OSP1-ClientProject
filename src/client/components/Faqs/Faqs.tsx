@@ -14,10 +14,8 @@ const Faqs = () => {
         </h2>
         <p>
           <strong> what do you need help with?</strong>
-          <h4>
             <FontAwesomeIcon icon={faCircleInfo} />
             Search bar
-          </h4>
         </p>
         <br />
         <p>

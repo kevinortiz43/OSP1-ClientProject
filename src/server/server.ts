@@ -12,7 +12,6 @@ const PORT = 3000;
 const app = express();
 
 app.use(express.json());
-app.use("/api", router);
 // add middleware
 const corsOptions = {
   origin: "http://localhost:5173",
@@ -27,11 +26,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // if we have forms
 
 // add routes
-
+app.use("/api", router);
 // test db route simple
 app.get("/api/test-simple", async (req: Request, res: Response) => {
   try {
-    // should work even when db is empty, just get current time
+
     const result = await db.query("SELECT NOW() as current_time");
 
     res.status(200).json({
