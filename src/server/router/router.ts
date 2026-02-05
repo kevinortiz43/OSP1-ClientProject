@@ -15,7 +15,7 @@ router.get("/trustControls", trustController.getTrustControls, (_, res) => {
 });
 
 
-router.get("/allTeams", trustController.getTrustControls, (_, res) => {
+router.get("/allTeams", allTeams.getTrustControls, (_, res) => {
   return res.status(200).json(res.locals.dbResults);
 });
 
