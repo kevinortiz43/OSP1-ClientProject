@@ -1,10 +1,10 @@
 // import "../App.css";
 import React from "react";
 import { useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCircleInfo } from "@fortawesome/free-solid-svg-icons";
+//import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+//import { faCircleInfo } from "@fortawesome/free-solid-svg-icons";
 
-const Faqs = () => {
+const Faqs = () => { 
   return (
     <div className="faqs_container">
       <div className="faqs_row">
@@ -15,7 +15,7 @@ const Faqs = () => {
         <p>
           <strong> what do you need help with?</strong>
           <h4>
-            <FontAwesomeIcon icon={faCircleInfo} />
+            {/* <FontAwesomeIcon icon={faCircleInfo} /> */}
             Search bar
           </h4>
         </p>
