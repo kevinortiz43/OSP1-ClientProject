@@ -10,7 +10,9 @@ import TrustCenter from "./components/TrustCenter/TrustCenter";
 export default function App() {
   return (
     <div className="trustFaqs_page">
+      <SearchBar />
       <div className="trustFaqs_grid">
+        
         <section className="trustFaqs_col" aria-label="Trust Center">
           <TrustCenter />
         </section>
