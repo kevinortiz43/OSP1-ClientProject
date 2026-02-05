@@ -8,7 +8,7 @@
     "start": "vite",
     "server": "tsx --watch ./src/server/server.ts",
     "setup":  "docker compose up -d && npm run csv-agno && npm run seed-agno && npm run types-agno",
-    "devo":  "docker compose up -d && npm run csv-agno && npm run seed-agno && npm run types-agno && docker compose up --watch",
+    "devo":  "npm run setup && npm run watch",
     "watch":"docker compose up --watch",
     "tear":"docker compose down && docker system prune --all --volumes --force",
     "restart":"docker compose down && docker compose build --no-cache",
