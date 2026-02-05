@@ -148,7 +148,7 @@ function App({ data: initialData, fetchUrl }: AppProps) {
       category.items.map((item) => ({ ...item, category: category.label })),
     )
   }, [faqCategories])
-
+ 
   return (
     <div id="root">
       <h1>Trust Controls & FAQs</h1>
