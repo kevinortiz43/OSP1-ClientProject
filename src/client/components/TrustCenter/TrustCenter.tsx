@@ -81,9 +81,6 @@ const TrustCenter: React.FC<TrustCenterProps> = ({ selectedCategories }) => {
     <div className="trusts_container">
       <div className="trusts_header">
         <h1 className="trusts_title">Trust Center</h1>
-        <p className="trusts_subtitle">
-          Find answers to common questions about our platform
-        </p>
       </div>
 
            {/* Show filter status */}
@@ -109,8 +106,6 @@ const TrustCenter: React.FC<TrustCenterProps> = ({ selectedCategories }) => {
                   </div>
                   <div className="trust_text">
                     <h3 className="trust_question">{trust.short}</h3>
-                    {/* Optional: Show category tag */}
-                    <span className="trust-category">{trust.category}</span>
                   </div>
                   <FontAwesomeIcon
                     icon={faChevronDown}

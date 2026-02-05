@@ -22,7 +22,7 @@ const MultiSelect: React.FC<MultiSelectProps> = ({ onFilterChange }) => { //pass
 
   return (
     <div className="searchbar" >
-    <Select options={options} onChange={handleChange} isMulti />
+    <Select options={options} onChange={handleChange} isMulti placeholder="Filter results by category" />
     </div>
   );
 };
