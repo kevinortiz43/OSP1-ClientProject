@@ -10,7 +10,7 @@ export default function App() {
   return (
     <>
       <SearchBar></SearchBar>
-      <AppComponent />
+      <AppComponent />/
       <Faqs></Faqs>
     </>
   );
