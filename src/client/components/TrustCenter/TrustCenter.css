@@ -1,19 +1,18 @@
-/* Faqs.css */
-.faqs_container {
+/* TrustCenter.css */
+.trusts_container {
   display: flex;
   flex-direction: column;
   gap: 24px;
 }
 
-.faqs_header {
+.trusts_header {
   background-color: #ffffff;
   padding: 32px;
   border-radius: 12px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  margin: 0;
 }
 
-.faqs_title {
+.trusts_title {
   font-size: 28px;
   font-weight: 700;
   color: #1a1a1a;
@@ -21,20 +20,26 @@
   font-family: Arial, sans-serif;
 }
 
-.faqs_subtitle {
+.trusts_subtitle {
   font-size: 15px;
   color: #666666;
   margin: 0;
   font-family: Arial, sans-serif;
 }
 
-.faqs_list {
+/* .trusts_list {
   display: flex;
   flex-direction: column;
   gap: 16px;
+} */
+
+.trusts_list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 16px;
 }
 
-.faq_card {
+.trust_card {
   background-color: #ffffff;
   border-radius: 12px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
@@ -43,11 +48,11 @@
   transition: box-shadow 250ms;
 }
 
-.faq_card:hover {
+.trust_card:hover {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
 }
 
-.faq_button {
+.trust_button {
   width: 100%;
   background: transparent;
   border: none;
@@ -57,7 +62,7 @@
   font-family: Arial, sans-serif;
 }
 
-.faq_header {
+.trust_header {
   display: flex;
   align-items: center;
   gap: 16px;
@@ -65,16 +70,16 @@
   transition: background-color 150ms;
 }
 
-.faq_button:hover .faq_header,
-.faq_button.active .faq_header {
+.trust_button:hover .trust_header,
+.trust_button.active .trust_header {
   background-color: #f8f9fa;
 }
 
-.faq_button.active .faq_header {
+.trust_button.active .trust_header {
   border-bottom: 1px solid #e5e7eb;
 }
 
-.faq_icon_wrapper {
+.trust_icon_wrapper {
   width: 40px;
   height: 40px;
   display: flex;
@@ -85,17 +90,17 @@
   flex-shrink: 0;
 }
 
-.faq_icon {
+.trust_icon {
   color: #0066cc;
   font-size: 20px;
 }
 
-.faq_text {
+.trust_text {
   flex: 1;
   min-width: 0;
 }
 
-.faq_question {
+.trust_question {
   font-size: 16px;
   font-weight: 600;
   color: #1a1a1a;
@@ -103,30 +108,30 @@
   font-family: Arial, sans-serif;
 }
 
-.faq_category {
+.trust_category {
   font-size: 13px;
   color: #999999;
   font-family: Arial, sans-serif;
 }
 
-.faq_chevron {
+.trust_chevron {
   color: #999999;
   transition: transform 150ms;
   flex-shrink: 0;
 }
 
-.faq_chevron.rotated {
+.trust_chevron.rotated {
   transform: rotate(180deg);
 }
 
-.faq_answer {
+.trust_answer {
   margin-top: 16px;
   gap: 16px 24px;
   padding: 0 24px 24px 24px;
   animation: slideDown 250ms ease-in-out;
 }
 
-.faq_answer p {
+.trust_answer p {
   margin: 0;
   font-size: 18px;
   line-height: 1.6;
@@ -147,19 +152,19 @@
 
 /* Responsive */
 @media (max-width: 768px) {
-  .faqs_header {
+  .trusts_header {
     padding: 24px;
   }
 
-  .faqs_title {
+  .trusts_title {
     font-size: 24px;
   }
 
-  .faq_header {
+  .trusts_header {
     padding: 16px;
   }
 
-  .faq_answer {
+  .trusts_answer {
     padding: 0 16px 16px 16px;
   }
 }
