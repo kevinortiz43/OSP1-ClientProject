@@ -10,7 +10,7 @@ interface FAQ {
   id: string;
   question: string;
   answer: string;
-  categories: string[];
+  category: string;
   searchText: string;
   createdat?: string;
   updatedat?: string;

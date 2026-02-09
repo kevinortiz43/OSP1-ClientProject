@@ -10,7 +10,7 @@ export interface Supabase {
     isActive?: boolean;
     employeeId?: number;
     responseTimeHours?: number;
-    categories?: string[];
+    category?: string;
     searchText?: string;
     createdAt?: Date;
     createdBy?: string;
@@ -32,7 +32,7 @@ export interface Supabase {
     id: string;
     question?: string;
     answer?: string;
-    categories?: string[];
+    category?: string;
     searchText?: string;
     createdAt?: Date;
     createdBy?: string;
