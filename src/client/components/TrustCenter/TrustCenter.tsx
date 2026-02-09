@@ -1,3 +1,5 @@
+import "../../App.css";
+
 import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -11,6 +13,7 @@ interface Trust {
   category: string;
   short: string;
   long: string;
+  searchText: string;
   createdAt?: string;
   createdBy?: string;
   updatedAt?: string;
@@ -39,9 +42,13 @@ const TrustCenter: React.FC<TrustCenterProps> = ({ selectedCategories }) => {
         // console.log('Fetching Trust Controls from API:', response);
         if (!response.ok) throw new Error("Failed to fetch Trust Controls");
 
-        const data = await response.json();
-        setTrusts(data);
-        setFilteredTrusts(data); // init with all data
+        const infoObj = await response.json();
+
+        console.log("infoObj: ", infoObj);
+
+
+        setTrusts(infoObj.data);
+        setFilteredTrusts(infoObj.data); // init with all data
         setLoading(false);
       } catch (err) {
         if (err && err.message) {

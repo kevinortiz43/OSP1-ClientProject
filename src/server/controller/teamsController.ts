@@ -1,10 +1,10 @@
 import { dataService } from '../caching/dataService';
 
 export default {
-  getTrustControls: async (_, res, next) => {
+  getTeams: async (_, res, next) => {
     try {
       // dataService.getTeams() returns { data: any[], source: 'cache' | 'database' }
-      const result = await dataService.getControls();
+      const result = await dataService.getTeams();
 
       if (!result) {
         res.locals.dbResults = "No Teams controller data";
@@ -21,10 +21,10 @@ export default {
       return next();
     } catch (error) {
       const serverError = {
-        log: `Error in Trust Controls Controller middleware: ${error instanceof Error ? error.message : "Unknown error"}`,
+        log: `Error in Teams Controller middleware: ${error instanceof Error ? error.message : "Unknown error"}`,
         status: 500,
         message: {
-          err: "Failed to correctly retrieve the database query for Trust Controls",
+          err: "Failed to correctly retrieve the database query for Teams Controls",
         },
       };
       return next(serverError);

@@ -28,5 +28,3 @@ const MultiSelect: React.FC<MultiSelectProps> = ({ onFilterChange }) => { //pass
 };
 
 export default MultiSelect;
-
-

@@ -27,8 +27,8 @@ const Faqs = () => {
         // console.log('Fetching FAQs from API:', response);
         if (!response.ok) throw new Error("Failed to fetch FAQs");
 
-        const data = await response.json();
-        setFaqs(data);
+        const infoObj = await response.json();
+        setFaqs(infoObj.data);
         setLoading(false);
       } catch (err) {
         if (err && err.message) {

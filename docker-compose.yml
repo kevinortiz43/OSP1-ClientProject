@@ -1,0 +1,119 @@
+services:
+  # Frontend service (Vite)
+  frontend:
+    build:
+      context: .
+      target: dev
+    ports:
+      - "5173:5173"
+    environment:
+      - NODE_ENV=development
+      - VITE_API_URL=http://localhost:3000
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+    # REMOVED volumes: section - let develop.watch handle it
+    develop:
+      watch:
+        # Sync client files (hot reload)
+        - action: sync
+          path: ./src/client
+          target: /app/src/client
+        # Sync assets
+        - action: sync
+          path: ./src/assets
+          target: /app/src/assets
+        # Sync public folder
+        - action: sync
+          path: ./public
+          target: /app/public
+        # Sync root files
+        - action: sync
+          path: ./index.html
+          target: /app/index.html
+        - action: sync
+          path: ./vite.config.ts
+          target: /app/vite.config.ts
+        # Rebuild on package.json changes
+        - action: rebuild
+          path: package.json
+    networks:
+      - app-network
+
+  # Backend service (Express with hot reload)
+  backend:
+    build:
+      context: .
+      target: dev
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://root:root@db:5432/test_db
+      - NODE_ENV=development
+      - PORT=3000
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=test_db
+      - DB_USER=root
+      - DB_PASSWORD=root
+    command: ["npm", "run", "server"]
+    # REMOVED volumes: section - let develop.watch handle it
+    develop:
+      watch:
+        # IMPORTANT: sync+restart will sync files AND restart the container
+        - action: sync+restart
+          path: ./src/server
+          target: /app/src/server
+          ignore:
+            - "**/*.log"
+            - "**/*.tmp"
+        # If you have shared code
+        - action: sync+restart
+          path: ./src/shared
+          target: /app/src/shared
+        # Rebuild on package.json changes
+        - action: rebuild
+          path: package.json
+    depends_on:
+      - db
+    networks:
+      - app-network
+
+  # PostgreSQL Database
+  db:
+    image: postgres:16-alpine
+    restart: always
+    shm_size: 128mb
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: test_db
+    ports:
+      - "5432:5432"
+    networks:
+      - app-network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # pgAdmin GUI
+  pgadmin:
+    container_name: pgadmin4_container
+    image: dpage/pgadmin4
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: root
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
+    networks:
+      - app-network
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  pgadmin_data:
