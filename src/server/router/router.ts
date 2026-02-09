@@ -8,7 +8,7 @@ import { dataService } from '../caching/dataService';
 const router = express.Router();
 
 router.get("/test", (_, res) => {
-  return res.status(200).send("test");
+  return res.status(200).send("TEST TESTTEST ");
 });
 
 

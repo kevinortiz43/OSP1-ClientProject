@@ -19,18 +19,32 @@ services:
       # - node_modules_frontend:/app/node_modules
     develop:
       watch:
+        # Sync client files (hot reload)
         - action: sync
           path: ./src/client
           target: /app/src/client
+        # Sync assets
+        - action: sync
+          path: ./src/assets
+          target: /app/src/assets
+        # Sync public folder
         - action: sync
           path: ./public
           target: /app/public
+        # Sync root files
+        - action: sync
+          path: ./index.html
+          target: /app/index.html
+        - action: sync
+          path: ./vite.config.ts
+          target: /app/vite.config.ts
+        # Rebuild on package.json changes
         - action: rebuild
           path: package.json
     networks:
       - app-network
 
-
+  # Backend service (Express with hot reload)
   backend:
     build:
       context: .
@@ -54,9 +68,18 @@ services:
       # - node_modules_backend:/app/node_modules
     develop:
       watch:
+        # IMPORTANT: sync+restart will sync files AND restart the container
         - action: sync+restart
           path: ./src/server
           target: /app/src/server
+          ignore:
+            - "**/*.log"
+            - "**/*.tmp"
+        # If you have shared code
+        - action: sync+restart
+          path: ./src/shared
+          target: /app/src/shared
+        # Rebuild on package.json changes
         - action: rebuild
           path: package.json
     depends_on:
@@ -64,7 +87,7 @@ services:
     networks:
       - app-network
 
-
+  # PostgreSQL Database
   db:
     image: postgres:16-alpine
     restart: always
@@ -80,7 +103,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-
+  # pgAdmin GUI
   pgadmin:
     container_name: pgadmin4_container
     image: dpage/pgadmin4
@@ -94,6 +117,8 @@ services:
       - db
     networks:
       - app-network
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
 
 networks:
   app-network:
@@ -101,5 +126,4 @@ networks:
 
 volumes:
   postgres_data:
-  node_modules_frontend:
-  node_modules_backend:
+  pgadmin_data:
