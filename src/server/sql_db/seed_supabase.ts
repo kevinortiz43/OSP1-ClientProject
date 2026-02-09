@@ -1,9 +1,10 @@
-import fs from "fs";
+import fs from "fs"; // <-- ADD THIS IMPORT (missing in your code)
 import path from "path";
 import { fileURLToPath } from "url";
-import {from}   from "pg-copy-streams"; // necessary for seeding Supabase
-import { parse } from 'csv-parse/sync'; 
-import { pool } from "./db_connect"; // for supabased (temporary online solution)
+import { from } from "pg-copy-streams"; // necessary for seeding Supabase
+import { parse } from "csv-parse/sync";
+import { pool } from "./db_connect_supabase"; // for supabased (temporary online solution)
+import { stringify } from 'csv-stringify/sync';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url)); // current working directory
 const dataDir = path.join(__dirname, "../data"); // data folder path
@@ -16,62 +17,55 @@ function getTableNameFromCSV(filename: string): string {
 } // NOTE: SQL query needs " " around table name, i.e. SELECT * FROM "allTrustControls";
 // rather than SELECT * FROM alltrustcontrols (if we decide to use lowercase, then no " " around table name needed)
 
-//input: csvPath
-//output: headers and 1st row. Also check if csv file has data
-function getCSVHeadersAndFirstRow(csvPath: string): {
-  headers: string[];
-  firstRow: string[];
-} {
-  const content = fs.readFileSync(csvPath, "utf8");
-  
-  // parse CSV with csv-parse module
-  const records = parse(content, {
-    columns: true,  // use 1st row -> headers
-    skip_empty_lines: true,
-    trim: true
-  });
-  
-  if (records.length === 0) {
-    throw new Error("CSV file has no data");
-  }
-  
-  // get headers from 1st record
-  const headers = Object.keys(records[0]);
-  const firstRow = Object.values(records[0]) as string[];
-  
-  console.log("parsed headers:", headers);
-  console.log("parsed 1st row:", firstRow);
-  
-  return { headers, firstRow };
-}
-
-// input: each value from 1st row
-// output: string -> infer each type from each value
+// infer type from value type
 function inferTypeFromValue(value: string): string {
   if (!value) return "TEXT";
-
-// test if regex matches dates:
-// const testDate = "2025-12-31T16:47:02.587878+00:00";
-// console.log('testDate type boolean:', /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(testDate)); // should be true
-
-//   console.log(`Testing regex on "${value}":`, /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value));
-
-//   check if ISO 8601 date/time format: YYYY-MM-DDThh:mm:ss
-//   Examples: "2026-01-16T19:52:47.817794+00:00", "2024-01-15T10:30:00.123Z"
+  
   if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value)) {
     console.log('timestampz TYPE returned')
-    return "TIMESTAMPTZ"; // PostgreSQL timestamp with timezone
+    return "TIMESTAMPTZ";
   }
 
+  // PostgreSQL arrays (after preprocessing)
+  const trimmed = value.trim();
+  if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+    console.log('TEXT[] returned for PostgreSQL array');
+    return "TEXT[]";
+  }
 
-  // check if number type (if not integer, then numeric)
-  // NOTE: have NOT yet tested number data types to see if it recognizes correectly  
+  // detect JSON arrays (original format, just in case)
+  if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+    try {
+      JSON.parse(trimmed);
+      console.log('TEXT[] returned for JSON array');
+      return "TEXT[]";
+    } catch {
+      console.log('TEXT detected (invalid JSON array)');
+      return "TEXT";
+    }
+  }
+
+  // detect boolean
+  const trimmedValue = value.trim().toLowerCase();
+  if (trimmedValue === 'true' || trimmedValue === 'false') {
+    console.log('BOOLEAN detected:', trimmedValue);
+    return "BOOLEAN";
+  }
+
+// detect number - NOTE: added numeric and integer properties to test if this code works
   const num = Number(value);
-  if (!isNaN(num)) {
-    return Number.isInteger(num) ? "INTEGER" : "NUMERIC";
+  if (!isNaN(num) && value.trim() !== '') {
+    // check if integer
+    if (Number.isInteger(num) && !value.includes('.')) {
+      console.log(`INTEGER detected: ${value}`);
+      return "INTEGER";
+    } else {
+      console.log(`NUMERIC detected: ${value}`);
+      return "NUMERIC";
+    }
   }
-
-  // default to TEXT (handles any length of number to prevent rounding number)
+  
+  console.log(`TEXT detected: ${value}`);
   return "TEXT";
 }
 
@@ -97,6 +91,64 @@ function generateCreateTableSQL(
   return `CREATE TABLE IF NOT EXISTS ${tableName} (\n  ${columns.join(",\n  ")}\n);`; // SQL CREATE TABLE (if not exists) query with each generated `header + type`
 }
 
+// input: CSV file path
+// output: processed CSV content, headers, and first row (with arrays converted to PostgreSQL format)
+function processCSVWithArrays(csvPath: string): { content: string, headers: string[], firstRow: string[] } {
+  const content = fs.readFileSync(csvPath, "utf8");
+  
+  // Parse the CSV
+  const records = parse(content, {
+    columns: true,
+    skip_empty_lines: true,
+    trim: true,
+  });
+
+  if (records.length === 0) {
+    throw new Error("CSV file has no data");
+  }
+
+  const headers = Object.keys(records[0]);
+  
+  // Process each record to convert JSON arrays to PostgreSQL arrays
+  const processedRecords = records.map((record: any) => {
+    const processed: any = {};
+    
+    for (const [key, value] of Object.entries(record)) {
+      const strValue = String(value).trim();
+      
+      // Check if it's a JSON array
+      if (strValue.startsWith('[') && strValue.endsWith(']')) {
+        try {
+          // Fix escaped quotes before parsing
+          const fixedJson = strValue.replace(/""/g, '"');
+          const array = JSON.parse(fixedJson);
+          // Convert to PostgreSQL array format: {"item1","item2","item3"}
+          processed[key] = `{${array.map((item: string) => `"${item.replace(/"/g, '\\"')}"`).join(',')}}`;
+        } catch {
+          // If parsing fails, keep original
+          processed[key] = value;
+        }
+      } else {
+        processed[key] = value;
+      }
+    }
+    
+    return processed;
+  });
+
+  // Get first row for type inference (after processing)
+  const firstRow = Object.values(processedRecords[0]) as string[];
+  
+  // Convert processed records back to CSV format (SYNCHRONOUS VERSION)
+  const processedContent = stringify(processedRecords, {
+    header: true,
+    columns: headers,
+  });
+  
+  return { content: processedContent, headers, firstRow };
+}
+
+
 // seeding supabase
 async function seedSupabaseWithCOPY() {
   console.log("Starting Supabase seeding...");
@@ -108,12 +160,15 @@ async function seedSupabaseWithCOPY() {
   }
 
   // check to verify CSV files exist in data folder
-  const csvFiles = fs.readdirSync(dataDir).filter((f) => f.endsWith(".csv")); // array of csv files
+  // EXCLUDE temp files (files starting with 'temp_') to avoid processing temporary files
+  const csvFiles = fs.readdirSync(dataDir).filter((f) => 
+    f.endsWith(".csv") && !f.startsWith("temp_") // <-- ADD THIS
+  );
+  
   if (csvFiles.length === 0) {
     console.log("No CSV files found");
     return;
   }
-
   console.log(`Found ${csvFiles.length} CSV files\n`);
 
   // connect to Supabase
@@ -126,7 +181,13 @@ async function seedSupabaseWithCOPY() {
 
       const csvPath = path.join(dataDir, file); // get each CSV file path by joining data path + each filename from array of csv files
       const tableName = getTableNameFromCSV(file); // get table name from each CSV filename
-      const { headers, firstRow } = getCSVHeadersAndFirstRow(csvPath); // get headers and 1st row from each CSV file
+
+     // Use processing function to convert JSON arrays to PostgreSQL format
+      const { content: processedContent, headers, firstRow } = processCSVWithArrays(csvPath); // get headers and 1st row from each CSV file
+      
+      // Create a temporary processed file
+      const tempPath = path.join(dataDir, `temp_${file}`);
+      fs.writeFileSync(tempPath, processedContent);
 
       const createSQL = generateCreateTableSQL(tableName, headers, firstRow); // dynamically create SQL query string
       await client.query(`DROP TABLE IF EXISTS ${tableName} CASCADE;`); // delete any preexisting table if already exists
@@ -142,9 +203,7 @@ async function seedSupabaseWithCOPY() {
       // - HEADER: First line contains column names
       const quotedHeaders = headers.map((h) => `"${h}"`).join(", ");
       const copyStream = client.query(
-        from(
-          `COPY ${tableName}(${quotedHeaders}) FROM STDIN CSV HEADER`,
-        ),
+        from(`COPY ${tableName}(${quotedHeaders}) FROM STDIN CSV HEADER`),
       );
 
       // 1. fileStream reads CSV file in chunks
@@ -153,12 +212,24 @@ async function seedSupabaseWithCOPY() {
       // 4. PostgreSQL receives chunks as if typing them in STDIN (standard input)
 
       // create readable stream from CSV file on local machine
-      const fileStream = fs.createReadStream(csvPath); // read each CSV file in chunks (in case large file)
+      const fileStream = fs.createReadStream(tempPath); // read each CSV file in chunks (in case large file)
 
       // pipe file stream into COPY command stream
       // connects local CSV file to Supbase connection
       await new Promise((resolve, reject) => {
-        fileStream.pipe(copyStream).on("finish", resolve).on("error", reject);
+        fileStream.pipe(copyStream).on("finish", () => {
+          // Clean up temp file after successful import
+          if (fs.existsSync(tempPath)) {
+            fs.unlinkSync(tempPath);
+          }
+          resolve(true);
+        }).on("error", (error) => {
+          // Clean up temp file even on error
+          if (fs.existsSync(tempPath)) {
+            fs.unlinkSync(tempPath);
+          }
+          reject(error);
+        });
       });
 
       // verify import by counting rows
@@ -193,4 +264,3 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 }
 
 export { seedSupabaseWithCOPY };
-
