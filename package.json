@@ -7,10 +7,10 @@
     "dev": "concurrently \"npm run start\" \"npm run server\"",
     "start": "vite",
     "server": "tsx --watch ./src/server/server.ts",
-    "setup":  "docker compose up -d && npm run csv-agno && npm run seed-agno && npm run types-agno",
-    "watch":"docker compose up --watch",
-    "tear":"docker system prune --all --volumes --force",
-    "restart":"docker compose down && docker compose build --no-cache",
+    "setup": "docker compose up -d && npm run csv-agno && npm run seed-agno && npm run types-agno",
+    "watch": "docker compose up --watch",
+    "tear": "docker system prune --all --volumes --force",
+    "restart": "docker compose down && docker compose build --no-cache",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
@@ -23,8 +23,8 @@
     "types-supabase": "tsx ./src/server/sql_db/generateSchema.ts",
     "types-local": "tsx ./src/server/sql_db/generateSchema_local.ts",
     "types-agno": "tsx ./src/server/sql_db/generateSchema_agnostic.ts",
-    "db-setup-agno":  "npm run csv-agno && npm run seed-agno && npm run types-agno",
-    "db-setup-localLinux":  "npm run csv-module && npm run seed-local && npm run types-local"
+    "db-setup-agno": "npm run csv-agno && npm run seed-agno && npm run types-agno",
+    "db-setup-localLinux": "npm run csv-module && npm run seed-local && npm run types-local"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^7.1.0",
@@ -35,10 +35,12 @@
     "cors": "^2.8.6",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
+    "node-cache": "^5.1.2",
     "pg": "^8.17.2",
     "pg-copy-streams": "^7.0.0",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "react-select": "^5.10.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

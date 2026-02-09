@@ -1,12 +1,29 @@
 .searchbar{
   display: flex;
-  padding: 25px 300px;
+  padding: 25px 20px;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  justify-content: center;
+  align-items: center;
+  width: auto;
   position: sticky;
   top: 0;
 }
 
+/* 
 .searchbar #s{
   text-align: left;
   border-radius: 10px;
   width: 200%;
-}
+} */
+
+/* MultiSelect {
+  display: flex;
+  padding: 25px 300px;
+  position: sticky;
+  top: 0;
+  text-align: left;
+  border-radius: 10px;
+  width: 200%;
+} */

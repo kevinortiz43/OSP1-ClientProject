@@ -5,15 +5,13 @@ import express, { Request, Response, NextFunction } from "express";
 import "dotenv/config";
 import router from "./router/router";
 
+
 const PORT = 3000;
 
 // initialize express
 const app = express();
 
-app.use(express.json());
-
-app.use("/api", router);
-// add middleware
+// add middleware (CORS middleware MUST come first before router api)
 const corsOptions = {
   origin: "http://localhost:5173",
   optionsSuccessStatus: 200,
@@ -21,6 +19,11 @@ const corsOptions = {
 
 // add cors
 app.use(cors(corsOptions));
+
+
+app.use(express.json());
+
+app.use("/api", router);
 
 // parsing middleware
 app.use(express.json());
