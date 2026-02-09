@@ -1,0 +1,105 @@
+services:
+  # Frontend service (Vite)
+  frontend:
+    build:
+      context: .
+      target: dev
+    ports:
+      - "5173:5173"
+    environment:
+      - NODE_ENV=development
+      - VITE_API_URL=http://localhost:3000  
+    command: ["npm", "run", "start", "--", "--host", "0.0.0.0"]
+    volumes:
+      - ./src:/app/src:delegated
+      - ./public:/app/public:delegated
+      - ./index.html:/app/index.html:delegated
+      - ./vite.config.ts:/app/vite.config.ts:delegated
+
+      # - node_modules_frontend:/app/node_modules
+    develop:
+      watch:
+        - action: sync
+          path: ./src/client
+          target: /app/src/client
+        - action: sync
+          path: ./public
+          target: /app/public
+        - action: rebuild
+          path: package.json
+    networks:
+      - app-network
+
+
+  backend:
+    build:
+      context: .
+      target: dev
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://root:root@db:5432/test_db
+      - NODE_ENV=development
+      - PORT=3000
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=test_db
+      - DB_USER=root
+      - DB_PASSWORD=root
+    command: ["npm", "run", "server"]
+    volumes:
+
+      - ./src/server:/app/src/server:delegated
+
+      # - node_modules_backend:/app/node_modules
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./src/server
+          target: /app/src/server
+        - action: rebuild
+          path: package.json
+    depends_on:
+      - db
+    networks:
+      - app-network
+
+
+  db:
+    image: postgres:16-alpine
+    restart: always
+    shm_size: 128mb
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: test_db
+    ports:
+      - "5432:5432"
+    networks:
+      - app-network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+
+  pgadmin:
+    container_name: pgadmin4_container
+    image: dpage/pgadmin4
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: root
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  node_modules_frontend:
+  node_modules_backend:
