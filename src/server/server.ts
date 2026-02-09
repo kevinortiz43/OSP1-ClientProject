@@ -16,7 +16,7 @@ const corsOptions = {
 };
 
 // initialize express
-const app = express();
+// const app = express();
 // add cors
 app.use(cors(corsOptions));
 

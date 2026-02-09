@@ -8,15 +8,9 @@ services:
       - "5173:5173"
     environment:
       - NODE_ENV=development
-      - VITE_API_URL=http://localhost:3000  
-    command: ["npm", "run", "start", "--", "--host", "0.0.0.0"]
-    volumes:
-      - ./src:/app/src:delegated
-      - ./public:/app/public:delegated
-      - ./index.html:/app/index.html:delegated
-      - ./vite.config.ts:/app/vite.config.ts:delegated
-
-      # - node_modules_frontend:/app/node_modules
+      - VITE_API_URL=http://localhost:3000
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+    # REMOVED volumes: section - let develop.watch handle it
     develop:
       watch:
         # Sync client files (hot reload)
@@ -61,11 +55,7 @@ services:
       - DB_USER=root
       - DB_PASSWORD=root
     command: ["npm", "run", "server"]
-    volumes:
-
-      - ./src/server:/app/src/server:delegated
-
-      # - node_modules_backend:/app/node_modules
+    # REMOVED volumes: section - let develop.watch handle it
     develop:
       watch:
         # IMPORTANT: sync+restart will sync files AND restart the container
