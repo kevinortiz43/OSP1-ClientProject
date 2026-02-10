@@ -54,6 +54,22 @@ services:
       - DB_NAME=test_db
       - DB_USER=root
       - DB_PASSWORD=root
+      - TEXT2SQL_URL=http://localhost:12434/engines/v1
+      - TEXT2SQL_MODEL=hf.co/mradermacher/Arctic-Text2SQL-R1-7B-GGUF:Q4_K_M
+      # Or will the AI model be AUTO-INJECTED by DMR??
+      # - TEXT2SQL_URL (from models definition)
+      # - TEXT2SQL_MODEL (from models definition)
+    # MODEL BINDING - Tells DMR to provision this model
+    models:
+      text2sql: # Reference to the model defined below
+        endpoint_var: TEXT2SQL_URL # Custom name for URL
+        model_var: TEXT2SQL_MODEL # Custom name for model ID
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 4G
+
     command: ["npm", "run", "server"]
     # REMOVED volumes: section - let develop.watch handle it
     develop:
@@ -109,6 +125,33 @@ services:
       - app-network
     volumes:
       - pgadmin_data:/var/lib/pgadmin
+
+  # TOP-LEVEL MODELS SECTION (Required)
+models:
+  text2sql:
+    model: hf.co/mradermacher/Arctic-Text2SQL-R1-7B-GGUF:Q4_K_M
+    context_size: 4096
+    runtime_flags:
+      - "--n-gpu-layers"
+      - "0" # no gpu use
+      - "--threads"
+      - "7" # 7 threads
+      - "--mlock"
+      - "--batch-size"
+      - "1024"
+      - "--temp"
+      - "0.1"
+      - "--threads-batch"
+      - "7"  # Match --threads for batch processing
+      - "--no-mmap"  # May improve performance on some systems
+      - "--repeat-penalty"
+      - "1.1"  # Prevent repetitive SQL
+  # Development flags (optional - remove for production):
+      - "--verbose"
+      - "--verbose-prompt"
+      - "--log-prefix"
+      - "--log-timestamps"
+      - "--log-colors"
 
 networks:
   app-network:
