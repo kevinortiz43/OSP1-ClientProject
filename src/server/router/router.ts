@@ -5,6 +5,7 @@ import teamsController from "../controller/teamsController";
 import { getCacheStats } from "../caching/cache";
 import { dataService } from "../caching/dataService";
 import { parseNaturalLanguageQuery } from "../controller/AI_Controller/naturalLanguageController";
+import { QueryOpenAI } from "../controller/AI_Controller/onlineAIController";
 
 const router = express.Router();
 
@@ -12,20 +13,15 @@ router.get("/test", (_, res) => {
   return res.status(200).send("TEST TESTTEST ");
 });
 
-
-
 // router.get("/ai/", parseNaturalLanguageQuery, (req, res) => {
 //   return res.status(200).send("Testing");
 // });
-router.post("/ai/", parseNaturalLanguageQuery, (req, res) => {
+router.post("/ai-online", parseNaturalLanguageQuery, QueryOpenAI,queryDatabase, (_req, res) => {
   return res.status(200).json({
-  
-     databaseQuery: res.locals.databaseQuery,
-      databaseQueryResult: res.locals.databaseQueryResult,
-   
-  })
-}
-);
+    databaseQuery: res.locals.databaseQuery,
+    databaseQueryResult: res.locals.databaseQueryResult,
+  });
+});
 
 // router.get("/ai/", parseNaturalLanguageQuery,queryAI, queryDatabase, (req, res) =>{
 //   res.status(200).json({
