@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-
+import "./chat-widget.css";
 type ChatRole = "user" | "assistant";
 
 type ChatMessage = {
