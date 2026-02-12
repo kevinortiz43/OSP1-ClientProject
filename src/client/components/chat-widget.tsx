@@ -17,12 +17,6 @@ function makeId() {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
-/**
- * Mock chat widget UI.
- * - No HTTP requests yet (intentionally)
- * - Keeps messages in local component state
- * - Fixed-size panel intended to be placed inside a fixed bottom bar
- */
 const ChatWidget: React.FC<ChatWidgetProps> = ({ title = "Chat" }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [draft, setDraft] = useState("");

@@ -7,6 +7,7 @@ import Faqs from "./components/Faqs/Faqs";
 import SearchBar from "./components/Searchbar/SearchBar";
 import TrustCenter from "./components/TrustCenter/TrustCenter";
 import MultiSelect from "./components/Searchbar/MultiSelect";
+import ChatWidget from "./components/chat-widget";
 
 
 export default function App() {
@@ -32,6 +33,9 @@ export default function App() {
         <section className="trustFaqs_col" aria-label="FAQs">
           <Faqs selectedCategories={selectedCategories} />
         </section>
+        <div>
+          <ChatWidget />
+        </div>
       </div>
     </div>
   );
