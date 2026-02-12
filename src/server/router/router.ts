@@ -6,6 +6,7 @@ import { getCacheStats } from "../caching/cache";
 import { dataService } from "../caching/dataService";
 import { parseNaturalLanguageQuery } from "../controller/AI_Controller/naturalLanguageController";
 import { QueryOpenAI } from "../controller/AI_Controller/onlineAIController";
+import { databaseQuery } from "../controller/AI_Controller/databaseController";
 
 const router = express.Router();
 
@@ -13,10 +14,14 @@ router.get("/test", (_, res) => {
   return res.status(200).send("TEST TESTTEST ");
 });
 
-// router.get("/ai/", parseNaturalLanguageQuery, (req, res) => {
-//   return res.status(200).send("Testing");
-// });
-router.post("/ai-online", parseNaturalLanguageQuery, QueryOpenAI,queryDatabase, (_req, res) => {
+router.get("/ai", (req, res) => {
+  return res.status(200).send("Testing");
+});
+
+
+
+
+router.post("/ai-online", parseNaturalLanguageQuery, QueryOpenAI,databaseQuery, (_req, res) => {
   return res.status(200).json({
     databaseQuery: res.locals.databaseQuery,
     databaseQueryResult: res.locals.databaseQueryResult,
