@@ -5,7 +5,9 @@ import { InferenceClient } from "@huggingface/inference";
 
 const { AI_APIKEY } = process.env;
 
-const client = new InferenceClient("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");
+const client = new InferenceClient("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");
+// Middleware 1: Convert natural language to SQL
+
 
 export const QueryOpenAI: RequestHandler = async (_, res, next) => {
   try {
@@ -15,85 +17,87 @@ export const QueryOpenAI: RequestHandler = async (_, res, next) => {
       const error: ServerError = {
         log: "OpenAI query middleware did not receive a query",
         status: 500,
-        message: { err: "An error occured before querying Hugging Face" },
+        message: { err: "An error occurred before querying AI" },
       };
       return next(error);
     }
 
-    const systemPrompt = `
-You are a SQL assistant that converts natural language queries into valid PostgreSQL SELECT statements. 
-Only respond with the SQL query, no explanations or markdown formatting.
+    const systemPrompt = `You are a SQL expert for a security compliance database.
 
-Database Schema:
+CRITICAL SCHEMA RULES:
+1. Table names MUST be double-quoted: "allTrustControls", "allTrustFaqs"
+2. Column "searchText" MUST be double-quoted because it has mixed case: "searchText"
+3. Other columns are lowercase and don't need quotes: short, long, question, answer, category
+4. The 'category' column contains STRING VALUES
+   - Valid values: 'Cloud Security', 'Data Security', 'Organizational Security', 'Secure Development'
 
-CREATE TABLE "allTrustControls" (
-  id CHARACTER VARYING(255) PRIMARY KEY,
-  category TEXT,
-  short TEXT,
-  long TEXT,
-  searchText TEXT,
-  createdAt TIMESTAMP WITH TIME ZONE,
-  createdBy TEXT,
-  updatedAt TIMESTAMP WITH TIME ZONE,
-  updatedBy TEXT
-);
+DATABASE SCHEMA:
 
-CREATE TABLE "allTrustFaqs" (
-  id CHARACTER VARYING(255) PRIMARY KEY,
-  question TEXT,
-  answer TEXT,
-  categories
-  searchText TEXT,
-  createdAt TIMESTAMP WITH TIME ZONE,
-  createdBy TEXT,
-  updatedBy TIMESTAMP WITH TIME ZONE,
-  updatedBy TEXT
-);
+Table: "allTrustControls"
+Columns:
+  - id (character varying)
+  - category (text) - values: 'Cloud Security', 'Data Security', 'Organizational Security', 'Secure Development'
+  - short (text) - brief description
+  - long (text) - detailed description
+  - "searchText" (text) - MUST BE QUOTED - full-text search field
+  - createdAt, createdBy, updatedAt, updatedBy (metadata)
 
-Examples:
+Table: "allTrustFaqs"
+Columns:
+  - id (character varying)
+  - question (text)
+  - answer (text)
+  - categories (jsonb)
+  - "searchText" (text) - MUST BE QUOTED - full-text search field
+  - createdAt, createdBy, updatedAt, updatedBy (metadata)
 
-User: "Find FAQs about security"
-Query: SELECT * FROM "allTrustFaqs" WHERE searchText ILIKE '%security%';
+QUERY GENERATION RULES:
+1. Search "allTrustControls" for security controls and policies
+2. Search "allTrustFaqs" for frequently asked questions
+3. Use WHERE "searchText" ILIKE '%keyword%' for text searches (NOTE: "searchText" must be quoted!)
+4. Extract 2-4 key search terms from the user's question
+5. Combine terms with OR for broader results, AND for narrower results
+6. Always LIMIT results to 10 rows
+7. Return ONLY the SQL query - no explanations, no markdown
+8. Always end with semicolon
 
-User: "Show controls in the compliance category"
-Query: SELECT * FROM "allTrustControls" WHERE category ILIKE '%compliance%';
+CORRECT EXAMPLES:
 
-User: "Get all FAQs created this year"
-Query: SELECT * FROM "allTrustFaqs" WHERE EXTRACT(YEAR FROM createdAt) = EXTRACT(YEAR FROM CURRENT_DATE);
+User: "How are tenants segregated?"
+Query: SELECT short, long FROM "allTrustControls" WHERE "searchText" ILIKE '%tenant%' OR "searchText" ILIKE '%segregat%' LIMIT 10;
 
-User: "Find controls with 'encryption' in short or long description"
-Query: SELECT * FROM "allTrustControls" WHERE short ILIKE '%encryption%' OR long ILIKE '%encryption%';
+User: "What is our incident response plan?"
+Query: SELECT short, long FROM "allTrustControls" WHERE "searchText" ILIKE '%incident%' AND "searchText" ILIKE '%response%' LIMIT 10;
 
-IMPORTANT: Always use double quotes around table names to preserve case sensitivity. 
-Use only the above categories to preserve case sensibility. 
+User: "API security measures"
+Query: SELECT short, long FROM "allTrustControls" WHERE "searchText" ILIKE '%api%' OR "searchText" ILIKE '%security%' LIMIT 10;
 
-For example: Use searchText not searchtext
-Instructions:
-1. Carefully read user prompt
-2. Identify keywords matching table properties in database
-3. Convert prompt to correctly formatted SQL query
-4. ALWAYS wrap table names in double quotes: "allTrustControls" and "allTrustFaqs"
-5. Return ONLY SQL query, nothing else
+User: "Data encryption policy"
+Query: SELECT question, answer FROM "allTrustFaqs" WHERE "searchText" ILIKE '%encryption%' OR "searchText" ILIKE '%data%' LIMIT 10;
 
-Now convert this: "${naturalLanguageQuery}"
-`;
+User: "Cloud security controls"
+Query: SELECT short, long FROM "allTrustControls" WHERE category = 'Cloud Security' LIMIT 10;
+
+Now convert this query: "${naturalLanguageQuery}"
+
+CRITICAL: Remember to quote "searchText" - it MUST be "searchText" not searchText or searchtext!`;
 
     const chatCompletion = await client.chatCompletion({
-      model: "Qwen/Qwen2.5-Coder-3B-Instruct:nscale",
+      model: "Qwen/Qwen2.5-Coder-7B-Instruct:nscale",
       messages: [
         {
-          role: "user",
+          role: "system",
           content: systemPrompt,
         },
       ],
+      max_tokens: 200,
+      temperature: 0.3,
     });
 
     const sqlQuery = chatCompletion.choices[0].message.content?.trim();
-
     let cleanSql = sqlQuery?.replace(/```sql\s*/gi, "").replace(/```\s*/gi, "");
 
-    const sqlMatch = cleanSql?.match(/SELECT.*?;/is); // Added 's' flag for multiline
-
+    const sqlMatch = cleanSql?.match(/SELECT.*?;/is);
     if (sqlMatch) {
       cleanSql = sqlMatch[0];
     }
@@ -105,9 +109,23 @@ Now convert this: "${naturalLanguageQuery}"
       .replace(/JOIN\s+allTrustControls/gi, 'JOIN "allTrustControls"')
       .replace(/JOIN\s+allTrustFaqs/gi, 'JOIN "allTrustFaqs"');
 
+    // CRITICAL: Fix searchText casing - ensure it's properly quoted
+    cleanSql = cleanSql
+      ?.replace(/\bsearchtext\b/gi, '"searchText"')  // Fix any searchtext to "searchText"
+      ?.replace(/\bsearchText\b/g, '"searchText"')   // Ensure searchText is quoted
+      ?.replace(/\b"searchText"\b/g, '"searchText"') // Remove duplicate quotes if any
+      ?.replace(/"+"searchText""+/g, '"searchText"'); // Clean up multiple quotes
+
+    // Fix common issues
+    cleanSql = cleanSql
+      ?.replace(/WHERE\s+WHERE/gi, 'WHERE') // Remove duplicate WHERE
+      ?.replace(/"\s*"\s*searchText\s*"\s*"/gi, '"searchText"'); // Clean malformed quotes
+
     if (!cleanSql?.endsWith(";")) {
       cleanSql += ";";
     }
+
+    console.log("Final cleaned SQL:", cleanSql); // Debug log
 
     res.locals.databaseQuery = cleanSql;
     return next();
