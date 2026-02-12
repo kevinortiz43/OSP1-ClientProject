@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { parseNaturalLanguageQuery } from './naturalLanguageController';
+import { parseNaturalLanguageQuery } from '../controller/naturalLanguageController';
 
 describe('parseNaturalLanguageQuery', () => {
   let req: Partial<Request>;

@@ -1,5 +1,4 @@
 services:
-  # Frontend service (Vite)
   frontend:
     build:
       context: .
@@ -10,29 +9,23 @@ services:
       - NODE_ENV=development
       - VITE_API_URL=http://localhost:3000
     command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
-    # REMOVED volumes: section - let develop.watch handle it
     develop:
       watch:
-        # Sync client files (hot reload)
         - action: sync
           path: ./src/client
           target: /app/src/client
-        # Sync assets
         - action: sync
           path: ./src/assets
           target: /app/src/assets
-        # Sync public folder
         - action: sync
           path: ./public
           target: /app/public
-        # Sync root files
         - action: sync
           path: ./index.html
           target: /app/index.html
         - action: sync
           path: ./vite.config.ts
           target: /app/vite.config.ts
-        # Rebuild on package.json changes
         - action: rebuild
           path: package.json
     networks:
@@ -46,6 +39,7 @@ services:
     ports:
       - "3000:3000"
     environment:
+      # Database configuration
       - DATABASE_URL=postgresql://root:root@db:5432/test_db
       - NODE_ENV=development
       - PORT=3000
@@ -54,42 +48,33 @@ services:
       - DB_NAME=test_db
       - DB_USER=root
       - DB_PASSWORD=root
-      - TEXT2SQL_URL=http://localhost:12434/engines/v1
-      - TEXT2SQL_MODEL=hf.co/mradermacher/Arctic-Text2SQL-R1-7B-GGUF:Q4_K_M
-      # Or will the AI model be AUTO-INJECTED by DMR??
-      # - TEXT2SQL_URL (from models definition)
-      # - TEXT2SQL_MODEL (from models definition)
-    # MODEL BINDING - Tells DMR to provision this model
+      # NO MANUAL AI URLS HERE - they will be auto-injected by DMR
+    # Model binding tells DMR to inject env vars
     models:
-      text2sql: # Reference to the model defined below
-        endpoint_var: TEXT2SQL_URL # Custom name for URL
-        model_var: TEXT2SQL_MODEL # Custom name for model ID
+      text2sql:
+        endpoint_var: TEXT2SQL_URL    # DMR will inject this URL
+        model_var: TEXT2SQL_MODEL     # DMR will inject this model name
     deploy:
       resources:
         limits:
           cpus: "2.0"
           memory: 4G
-
     command: ["npm", "run", "server"]
-    # REMOVED volumes: section - let develop.watch handle it
     develop:
       watch:
-        # IMPORTANT: sync+restart will sync files AND restart the container
         - action: sync+restart
           path: ./src/server
           target: /app/src/server
           ignore:
             - "**/*.log"
             - "**/*.tmp"
-        # If you have shared code
         - action: sync+restart
           path: ./src/shared
           target: /app/src/shared
-        # Rebuild on package.json changes
         - action: rebuild
           path: package.json
     depends_on:
-      - db
+      - db  # Only depend on DB, NOT on docker-model-runner
     networks:
       - app-network
 
@@ -126,32 +111,38 @@ services:
     volumes:
       - pgadmin_data:/var/lib/pgadmin
 
-  # TOP-LEVEL MODELS SECTION (Required)
+# MODELS AT TOP LEVEL (same indentation as services)
 models:
   text2sql:
     model: hf.co/mradermacher/Arctic-Text2SQL-R1-7B-GGUF:Q4_K_M
     context_size: 4096
     runtime_flags:
+      # GPU Acceleration (I have RTX 3060 on laptop 6G VRAM)
       - "--n-gpu-layers"
-      - "0" # no gpu use
+      - "99"  # use gpu if available
+      # CPU threads (fallback for non-GPU operations)
       - "--threads"
-      - "7" # 7 threads
+      - "7"
+      - "--threads-batch"
+      - "7"
+      # Memory
       - "--mlock"
+      - "--no-mmap"
+      # Performance
       - "--batch-size"
       - "1024"
+      # Sampling (deterministic for SQL)
       - "--temp"
       - "0.1"
-      - "--threads-batch"
-      - "7"  # Match --threads for batch processing
-      - "--no-mmap"  # May improve performance on some systems
       - "--repeat-penalty"
-      - "1.1"  # Prevent repetitive SQL
-  # Development flags (optional - remove for production):
+      - "1.1"
+      # Development logging - add required values
       - "--verbose"
       - "--verbose-prompt"
       - "--log-prefix"
       - "--log-timestamps"
       - "--log-colors"
+      - "auto"  # value for --log-colors
 
 networks:
   app-network:

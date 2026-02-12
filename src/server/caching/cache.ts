@@ -47,6 +47,36 @@ export function clearCache(key?: string) {
   }
 }
 
+
+/**
+ * Delete all cache keys that match a pattern/prefix.
+ * 
+ * - We must get all keys, filter those matching the pattern, then delete each one
+ * - This is less efficient than direct pattern deletion, but works with NodeCache's API
+ * - For search cache: pattern = "search:keywords*" deletes ALL cached search queries
+ */
+
+export function clearCacheByPattern(pattern: string): void {
+  // Step 1: Get ALL keys from cache
+  const allKeys = cache.keys();
+  
+  // Step 2: Convert pattern with wildcard to regex
+  // Example: "search:keywords*" becomes /^search:keywords.*$/
+  const regexPattern = '^' + pattern.replace('*', '.*') + '$';
+  const regex = new RegExp(regexPattern);
+  
+  // Step 3: Filter keys that match the pattern
+  const keysToDelete = allKeys.filter(key => regex.test(key));
+  
+  // Step 4: Delete all matching keys in one operation
+  if (keysToDelete.length > 0) {
+    cache.del(keysToDelete);
+    console.log(`Deleted ${keysToDelete.length} keys matching pattern: ${pattern}`);
+  } else {
+    console.log(`No keys found matching pattern: ${pattern}`);
+  }
+}
+
 // check if cache has key 
 export function hasCache(key: string): boolean {
   return cache.has(key);

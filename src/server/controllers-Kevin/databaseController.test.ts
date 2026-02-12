@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { queryStarWarsDatabase } from './databaseController';
+import { queryStarWarsDatabase } from '../controller/databaseController';
 import pg from 'pg';
 
 jest.mock('pg', () => {

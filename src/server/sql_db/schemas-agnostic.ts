@@ -2,7 +2,7 @@
 
 export interface DockerDatabase {
   allTeams: {
-    id: any;
+    id: string;
     firstName?: string;
     lastName?: string;
     role?: string;
@@ -18,7 +18,7 @@ export interface DockerDatabase {
     updatedBy?: string;
   };
   allTrustControls: {
-    id: any;
+    id: string;
     category?: string;
     short?: string;
     long?: string;
@@ -29,7 +29,7 @@ export interface DockerDatabase {
     updatedBy?: string;
   };
   allTrustFaqs: {
-    id: any;
+    id: string;
     question?: string;
     answer?: string;
     category?: string;

@@ -72,7 +72,12 @@ function mapPgTypeToTs(pgType: string, columnName?: string): string {
     'jsonb': 'any',
   };
 
-  // handling for categories
+  // handling for ID columns
+  if (columnName === 'id' || columnName?.endsWith('_id')) {
+    return 'string';  // fixing id type to string, not 'any'
+  }
+
+  // handling for categories[] (note: currently not used)
   if (pgType === 'jsonb' && columnName?.toLowerCase().includes('categor')) {
     return 'string[]';  // Your categories are string arrays
   }

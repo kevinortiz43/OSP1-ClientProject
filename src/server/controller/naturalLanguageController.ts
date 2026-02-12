@@ -1,5 +1,5 @@
-import { Request, RequestHandler } from 'express';
-import { ServerError } from '../types';
+import { type Request, type RequestHandler } from 'express';
+import { type ServerError } from '../types';
 
 export const parseNaturalLanguageQuery: RequestHandler = async (
   req: Request<unknown, unknown, Record<string, unknown>>,
