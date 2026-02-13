@@ -55,7 +55,7 @@ services:
       - DB_USER=root
       - DB_PASSWORD=root
       - PG_URI=postgresql://postgres.kgdlviaqzszogrdtktma:cl13ntPr0j12345!@aws-0-us-west-2.pooler.supabase.com:6543/postgres
-      - AI_APIKEY=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
+      - AI_APIKEY=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
       
     command: ["npm", "run", "server"]
     # REMOVED volumes: section - let develop.watch handle it
