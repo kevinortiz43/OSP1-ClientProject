@@ -7,7 +7,7 @@ import Faqs from "./components/Faqs/Faqs";
 import SearchBar from "./components/Searchbar/SearchBar";
 import TrustCenter from "./components/TrustCenter/TrustCenter";
 import MultiSelect from "./components/Searchbar/MultiSelect";
-import Interface from "./Chatbot/Interface";
+import Interface from "./components/Chatbot/Interface";
 
 export default function App() {
   // track selected categories - managed at App level

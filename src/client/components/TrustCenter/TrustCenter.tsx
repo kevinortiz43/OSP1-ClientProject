@@ -87,7 +87,7 @@ const TrustCenter: React.FC<TrustCenterProps> = ({ selectedCategories }) => {
   return (
     <div className="trusts_container">
       <div className="trusts_header">
-        <h1 className="trusts_title">Trust Control</h1>
+        <h1 className="trusts_title">Trust Controls</h1>
       </div>
 
            {/* Show filter status */}
