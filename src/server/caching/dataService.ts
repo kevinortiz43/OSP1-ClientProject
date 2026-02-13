@@ -1,6 +1,6 @@
 // services/dataService.ts
 import { getCache, setCache, clearCache } from './cache';
-import { dockerPool } from '../sql_db/db_connect_agnostic';
+import { pool } from '../sql_db/db_connect_supabase'
 
 // cache keys for consistency
 // couldn't use enum due to "This syntax is not allowed when 'erasableSyntaxOnly' is enabled," means you are using a TypeScript construct that generates runtime JavaScript code, which is forbidden by the erasableSyntaxOnly compiler option. The enum declaration is one such construct. 
@@ -23,7 +23,7 @@ export const dataService = {
     
     console.log('cache teams MISS, querying DB');
 
-    const result = await dockerPool.query('SELECT * FROM "allTeams"');
+    const result = await pool.query('SELECT * FROM "allTeams"');
     const data = result.rows;
     
     // cache for a long time (maybe 1 day?) since data rarely changes
@@ -42,7 +42,7 @@ export const dataService = {
     }
     
     console.log('cache controls MISS, querying DB');
-    const result = await dockerPool.query('SELECT * FROM "allTrustControls"');
+    const result = await pool.query('SELECT * FROM "allTrustControls"');
     const data = result.rows;
     
     setCache(CacheKeys.CONTROLS_ALL, data, 300);
@@ -58,7 +58,7 @@ export const dataService = {
     }
     
     console.log('cache FAQs MISS, querying DB');
-    const result = await dockerPool.query('SELECT * FROM "allTrustFaqs"');
+    const result = await pool.query('SELECT * FROM "allTrustFaqs"');
     const data = result.rows;
     
     setCache(CacheKeys.FAQS_ALL, data, 300);

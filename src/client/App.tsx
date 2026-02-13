@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect,  useState  } from "react";
 import "./App.css";
 import "./components/darktheme.css";
 import AppComponent from "./components/client-components-dropdown";
@@ -8,16 +8,13 @@ import Faqs from "./components/Faqs/Faqs";
 import SearchBar from "./components/Searchbar/SearchBar";
 import TrustCenter from "./components/TrustCenter/TrustCenter";
 import MultiSelect from "./components/Searchbar/MultiSelect";
-import ChatWidget from "./components/chat-widget";
-
+import Interface from "./Chatbot/Interface";
 
 export default function App() {
-
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const handleFilterChange = (categories: string[]) => {
     setSelectedCategories(categories);
   };
-
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -41,16 +38,13 @@ export default function App() {
       {/* <SearchBar /> */}
       <MultiSelect onFilterChange={handleFilterChange} />
 
-     <div className="trustFaqs_grid">        
-      <section className="trustFaqs_col" aria-label="Trust Center">
+      <div className="trustFaqs_grid">
+        <section className="trustFaqs_col" aria-label="Trust Center">
           <TrustCenter selectedCategories={selectedCategories} />
         </section>
         <section className="trustFaqs_col" aria-label="FAQs">
           <Faqs selectedCategories={selectedCategories} />
         </section>
-        <div>
-          <ChatWidget />
-        </div>
       </div>
     </div>
   );
