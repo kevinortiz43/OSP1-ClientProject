@@ -10,11 +10,21 @@ interface FAQ {
   id: string;
   question: string;
   answer: string;
+  category: string;
+  searchText: string;
   createdat?: string;
   updatedat?: string;
+  updatedBy?: string;
 }
 
-const Faqs = () => {
+interface Faqs {
+  selectedCategories: string[];
+}
+
+
+
+
+const Faqs = ({ selectedCategories }) => {
   const [faqs, setFaqs] = useState<FAQ[]>([]); //state to hold fetched FAQs
   const [expandedId, setExpandedId] = useState<string | null>(null); //state to track expanded FAQ (starts as null)
   const [loading, setLoading] = useState(true); //state to track loading status (starts as true)
