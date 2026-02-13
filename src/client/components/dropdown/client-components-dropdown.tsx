@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 
-import allTrustControls from '../../server/data/allTrustControls.json'
-import allTrustFaqs from '../../server/data/allTrustFaqs.json'
+import allTrustControls from '../../../server/data/allTrustControls.json'
+import allTrustFaqs from '../../../server/data/allTrustFaqs.json'
 
 type Control = { id: string; short?: string; long?: string }
 type Category = { id: string; label: string; items: Control[] }

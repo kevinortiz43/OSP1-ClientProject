@@ -1,20 +1,19 @@
-import { dataService } from '../caching/dataService';
+import { dataService } from "../caching/dataService";
 
 export default {
   getTrustFaqs: async (_, res, next) => {
-    try { // dataService.getTeams() returns { data: any[], source: 'cache' | 'database' }
+    try {
       const result = await dataService.getFaqs();
-      
-      if (!result) {
-        res.locals.dbResults = "No FAQ controller data";
-      return next();
-    }
 
-      // store BOTH data AND metadata in res.locals
-      res.locals.dbResults = result.data; // actual team data array
-      res.locals.cacheInfo = {          // cache metadata
+      if (!result) {
+        res.locals.dbResults = "No FAQs controller data";
+        return next();
+      }
+
+      res.locals.dbResults = result.data;
+      res.locals.cacheInfo = {
         source: result.source,
-        cached: result.source === 'cache' // set value to boolean (true if source is 'cache')
+        cached: result.source === "cache",
       };
 
       return next();

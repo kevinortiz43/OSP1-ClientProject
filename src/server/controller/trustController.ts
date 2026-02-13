@@ -1,21 +1,19 @@
-import { dataService } from '../caching/dataService';
+import { dataService } from "../caching/dataService";
 
 export default {
   getTrustControls: async (_, res, next) => {
     try {
-      // dataService.getTeams() returns { data: any[], source: 'cache' | 'database' }
       const result = await dataService.getControls();
 
       if (!result) {
-        res.locals.dbResults = "No Teams controller data";
-      return next();
-    }
+        res.locals.dbResults = "No Trust controller data";
+        return next();
+      }
 
-      // store BOTH data AND metadata in res.locals
-      res.locals.dbResults = result.data; // actual team data array
-      res.locals.cacheInfo = {          // cache metadata
+      res.locals.dbResults = result.data;
+      res.locals.cacheInfo = {
         source: result.source,
-        cached: result.source === 'cache' // set value to boolean (true if source is 'cache')
+        cached: result.source === "cache",
       };
 
       return next();
@@ -31,3 +29,4 @@ export default {
     }
   },
 };
+

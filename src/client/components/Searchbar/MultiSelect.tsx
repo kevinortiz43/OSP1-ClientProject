@@ -5,7 +5,7 @@ interface MultiSelectProps {
   onFilterChange: (selectedCategories: string[]) => void;
 }
 
-const MultiSelect: React.FC<MultiSelectProps> = ({ onFilterChange }) => { //pass in onFilterChange prop
+const MultiSelect: React.FC<MultiSelectProps> = ({ onFilterChange }) => { 
   const options = [
     { value: "Organizational Security", label: "Organizational Security" },
     { value: "Cloud Security", label: "Cloud Security" },
@@ -14,7 +14,7 @@ const MultiSelect: React.FC<MultiSelectProps> = ({ onFilterChange }) => { //pass
   ];
 
 
-  const handleChange = (selectedOptions) => { // if selectedOptions exists, then map them, if not then empty arr
+  const handleChange = (selectedOptions: any[]) => { 
     const selectedValues = selectedOptions ? selectedOptions.map(opt => opt.value) : [];
     onFilterChange(selectedValues);
   };

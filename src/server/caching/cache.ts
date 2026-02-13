@@ -4,6 +4,8 @@ import NodeCache from 'node-cache';
 
 // stdTTL: default time-to-live in seconds (null = no expiration)
 // checkperiod: how often to check for expired keys
+
+// TODO: please review our cache we have set up for the node server
 const cache = new NodeCache({ 
   stdTTL: 300, // 300 seconds = 5 minutes, default TTL // change to 86400 for 24 hours if database data doesn't change very frequently
   checkperiod: 120, // check for expired keys every 2 minutes // could change to every 10 minutes
@@ -20,7 +22,7 @@ export function setCache<T>(key: string, data: T, ttl?: number): boolean {
   return cache.set(key, data, Number(ttl));
 }
 
-
+// NOTE: This is still buggy (only fix if enough time)
 // check cache stats (for monitoring)
 // {"hits":0,"misses":0,"keys":0,"ksize":0,"vsize":0}
 export function getCacheStats() {

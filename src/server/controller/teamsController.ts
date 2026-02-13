@@ -1,21 +1,19 @@
-import { dataService } from '../caching/dataService';
+import { dataService } from "../caching/dataService";
 
 export default {
   getTeams: async (_, res, next) => {
     try {
-      // dataService.getTeams() returns { data: any[], source: 'cache' | 'database' }
       const result = await dataService.getTeams();
 
       if (!result) {
         res.locals.dbResults = "No Teams controller data";
-      return next();
-    }
+        return next();
+      }
 
-      // store BOTH data AND metadata in res.locals
-      res.locals.dbResults = result.data; // actual team data array
-      res.locals.cacheInfo = {          // cache metadata
+      res.locals.dbResults = result.data;
+      res.locals.cacheInfo = {
         source: result.source,
-        cached: result.source === 'cache' // set value to boolean (true if source is 'cache')
+        cached: result.source === "cache",
       };
 
       return next();

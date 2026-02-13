@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import "./App.css";
-import AppComponent from "./components/client-components-dropdown";
+import AppComponent from "./components/dropdown/client-components-dropdown";
 import allTrustControls from "../server/data/allTrustControls.json";
 import allTrustFaqs from "../server/data/allTrustFaqs.json";
 import Faqs from "./components/Faqs/Faqs";
