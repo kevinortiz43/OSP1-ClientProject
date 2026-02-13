@@ -1,4 +1,4 @@
-import { RequestHandler } from 'express';
+import type { RequestHandler } from 'express';
 import { ServerError } from '../types';
 import { Pool, QueryResult } from "pg";
 import dotenv from "dotenv";
