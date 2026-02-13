@@ -1,29 +1,27 @@
-
 import type { RequestHandler } from "express";
 import type { ServerError } from "./types";
-
-import "dotenv/config";
+import { AI_APIKEY } from "../../envVariables";
 import { InferenceClient } from "@huggingface/inference";
 
-const client = new InferenceClient("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");
+import { model } from "../../envVariables";
+const client = new InferenceClient(AI_APIKEY);
 
-// New middleware: Generate AI response from query results
 export const GenerateAIResponse: RequestHandler = async (_req, res, next) => {
   try {
     const { naturalLanguageQuery, databaseQueryResult } = res.locals;
 
-    // If no results found after retries
     if (!databaseQueryResult || databaseQueryResult.length === 0) {
       return res.status(200).json({
-        response: "Answer not found at this time. Please try rephrasing your question or contact support for assistance.",
+        response:
+          "Answer not found at this time. Please try rephrasing your question",
         found: false,
         sqlQuery: res.locals.sqlQuery,
       });
     }
 
-    // Prepare context from query results
-    let context = "Relevant information from the security compliance database:\n\n";
-    
+    let context =
+      "Relevant information from the security compliance database:\n\n";
+
     databaseQueryResult.forEach((result: any, index: number) => {
       if (result.short && result.long) {
         // From allTrustControls
@@ -42,7 +40,7 @@ export const GenerateAIResponse: RequestHandler = async (_req, res, next) => {
 
 INSTRUCTIONS:
 1. Synthesize information from the provided controls/FAQs to directly answer the question
-2. Be concise but complete - aim for 2-4 sentences
+2. Be concise but complete aim for 2 to 4 sentences
 3. Use natural language, not bullet points
 4. Focus on the most relevant information or synthesize multiple items if needed
 5. Don't mention that you're looking at database records - just answer naturally as if you're a knowledgeable expert
@@ -55,7 +53,7 @@ ${context}
 Provide a helpful, direct answer:`;
 
     const responseCompletion = await client.chatCompletion({
-      model: "Qwen/Qwen2.5-Coder-7B-Instruct:nscale",
+      model: `${model}`,
       messages: [
         {
           role: "user",
@@ -69,17 +67,18 @@ Provide a helpful, direct answer:`;
     const aiResponse = responseCompletion.choices[0].message.content?.trim();
 
     return res.status(200).json({
-      response: aiResponse || "I found relevant information but encountered an issue formulating a response. Please try again.",
+      response:
+        aiResponse ||
+        "I found relevant information but encountered an issue formulating a response. Please try again.",
       found: true,
       sources: databaseQueryResult.length,
       sqlQuery: res.locals.sqlQuery,
       // Optionally include raw data for debugging
       rawData: databaseQueryResult,
     });
-
   } catch (error) {
     console.error("Error generating AI response:", error);
-    
+
     const serverError: ServerError = {
       log: `AI response generation error: ${error instanceof Error ? error.message : "Unknown error"}`,
       status: 500,

@@ -1,13 +1,10 @@
 import type { RequestHandler } from "express";
 import type { ServerError } from "./types";
-import "dotenv/config";
+import { AI_APIKEY } from "../../envVariables";
 import { InferenceClient } from "@huggingface/inference";
+import { model } from "../../envVariables";
 
-const { AI_APIKEY } = process.env;
-
-const client = new InferenceClient("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");
-// Middleware 1: Convert natural language to SQL
-
+const client = new InferenceClient(AI_APIKEY);
 
 export const QueryOpenAI: RequestHandler = async (_, res, next) => {
   try {
@@ -15,7 +12,7 @@ export const QueryOpenAI: RequestHandler = async (_, res, next) => {
 
     if (!naturalLanguageQuery) {
       const error: ServerError = {
-        log: "OpenAI query middleware did not receive a query",
+        log: "OpenAI query middleware did not receive a query. Check onlineAiController.ts",
         status: 500,
         message: { err: "An error occurred before querying AI" },
       };
@@ -26,7 +23,7 @@ export const QueryOpenAI: RequestHandler = async (_, res, next) => {
 
 CRITICAL SCHEMA RULES:
 1. Table names MUST be double-quoted: "allTrustControls", "allTrustFaqs"
-2. Column "searchText" MUST be double-quoted because it has mixed case: "searchText"
+2. Column "searchText" MUST be double quoted because it has mixed case: "searchText"
 3. Other columns are lowercase and don't need quotes: short, long, question, answer, category
 4. The 'category' column contains STRING VALUES
    - Valid values: 'Cloud Security', 'Data Security', 'Organizational Security', 'Secure Development'
@@ -55,7 +52,7 @@ QUERY GENERATION RULES:
 1. Search "allTrustControls" for security controls and policies
 2. Search "allTrustFaqs" for frequently asked questions
 3. Use WHERE "searchText" ILIKE '%keyword%' for text searches (NOTE: "searchText" must be quoted!)
-4. Extract 2-4 key search terms from the user's question
+4. Extract 2 4 key search terms from the user's question
 5. Combine terms with OR for broader results, AND for narrower results
 6. Always LIMIT results to 10 rows
 7. Return ONLY the SQL query - no explanations, no markdown
@@ -83,7 +80,7 @@ Now convert this query: "${naturalLanguageQuery}"
 CRITICAL: Remember to quote "searchText" - it MUST be "searchText" not searchText or searchtext!`;
 
     const chatCompletion = await client.chatCompletion({
-      model: "Qwen/Qwen2.5-Coder-7B-Instruct:nscale",
+      model: `${model}`,
       messages: [
         {
           role: "system",
@@ -109,23 +106,21 @@ CRITICAL: Remember to quote "searchText" - it MUST be "searchText" not searchTex
       .replace(/JOIN\s+allTrustControls/gi, 'JOIN "allTrustControls"')
       .replace(/JOIN\s+allTrustFaqs/gi, 'JOIN "allTrustFaqs"');
 
-    // CRITICAL: Fix searchText casing - ensure it's properly quoted
     cleanSql = cleanSql
-      ?.replace(/\bsearchtext\b/gi, '"searchText"')  // Fix any searchtext to "searchText"
-      ?.replace(/\bsearchText\b/g, '"searchText"')   // Ensure searchText is quoted
-      ?.replace(/\b"searchText"\b/g, '"searchText"') // Remove duplicate quotes if any
-      ?.replace(/"+"searchText""+/g, '"searchText"'); // Clean up multiple quotes
+      ?.replace(/\bsearchtext\b/gi, '"searchText"')
+      ?.replace(/\bsearchText\b/g, '"searchText"')
+      ?.replace(/\b"searchText"\b/g, '"searchText"')
+      ?.replace(/"+"searchText""+/g, '"searchText"');
 
-    // Fix common issues
     cleanSql = cleanSql
-      ?.replace(/WHERE\s+WHERE/gi, 'WHERE') // Remove duplicate WHERE
-      ?.replace(/"\s*"\s*searchText\s*"\s*"/gi, '"searchText"'); // Clean malformed quotes
+      ?.replace(/WHERE\s+WHERE/gi, "WHERE")
+      ?.replace(/"\s*"\s*searchText\s*"\s*"/gi, '"searchText"');
 
     if (!cleanSql?.endsWith(";")) {
       cleanSql += ";";
     }
 
-    console.log("Final cleaned SQL:", cleanSql); // Debug log
+    console.log("Final cleaned SQL:", cleanSql);
 
     res.locals.databaseQuery = cleanSql;
     return next();

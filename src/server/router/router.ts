@@ -7,7 +7,7 @@ import { dataService } from "../caching/dataService";
 import { parseNaturalLanguageQuery } from "../controller/AI_Controller/naturalLanguageController";
 import { QueryOpenAI } from "../controller/AI_Controller/onlineAIController";
 import { databaseQuery } from "../controller/AI_Controller/databaseController";
-import { GenerateAIResponse } from "../controller/AI_Controller/generateAResponse";
+import { GenerateAIResponse } from "../controller/AI_Controller/generateAIResponse";
 const router = express.Router();
 
 router.get("/test", (_, res) => {

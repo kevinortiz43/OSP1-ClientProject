@@ -1,8 +1,5 @@
 import { Pool } from 'pg';
 import type { QueryResult } from "pg";
-import dotenv from "dotenv";
-
-dotenv.config(); // process.env
 
 // create a new pool here using the connection string above
 const pool = new Pool({
