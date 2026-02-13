@@ -1,4 +1,5 @@
 services:
+  # --- Frontend ---
   frontend:
     build:
       context: .
@@ -31,7 +32,37 @@ services:
     networks:
       - app-network
 
-  # Backend service (Express with hot reload)
+  # --- AI Model Service (Ollama) --
+  ollama:
+    image: ollama/ollama:latest
+    # image: ollama/ollama:0.15.5-rc2  # if want to test Qwen3-coder-next (requires this pre-release beta version)
+    container_name: ollama-4090
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_models:/root/.ollama
+    runtime: nvidia
+    init: true  
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_PORT=11434
+      - OLLAMA_NUM_PARALLEL=4
+      - OLLAMA_MAX_LOADED_MODELS=2
+      - OLLAMA_KEEP_ALIVE=3600
+      - OLLAMA_DEBUG=0
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "ollama", "list"]  
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s 
+    networks:
+      - app-network
+
+  # --- Backend Service ---
   backend:
     build:
       context: .
@@ -39,7 +70,6 @@ services:
     ports:
       - "3000:3000"
     environment:
-      # Database configuration
       - DATABASE_URL=postgresql://root:root@db:5432/test_db
       - NODE_ENV=development
       - PORT=3000
@@ -48,17 +78,12 @@ services:
       - DB_NAME=test_db
       - DB_USER=root
       - DB_PASSWORD=root
-      # NO MANUAL AI URLS HERE - they will be auto-injected by DMR
-    # Model binding tells DMR to inject env vars
-    models:
-      text2sql:
-        endpoint_var: TEXT2SQL_URL    # DMR will inject this URL
-        model_var: TEXT2SQL_MODEL     # DMR will inject this model name
-    deploy:
-      resources:
-        limits:
-          cpus: "2.0"
-          memory: 4G
+      - TEXT2SQL_URL=http://ollama:11434
+      - TEXT2SQL_MODEL=${TEXT2SQL_MODEL:-arctic-text2sql} # change model here, also in .env
+      # - TEXT2SQL_MODEL=${TEXT2SQL_MODEL:-sqlcoder}
+      # - TEXT2SQL_MODEL=${TEXT2SQL_MODEL:-qwen3-coder} 
+      - MODEL_REGISTRY_URL=http://ollama:11434/api/tags
+      - HARDWARE_TIER=4090-workstation
     command: ["npm", "run", "server"]
     develop:
       watch:
@@ -74,11 +99,14 @@ services:
         - action: rebuild
           path: package.json
     depends_on:
-      - db  # Only depend on DB, NOT on docker-model-runner
+      db:
+        condition: service_started
+      ollama:
+        condition: service_healthy
     networks:
       - app-network
 
-  # PostgreSQL Database
+  # --- PostgreSQL Database ---
   db:
     image: postgres:16-alpine
     restart: always
@@ -89,12 +117,12 @@ services:
       POSTGRES_DB: test_db
     ports:
       - "5432:5432"
-    networks:
-      - app-network
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
 
-  # pgAdmin GUI
+  # --- pgAdmin GUI ---
   pgadmin:
     container_name: pgadmin4_container
     image: dpage/pgadmin4
@@ -106,48 +134,20 @@ services:
       - "5050:80"
     depends_on:
       - db
-    networks:
-      - app-network
     volumes:
       - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - app-network
 
-# MODELS AT TOP LEVEL (same indentation as services)
-models:
-  text2sql:
-    model: hf.co/mradermacher/Arctic-Text2SQL-R1-7B-GGUF:Q4_K_M
-    context_size: 4096
-    runtime_flags:
-      # GPU Acceleration (I have RTX 3060 on laptop 6G VRAM)
-      - "--n-gpu-layers"
-      - "99"  # use gpu if available
-      # CPU threads (fallback for non-GPU operations)
-      - "--threads"
-      - "7"
-      - "--threads-batch"
-      - "7"
-      # Memory
-      - "--mlock"
-      - "--no-mmap"
-      # Performance
-      - "--batch-size"
-      - "1024"
-      # Sampling (deterministic for SQL)
-      - "--temp"
-      - "0.1"
-      - "--repeat-penalty"
-      - "1.1"
-      # Development logging - add required values
-      - "--verbose"
-      - "--verbose-prompt"
-      - "--log-prefix"
-      - "--log-timestamps"
-      - "--log-colors"
-      - "auto"  # value for --log-colors
-
+# --- Networks ---
 networks:
   app-network:
     driver: bridge
 
+# --- Volumes ---
 volumes:
+  ollama_models:
+    driver: local
+    name: ollama_models_4090
   postgres_data:
   pgadmin_data:
