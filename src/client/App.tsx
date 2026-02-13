@@ -46,6 +46,7 @@ export default function App() {
           <Faqs selectedCategories={selectedCategories} />
         </section>
       </div>
+      <Interface />
     </div>
   );
 }
