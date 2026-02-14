@@ -83,7 +83,6 @@ router.get("/admin/cache-stats", (req, res) => {
 
 
 // endpoint to manually clear cache for 'teams', 'controls', or 'faqs' or empty if want to clear all cache (for admin)
-
 // http://localhost:3000/api/admin/clear-cache
 router.post("/admin/clear-cache", (req, res) => {
   const { type } = req.body; // 'teams', 'controls', 'faqs', or leave empty if want to clear all cache keys
@@ -110,7 +109,7 @@ router.post(
   parseNaturalLanguageQuery,    // 1. Parse user input
   queryOfflineOpenAI,                 // 2. Try cache → search → AI
   executeDatabaseQuery,        // 3. Execute SQL (if any)
-  (_req, res) => {            // 4. Send response
+  (_req, res) => {           
     res.status(200).json({
       success: true,
       data: {

@@ -1,4 +1,4 @@
-/* Faqs.css */
+
 .faqs_container {
   display: flex;
   flex-direction: column;
@@ -145,7 +145,6 @@
   }
 }
 
-/* Responsive */
 @media (max-width: 768px) {
   .faqs_header {
     padding: 24px;

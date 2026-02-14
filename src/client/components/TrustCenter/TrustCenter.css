@@ -27,12 +27,6 @@
   font-family: Arial, sans-serif;
 }
 
-/* .trusts_list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-} */
-
 .trusts_list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
@@ -150,7 +144,6 @@
   }
 }
 
-/* Responsive */
 @media (max-width: 768px) {
   .trusts_header {
     padding: 24px;

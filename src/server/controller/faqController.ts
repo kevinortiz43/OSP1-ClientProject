@@ -3,7 +3,7 @@ import { dataService } from "../services/dataService";
 export default {
   getTrustFaqs: async (_, res, next) => {
     try {
-      // dataService.getTeams() returns { data: any[], source: 'cache' | 'database' }
+      // dataService.getFaqs() returns { data: any[], source: 'cache' | 'database' }
       const result = await dataService.getFaqs();
 
       if (!result) {
@@ -12,7 +12,7 @@ export default {
       }
 
       // store BOTH data AND metadata in res.locals
-      res.locals.dbResults = result.data; // actual team data array
+      res.locals.dbResults = result.data; // trust faqs data array
       res.locals.cacheInfo = {
         // cache metadata
         source: result.source,

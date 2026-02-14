@@ -1,13 +1,9 @@
-// services/dataService.ts
-import { getCache, setCache, clearCache, clearCacheByPattern } from "../caching/cache";
-import { dockerPool } from "../sql_db/db_connect_agnostic";
+import { getCache, setCache, clearCache, clearCacheByPattern } from '../caching/cache';
+import { dockerPool } from '../sql_db/db_connect_agnostic';
 
+// cache keys for consistency
+// couldn't use enum due to "This syntax is not allowed when 'erasableSyntaxOnly' is enabled," means you are using a TypeScript construct that generates runtime JavaScript code, which is forbidden by the erasableSyntaxOnly compiler option. The enum declaration is one such construct. 
 
-/* Represents cached search result data.
- * - TypeScript needs to know the shape of cached objects
- * - This matches the structure saved in setCachedSearch()
- * - Ensures type safety when accessing cachedResult.properties
- */
 // MOVE into types.ts later
 export interface CachedSearchResult {
   results: Array<{
@@ -89,36 +85,38 @@ export const dataService = {
     return { data, source: "database" };
   },
 
-  // clear cache (for admin UPDATE, DELETE)
-clearCache(type?: "teams" | "controls" | "faqs" | "search") {
-  if (!type) {
-    clearCache(); // clear all
-    console.log("All cache cleared");
-    return;
-  }
+ // clear cache (for admin UPDATE, DELETE)
+  clearCache(type?: "teams" | "controls" | "faqs" | "search") {
+    if (!type) {
+      // Clear all cache types
+      clearCache(CacheKeys.TEAMS_ALL);
+      clearCache(CacheKeys.CONTROLS_ALL);
+      clearCache(CacheKeys.FAQS_ALL);
+      
+      // Clear all search cache entries (keys with SEARCH_CACHE_PREFIX)
+      clearCacheByPattern(`${CacheKeys.SEARCH_CACHE_PREFIX}*`);
+      
+      console.log("All cache cleared");
+      return;
+    }
 
-  if (type === "search") {
-    // For search cache, we need to clear by pattern
-    // This assumes your cache implementation supports pattern deletion
-    // If not, you may need to modify your caching module
-    console.log("Clearing all search cache entries");
-    // You may need to implement a method like clearCacheByPattern()
-    clearCacheByPattern(`${CacheKeys.SEARCH_CACHE_PREFIX}*`);
-    
-    console.log("Search cache cleared");
-    return;
-  }
+    if (type === "search") {
+      // Clear all search cache entries
+      clearCacheByPattern(`${CacheKeys.SEARCH_CACHE_PREFIX}*`);
+      
+      console.log("Search cache cleared");
+      return;
+    }
 
-  const keyMap = {
-    teams: CacheKeys.TEAMS_ALL,
-    controls: CacheKeys.CONTROLS_ALL,
-    faqs: CacheKeys.FAQS_ALL,
-  };
+    const keyMap = {
+      teams: CacheKeys.TEAMS_ALL,
+      controls: CacheKeys.CONTROLS_ALL,
+      faqs: CacheKeys.FAQS_ALL,
+    };
 
-  clearCache(keyMap[type as "teams" | "controls" | "faqs"]);
-  console.log(`Cache cleared for ${type}`);
-},
-
+    clearCache(keyMap[type]);
+    console.log(`Cache cleared for ${type}`);
+  },
 
 // add method to cache search
  async getCachedSearch(normalizedQuery: string): Promise<CachedSearchResult | null> {

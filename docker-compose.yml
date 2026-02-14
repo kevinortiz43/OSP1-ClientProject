@@ -9,7 +9,7 @@ services:
     environment:
       - NODE_ENV=development
       - VITE_API_URL=http://localhost:3000
-    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+    command: [ "npm", "run", "dev", "--", "--host", "0.0.0.0" ]
     develop:
       watch:
         - action: sync
@@ -35,14 +35,14 @@ services:
   # --- AI Model Service (Ollama) --
   ollama:
     image: ollama/ollama:latest
-    # image: ollama/ollama:0.15.5-rc2  # if want to test Qwen3-coder-next (requires this pre-release beta version)
+    # image: ollama/ollama:0.15.5-rc2  # if want to test Qwen3-coder-next (requires this pre-release beta version). Would have to npm run tear and re-install ollama which will take time
     container_name: ollama-4090
     ports:
       - "11434:11434"
     volumes:
       - ollama_models:/root/.ollama
     runtime: nvidia
-    init: true  
+    init: true
     environment:
       - OLLAMA_HOST=0.0.0.0
       - OLLAMA_PORT=11434
@@ -54,11 +54,11 @@ services:
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "ollama", "list"]  
+      test: [ "CMD", "ollama", "list" ]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 20s 
+      start_period: 20s
     networks:
       - app-network
 
@@ -84,7 +84,7 @@ services:
       # - TEXT2SQL_MODEL=${TEXT2SQL_MODEL:-qwen3-coder} 
       - MODEL_REGISTRY_URL=http://ollama:11434/api/tags
       - HARDWARE_TIER=4090-workstation
-    command: ["npm", "run", "server"]
+    command: [ "npm", "run", "server" ]
     develop:
       watch:
         - action: sync+restart
