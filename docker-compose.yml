@@ -47,8 +47,8 @@ services:
       - OLLAMA_HOST=0.0.0.0
       - OLLAMA_PORT=11434
       - OLLAMA_NUM_PARALLEL=4
-      - OLLAMA_MAX_LOADED_MODELS=2
-      - OLLAMA_KEEP_ALIVE=3600
+      - OLLAMA_MAX_LOADED_MODELS=2 # keep 2 models loaded
+      - OLLAMA_KEEP_ALIVE=-1 # keep both models loaded forever
       - OLLAMA_DEBUG=0
       - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility
