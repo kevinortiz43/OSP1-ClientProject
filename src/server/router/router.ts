@@ -71,7 +71,7 @@ router.get("/trustFaqs", faqController.getTrustFaqs, (req, res) => {
 });
 
 // get cache stats
-// http://localhost:3000/api/admin/cache-stats  (buggy)
+// http://localhost:3000/api/admin/cache-stats  (actually seems to work now?)
 router.get("/admin/cache-stats", (req, res) => {
   const stats = getCacheStats();
   res.json({
@@ -86,6 +86,7 @@ router.get("/admin/cache-stats", (req, res) => {
 
 // endpoint to manually clear cache for 'teams', 'controls', or 'faqs' or empty if want to clear all cache (for admin)
 // http://localhost:3000/api/admin/clear-cache
+// Example: {"type": ""} to clear all or {"type": "teams"} to clear specific keys 
 router.post("/admin/clear-cache", (req, res) => {
   const { type } = req.body; // 'teams', 'controls', 'faqs', or leave empty if want to clear all cache keys
 

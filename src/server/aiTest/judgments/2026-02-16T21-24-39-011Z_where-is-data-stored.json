@@ -1,0 +1,13 @@
+{
+  "timestamp": "2026-02-16T21:24:39.011Z",
+  "naturalLanguageQuery": "where is data stored",
+  "generatedSQL": "SELECT \"short\", \"long\" FROM \"allTrustControls\" WHERE \"searchText\" ILIKE '%data storage%';",
+  "resultsCount": 0,
+  "passed": false,
+  "score": 1,
+  "explanation": "Query returned no results",
+  "source": "ai",
+  "executionTime": "4914ms",
+  "sqlModel": "arctic-text2sql",
+  "judgeModel": "phi4-reasoning"
+}
