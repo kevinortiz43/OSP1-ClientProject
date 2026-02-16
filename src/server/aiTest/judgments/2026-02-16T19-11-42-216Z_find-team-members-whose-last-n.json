@@ -1,0 +1,13 @@
+{
+  "timestamp": "2026-02-16T19:11:42.216Z",
+  "naturalLanguageQuery": "find team members whose last name starts with H",
+  "generatedSQL": "SELECT \"firstName\", \"lastName\", \"email\"\nFROM \"allTeams\"\nWHERE \"lastName\" ILIKE 'H%';",
+  "resultsCount": 2,
+  "passed": false,
+  "score": 3,
+  "explanation": "<think>We are asked: \"You are a SQL expert judge. Evaluate if this SQL correctly answers the user's question.\" The question is: \"find team members whose last name starts with H\". Generated SQL code:\n\n",
+  "source": "ai",
+  "executionTime": "2136ms",
+  "sqlModel": "arctic-text2sql",
+  "judgeModel": "phi4-reasoning"
+}

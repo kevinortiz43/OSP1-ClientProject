@@ -1,0 +1,15 @@
+{
+  "timestamp": "2026-02-16T17:47:28.382Z",
+  "naturalLanguageQuery": "show me controls and faqs about api security",
+  "generatedSQL": "SELECT \n    c.\"short\", \n    c.\"long\", \n    f.\"question\", \n    f.\"answer\"\nFROM \n    \"allTrustControls\" c\nJOIN \n    \"allTrustFaqs\" f ON c.\"category\" = f.\"category\"\nWHERE \n    c.\"searchText\" ILIKE '%API%' OR f.\"searchText\" ILIKE '%API%';",
+  "expectedSQL": "SELECT * FROM \"allTrustControls\" WHERE \"searchText\" ILIKE '%api%' UNION ALL SELECT * FROM \"allTrustFaqs\" WHERE \"searchText\" ILIKE '%api%';",
+  "resultsCount": 5,
+  "expectedCount": ">=2",
+  "passed": true,
+  "score": 4.2,
+  "explanation": "✓ Returns 5 relevant results",
+  "source": "ai",
+  "executionTime": "1288ms",
+  "sqlModel": "arctic-text2sql",
+  "judgeModel": "phi4-reasoning"
+}

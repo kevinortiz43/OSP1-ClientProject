@@ -1,0 +1,13 @@
+{
+  "timestamp": "2026-02-16T19:09:11.683Z",
+  "naturalLanguageQuery": "what are the longest response times for the security team",
+  "generatedSQL": "SELECT MAX(\"responseTimeHours\") AS \"longest_response_time\"\nFROM \"allTeams\";",
+  "resultsCount": 1,
+  "passed": false,
+  "score": 3,
+  "explanation": "<think>We are asked: \"You are a SQL expert judge. Evaluate if this SQL correctly answers the user's question.\" The question is: \"what are the longest response times for the security team\". The generat",
+  "source": "ai",
+  "executionTime": "4264ms",
+  "sqlModel": "arctic-text2sql",
+  "judgeModel": "phi4-reasoning"
+}

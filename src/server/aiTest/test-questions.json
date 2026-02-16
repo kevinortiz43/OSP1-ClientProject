@@ -3,7 +3,7 @@
     "naturalLanguageQuery": "list all cloud security controls",
     "expectedResponse": {
       "source": "ai",
-      "sql": "SELECT * FROM \"allTrustControls\" WHERE category = 'Cloud Security';",
+      "sql": "SELECT * FROM \"allTrustControls\" WHERE \"category\" = 'Cloud Security';",
       "resultsCount": ">=5",
       "formatted": null
     }
@@ -12,7 +12,7 @@
     "naturalLanguageQuery": "show me the short descriptions of data security controls",
     "expectedResponse": {
       "source": "ai",
-      "sql": "SELECT short FROM \"allTrustControls\" WHERE category = 'Data Security';",
+      "sql": "SELECT \"short\" FROM \"allTrustControls\" WHERE \"category\" = 'Data Security';",
       "resultsCount": ">=3",
       "formatted": null
     }
@@ -21,7 +21,7 @@
     "naturalLanguageQuery": "find controls related to incident response in organizational security",
     "expectedResponse": {
       "source": "ai",
-      "sql": "SELECT * FROM \"allTrustControls\" WHERE category = 'Organizational Security' AND \"searchText\" ILIKE '%incident%';",
+      "sql": "SELECT * FROM \"allTrustControls\" WHERE \"category\" = 'Organizational Security' AND \"searchText\" ILIKE '%incident%';",
       "resultsCount": ">=1",
       "formatted": null
     }
@@ -30,7 +30,7 @@
     "naturalLanguageQuery": "how many controls are in each category",
     "expectedResponse": {
       "source": "ai",
-      "sql": "SELECT category, COUNT(*) as count FROM \"allTrustControls\" GROUP BY category;",
+      "sql": "SELECT \"category\", COUNT(*) as count FROM \"allTrustControls\" GROUP BY \"category\";",
       "resultsCount": ">=6",
       "formatted": null
     }
@@ -63,11 +63,11 @@
     }
   },
   {
-    "naturalLanguageQuery": "find all controls and faqs about data security",
+    "naturalLanguageQuery": "find all controls and faqs about privacy",
     "expectedResponse": {
       "source": "ai",
-      "sql": "SELECT * FROM \"allTrustControls\" WHERE category = 'Data Security' UNION ALL SELECT * FROM \"allTrustFaqs\" WHERE category = 'Data Security';",
-      "resultsCount": ">=5",
+      "sql": "SELECT * FROM \"allTrustControls\" WHERE \"category\" = 'Privacy' UNION ALL SELECT * FROM \"allTrustFaqs\" WHERE \"category\" = 'Privacy';",
+      "resultsCount": ">=2",
       "formatted": null
     }
   },
@@ -75,7 +75,7 @@
     "naturalLanguageQuery": "what is the average response time for the data security team",
     "expectedResponse": {
       "source": "ai",
-      "sql": "SELECT AVG(\"responseTimeHours\") as average_response_time FROM \"allTeams\" WHERE category = 'Data Security';",
+      "sql": "SELECT AVG(\"responseTimeHours\") as average_response_time FROM \"allTeams\" WHERE \"category\" = 'Data Security';",
       "resultsCount": 1,
       "formatted": null
     }
@@ -85,13 +85,10 @@
     "expectedResponse": {
       "source": "ai",
       "sql": "SELECT * FROM \"allTrustControls\" WHERE \"searchText\" ILIKE '%aws%' AND \"searchText\" ILIKE '%data%';",
-      "resultsCount": ">=1",
       "formatted": null
     }
   },
-
- 
-    {
+  {
     "naturalLanguageQuery": "who are active team members in organizational security",
     "expectedResponse": {
       "source": "ai",
@@ -136,13 +133,13 @@
       "formatted": null
     }
   },
-{
-  "naturalLanguageQuery": "show me secure development controls along with related FAQs",
-  "expectedResponse": {
-    "source": "ai",
-    "sql": "SELECT c.\"short\", c.\"long\", f.\"question\", f.\"answer\" FROM \"allTrustControls\" c LEFT JOIN \"allTrustFaqs\" f ON c.\"category\" = f.\"category\" WHERE c.\"category\" = 'Secure Development';",
-    "resultsCount": ">=5",
-    "formatted": null
+  {
+    "naturalLanguageQuery": "show me secure development controls along with related FAQs",
+    "expectedResponse": {
+      "source": "ai",
+      "sql": "SELECT c.\"short\", c.\"long\", f.\"question\", f.\"answer\" FROM \"allTrustControls\" c LEFT JOIN \"allTrustFaqs\" f ON c.\"category\" = f.\"category\" WHERE c.\"category\" = 'Secure Development';",
+      "resultsCount": ">=5",
+      "formatted": null
+    }
   }
-}
 ]

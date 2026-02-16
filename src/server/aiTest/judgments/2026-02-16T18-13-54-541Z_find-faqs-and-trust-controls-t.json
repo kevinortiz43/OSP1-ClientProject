@@ -1,0 +1,15 @@
+{
+  "timestamp": "2026-02-16T18:13:54.541Z",
+  "naturalLanguageQuery": "find FAQs and trust controls that mention cookies or privacy",
+  "generatedSQL": "To translate the user's request into an executable SQL query, we need to identify the relevant tables and columns based on the keywords \"cookies\" and \"privacy\". The user wants to retrieve both FAQs and trust controls related to these terms.\n\n### Step-by-Step Solution:\n\n1. **Identify Relevant Tables**:\n   - `\"allTrustControls\"`: Contains information about trust controls.\n   - `\"allTrustFaqs\"`: Contains information about FAQs.\n\n2. **Columns of Interest**:\n   - From `\"allTrustControls\"`, we are interested in the columns `\"short\"` and `\"long\"`.\n   - From `\"allTrustFaqs\"`, we are interested in the columns `\"question\"` and `\"answer\"`.\n\n3. **Search Criteria**:\n   - The search should be case-insensitive, so we use `ILIKE` with wildcards (`%`) to match any text containing \"cookies\" or \"privacy\".\n\n4. **Constructing Queries for Each Table**:\n   - For `\"allTrustControls\"`, select the relevant columns and apply the search criteria.\n   - For `\"allTrustFaqs\"`, select the relevant columns and apply the search criteria.\n\n5. **Combine Results Using UNION ALL**:\n   - Since we want to combine results from both tables, we use `UNION ALL` to merge them into a single result set.\n\n### SQL Query:\n\n```sql\nSELECT \"short\" AS description FROM \"allTrustControls\" WHERE \"searchText\" ILIKE '%cookies%' OR;",
+  "expectedSQL": "SELECT * FROM \"allTrustFaqs\" WHERE \"searchText\" ILIKE '%cookies%' OR \"searchText\" ILIKE '%privacy%' UNION ALL SELECT * FROM \"allTrustControls\" WHERE \"searchText\" ILIKE '%cookies%' OR \"searchText\" ILIKE '%privacy%';",
+  "resultsCount": 0,
+  "expectedCount": ">=4",
+  "passed": false,
+  "score": 1.2,
+  "explanation": "✗ Returns no results - query may need adjustment",
+  "source": "ai",
+  "executionTime": "2430ms",
+  "sqlModel": "arctic-text2sql",
+  "judgeModel": "phi4-reasoning"
+}

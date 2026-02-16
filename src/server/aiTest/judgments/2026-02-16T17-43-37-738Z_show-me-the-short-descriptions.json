@@ -1,0 +1,15 @@
+{
+  "timestamp": "2026-02-16T17:43:37.738Z",
+  "naturalLanguageQuery": "show me the short descriptions of data security controls",
+  "generatedSQL": "SELECT \"short\"\nFROM \"allTrustControls\"\nWHERE \"category\" ILIKE 'Data Security';",
+  "expectedSQL": "SELECT \"short\" FROM \"allTrustControls\" WHERE \"category\" = 'Data Security';",
+  "resultsCount": 3,
+  "expectedCount": ">=3",
+  "passed": true,
+  "score": 4.4,
+  "explanation": "✓ Returns 3 relevant results",
+  "source": "ai",
+  "executionTime": "4902ms",
+  "sqlModel": "arctic-text2sql",
+  "judgeModel": "phi4-reasoning"
+}

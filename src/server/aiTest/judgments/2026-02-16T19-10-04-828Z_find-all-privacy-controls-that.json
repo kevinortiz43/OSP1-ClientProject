@@ -1,0 +1,13 @@
+{
+  "timestamp": "2026-02-16T19:10:04.828Z",
+  "naturalLanguageQuery": "find all privacy controls that mention data retention",
+  "generatedSQL": "SELECT \"short\", \"long\"\nFROM \"allTrustControls\"\nWHERE \"searchText\" ILIKE '%data retention%' AND \"category\" = 'Privacy';",
+  "resultsCount": 1,
+  "passed": false,
+  "score": 3,
+  "explanation": "<think>We are asked: \"You are a SQL expert judge. Evaluate if this SQL correctly answers the user's question.\" The user question is \"find all privacy controls that mention data retention\". The generat",
+  "source": "ai",
+  "executionTime": "2177ms",
+  "sqlModel": "arctic-text2sql",
+  "judgeModel": "phi4-reasoning"
+}

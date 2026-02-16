@@ -1,0 +1,15 @@
+{
+  "timestamp": "2026-02-16T17:46:24.817Z",
+  "naturalLanguageQuery": "which team members are responsible for cloud security",
+  "generatedSQL": "SELECT \"firstName\", \"lastName\", \"email\"\nFROM \"allTeams\"\nWHERE \"category\" ILIKE 'Cloud Security' OR \"searchText\" ILIKE '%cloud security%';",
+  "expectedSQL": "SELECT * FROM \"allTeams\" WHERE \"searchText\" ILIKE '%cloud%';",
+  "resultsCount": 5,
+  "expectedCount": ">=5",
+  "passed": true,
+  "score": 4.2,
+  "explanation": "✓ Returns 5 relevant results",
+  "source": "ai",
+  "executionTime": "377ms",
+  "sqlModel": "arctic-text2sql",
+  "judgeModel": "phi4-reasoning"
+}

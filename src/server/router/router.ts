@@ -195,7 +195,7 @@ router.post(
   '/ai/query',
   // DEBUG: Entry point
   (req, res, next) => {
-    console.log('🔵 ROUTER: Entering /ai/query chain');
+    console.log('ROUTER: Entering /ai/query chain');
     next();
   },
   
@@ -203,7 +203,7 @@ router.post(
   
   // DEBUG: After parse
   (req, res, next) => {
-    console.log('🟢 After parseNaturalLanguageQuery');
+    console.log('After parseNaturalLanguageQuery');
     console.log('   naturalLanguageQuery:', res.locals.naturalLanguageQuery);
     next();
   },
@@ -212,7 +212,7 @@ router.post(
   
   // DEBUG: After AI
   (req, res, next) => {
-    console.log('🟡 After queryOfflineOpenAI');
+    console.log('After queryOfflineOpenAI');
     console.log('   source:', res.locals.queryResult?.source);
     console.log('   hasSQL:', !!res.locals.databaseQuery);
     next();
@@ -222,7 +222,7 @@ router.post(
   
   // DEBUG: After DB
   (req, res, next) => {
-    console.log('🟠 After executeDatabaseQuery');
+    console.log('After executeDatabaseQuery');
     console.log('   results count:', (res.locals.databaseQueryResult || []).length);
     next();
   },
@@ -231,13 +231,13 @@ router.post(
   
   // DEBUG: After judgment trigger
   (req, res, next) => {
-    console.log('🔴 After triggerBackgroundJudgment');
+    console.log('After triggerBackgroundJudgment');
     console.log('   judgmentData exists?', !!res.locals.judgmentData);
     next();
   },
   
   (_req, res) => {
-    console.log('⚫ Sending response');
+    console.log('Sending response');
     
     res.status(200).json({
       success: true,
@@ -254,22 +254,29 @@ router.post(
     });
 
     // AFTER response sent, run background jobs
-    setImmediate(async () => {
-      console.log('⚪ SETIMMEDIATE: Starting background jobs');
-      console.log('   judgmentData exists?', !!res.locals.judgmentData);
-      
-      try {
-        if (res.locals.judgmentData) {
-          console.log('   Importing backgroundJobs...');
-          const backgroundModule = await import('../controller/backgroundJobs');
-          console.log('   Running runBackgroundJudgment...');
-          await backgroundModule.runBackgroundJudgment(res.locals.judgmentData);
-          console.log('   Background judgment completed');
-        }
-      } catch (error) {
-        console.error('❌ Background jobs failed:', error);
-      }
-      console.log('⚪ SETIMMEDIATE: Finished');
+ setImmediate(async () => {
+  console.log('SETIMMEDIATE: Starting background jobs');
+  console.log('   judgmentData exists?', !!res.locals.judgmentData);
+  
+  if (res.locals.judgmentData) {
+    console.log('   judgmentData structure:', Object.keys(res.locals.judgmentData));
+    console.log('   naturalLanguageQuery:', res.locals.judgmentData.naturalLanguageQuery);
+    console.log('   resultsCount:', res.locals.judgmentData.resultsCount);
+    
+    try {
+      console.log('   Importing backgroundJobs...');
+      const backgroundModule = await import('../controller/backgroundJobs');
+      console.log('   Running runBackgroundJudgment...');
+      await backgroundModule.runBackgroundJudgment(res.locals.judgmentData);
+      console.log('Background judgment completed successfully');
+    } catch (error) {
+      console.error('Background judgment failed:', error);
+      console.error('Error details:', error.message);
+    }
+  } else {
+    console.log('   ⚠ No judgment data to process');
+  }
+  console.log('SETIMMEDIATE: Finished');
     });
   }
 );

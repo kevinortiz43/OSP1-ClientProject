@@ -1,0 +1,15 @@
+{
+  "timestamp": "2026-02-16T17:44:18.409Z",
+  "naturalLanguageQuery": "find controls related to incident response in organizational security",
+  "generatedSQL": "SELECT \"short\", \"long\"\nFROM \"allTrustControls\"\nWHERE \"category\" ILIKE 'Organizational Security' AND (\"searchText\" ILIKE '%incident response%' OR \"short\" ILIKE '%incident response%');",
+  "expectedSQL": "SELECT * FROM \"allTrustControls\" WHERE \"category\" = 'Organizational Security' AND \"searchText\" ILIKE '%incident%';",
+  "resultsCount": 1,
+  "expectedCount": ">=1",
+  "passed": true,
+  "score": 4.2,
+  "explanation": "✓ Returns 1 relevant results",
+  "source": "ai",
+  "executionTime": "590ms",
+  "sqlModel": "arctic-text2sql",
+  "judgeModel": "phi4-reasoning"
+}
