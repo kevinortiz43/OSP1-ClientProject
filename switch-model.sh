@@ -5,33 +5,22 @@
 
 if [ "$1" == "arctic" ]; then
   cat > .env << 'ENV_CONTENT'
-# Arctic Text2SQL Model
-OLLAMA_MODEL=hf.co/mradermacher/Arctic-Text2SQL-R1-7B-GGUF:Q4_K_M
-OLLAMA_ALIAS=arctic-text2sql
+# Arctic Text2SQL + phi4-reasoning Judge
 TEXT2SQL_MODEL=arctic-text2sql
+JUDGE_MODEL=phi4-reasoning
 ENV_CONTENT
-  echo "Switched to Arctic model"
+  echo "Switched to Arctic model (judge: phi4-reasoning)"
 
 elif [ "$1" == "sqlcoder" ]; then
   cat > .env << 'ENV_CONTENT'
-# SQLCoder Model
-OLLAMA_MODEL=hf.co/TheBloke/sqlcoder-7B-GGUF:Q4_K_M
-OLLAMA_ALIAS=sqlcoder
+# SQLCoder Text2SQL + phi4-reasoning Judge
 TEXT2SQL_MODEL=sqlcoder
+JUDGE_MODEL=phi4-reasoning
 ENV_CONTENT
-  echo "Switched to SQLCoder model"
-
-elif [ "$1" == "qwen" ] || [ "$1" == "qwen-coder" ]; then
-  cat > .env << 'ENV_CONTENT'
-# Qwen2.5-Coder Model
-OLLAMA_MODEL=qwen2.5-coder:32b-instruct-q4_K_M
-OLLAMA_ALIAS=qwen-coder
-TEXT2SQL_MODEL=qwen-coder
-ENV_CONTENT
-  echo "Switched to Qwen2.5-Coder model"
+  echo "Switched to SQLCoder model (judge: phi4-reasoning)"
 
 else
-  echo "Usage: ./switch-model.sh [arctic|sqlcoder|qwen]"
+  echo "Usage: ./switch-model.sh [arctic|sqlcoder]"
   exit 1
 fi
 
@@ -43,7 +32,6 @@ echo "====================="
 # Restart just the backend
 docker compose up -d backend --no-deps
 
-# Verify the switch in logs
-echo "Checking backend logs for model initialization..."
+# Verify the switch
 sleep 2
 docker compose logs backend --tail=20 | grep -i "model.*initialized\|using model" | tail -3

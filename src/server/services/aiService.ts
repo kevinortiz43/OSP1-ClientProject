@@ -22,66 +22,88 @@ export class AIService {
   }
 
   private ensureQuotedIdentifiers(sql: string): string {
-    // 1. FIRST, extract just the SQL query (remove any explanations)
-    const sqlMatch = sql.match(/SELECT.*?;/is);
-    if (sqlMatch) {
-      sql = sqlMatch[0];
-    }
-
-    // 2. Fix double-double quotes
-    sql = sql.replace(/""([^""]+)""/g, '"$1"');
-
-    // 3. Fix UNION ALLER hallucination
-    sql = sql.replace(/UNION\s+ALLER/gi, 'UNION ALL');
-    sql = sql.replace(/UNION\s+ALL\s+ER/gi, 'UNION ALL');
-
-    // 4. Ensure table names are quoted
-    const tableNames = ['allTrustControls', 'allTrustFaqs', 'allTeams'];
-    for (const tableName of tableNames) {
-      // Match the table name when it's NOT already quoted
-      const regex = new RegExp(`(?<!")${tableName}(?!")`, 'g');
-      sql = sql.replace(regex, `"${tableName}"`);
-    }
-
-    // 5. Ensure camelCase column names are quoted (PostgreSQL requirement)
-    const columnNames = ['firstName', 'lastName', 'searchText', 'isActive', 'employeeId', 'responseTimeHours', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy'];
-    for (const columnName of columnNames) {
-      // Match the column name when it's NOT already quoted
-      const regex = new RegExp(`(?<!")${columnName}(?!")`, 'g');
-      sql = sql.replace(regex, `"${columnName}"`);
-    }
-
-    // 6. Fix category values to proper case
-    const categoryValues = [
-      'Cloud Security',
-      'Data Security', 
-      'Organizational Security',
-      'Secure Development',
-      'Privacy',
-      'Security Monitoring'
-    ];
-    
-    for (const categoryValue of categoryValues) {
-      // Case-insensitive replace of category values with correct case
-      const regex = new RegExp(`'${this.escapeRegExp(categoryValue)}'|'${this.escapeRegExp(categoryValue.toLowerCase())}'|'${this.escapeRegExp(categoryValue.toUpperCase())}'`, 'gi');
-      sql = sql.replace(regex, `'${categoryValue}'`);
-    }
-
-    // 7. REMOVE BAD JOINS
-    if (sql.includes('"allTeams"') && sql.includes('JOIN') && sql.includes('"allTrustControls"')) {
-      const match = sql.match(/WHERE\s+.*?"allTrustControls"\.category\s*=\s*'([^']+)'/i);
-      if (match) {
-        const category = match[1];
-        sql = `SELECT "firstName", "lastName", "role" FROM "allTeams" WHERE "category" ILIKE '${category}';`;
-      }
-    }
-
-    // 8. Convert category = 'value' to category ILIKE 'value' and ensure column quotes
-    sql = sql.replace(/WHERE\s+(\w+\.)?"category"\s*=\s*'([^']+)'/gi, 'WHERE $1"category" ILIKE \'$2\'');
-    sql = sql.replace(/WHERE\s+(\w+\.)?category\s*=\s*'([^']+)'/gi, 'WHERE $1"category" ILIKE \'$2\'');
-
-    return sql;
+  // 1. FIRST, extract just the SQL query (remove any explanations)
+  const sqlMatch = sql.match(/SELECT.*?;/is);
+  if (sqlMatch) {
+    sql = sqlMatch[0];
   }
+
+  // 2. Fix double-double quotes
+  sql = sql.replace(/""([^""]+)""/g, '"$1"');
+
+  // 3. Fix UNION ALLER hallucination
+  sql = sql.replace(/UNION\s+ALLER/gi, 'UNION ALL');
+  sql = sql.replace(/UNION\s+ALL\s+ER/gi, 'UNION ALL');
+
+  // 4. Handle table aliases - this is the key fix!
+  // First, capture table aliases from FROM and JOIN clauses
+  const aliasMap: Map<string, string> = new Map();
+  
+  // Find table aliases like: FROM "allTeams" t or JOIN "allTrustControls" c
+  const aliasRegex = /(?:FROM|JOIN)\s+"([^"]+)"\s+(\w+)/gi;
+  let match;
+  while ((match = aliasRegex.exec(sql)) !== null) {
+    const tableName = match[1];
+    const alias = match[2];
+    aliasMap.set(alias, tableName);
+    console.log(`Found alias: ${alias} -> ${tableName}`);
+  }
+
+  // 5. Ensure table names are quoted (but preserve aliases)
+  const tableNames = ['allTrustControls', 'allTrustFaqs', 'allTeams'];
+  for (const tableName of tableNames) {
+    // Match the table name when it's NOT already quoted and NOT part of an alias definition
+    const regex = new RegExp(`(?<!")\\b${tableName}\\b(?!")`, 'g');
+    sql = sql.replace(regex, `"${tableName}"`);
+  }
+
+  // 6. Ensure camelCase column names are quoted, including with aliases
+  const columnNames = ['firstName', 'lastName', 'searchText', 'isActive', 'employeeId', 
+                       'responseTimeHours', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy',
+                       'short', 'long', 'question', 'answer', 'id', 'category', 'role', 'email'];
+  
+  for (const columnName of columnNames) {
+    // Match column references that might have aliases: t.firstName or "t".firstName or alias.column
+    const regex = new RegExp(`(\\w+)\\.${columnName}\\b`, 'g');
+    sql = sql.replace(regex, (match, alias) => {
+      return `${alias}."${columnName}"`;
+    });
+    
+    // Match standalone column names (not preceded by alias)
+    const standaloneRegex = new RegExp(`(?<!\\.)\\b${columnName}\\b(?!\\s*=)`, 'g');
+    sql = sql.replace(standaloneRegex, `"${columnName}"`);
+  }
+
+  // 7. Fix category values to proper case
+  const categoryValues = [
+    'Cloud Security',
+    'Data Security', 
+    'Organizational Security',
+    'Secure Development',
+    'Privacy',
+    'Security Monitoring'
+  ];
+  
+  for (const categoryValue of categoryValues) {
+    const regex = new RegExp(`'${this.escapeRegExp(categoryValue)}'|'${this.escapeRegExp(categoryValue.toLowerCase())}'|'${this.escapeRegExp(categoryValue.toUpperCase())}'`, 'gi');
+    sql = sql.replace(regex, `'${categoryValue}'`);
+  }
+
+  // 8. REMOVE BAD JOINS
+  if (sql.includes('"allTeams"') && sql.includes('JOIN') && sql.includes('"allTrustControls"')) {
+    const match = sql.match(/WHERE\s+.*?"allTrustControls"\.category\s*=\s*'([^']+)'/i);
+    if (match) {
+      const category = match[1];
+      sql = `SELECT "firstName", "lastName", "role" FROM "allTeams" WHERE "category" ILIKE '${category}';`;
+    }
+  }
+
+  // 9. Convert category = 'value' to category ILIKE 'value'
+  sql = sql.replace(/WHERE\s+(\w+\.)?"category"\s*=\s*'([^']+)'/gi, 'WHERE $1"category" ILIKE \'$2\'');
+  sql = sql.replace(/WHERE\s+(\w+\.)?category\s*=\s*'([^']+)'/gi, 'WHERE $1"category" ILIKE \'$2\'');
+
+  return sql;
+}
 
   private escapeRegExp(string: string): string {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -176,7 +198,16 @@ SELECT "firstName", "lastName", "email" FROM "allTeams" WHERE "isActive" = true;
 SELECT "short", "long" FROM "allTrustControls" WHERE "searchText" ILIKE '%encryption%';
 
 -- Find people by role:
-SELECT "firstName", "lastName", "email" FROM "allTeams" WHERE "role" ILIKE '%manager%';`;
+SELECT "firstName", "lastName", "email" FROM "allTeams" WHERE "role" ILIKE '%manager%';
+
+-- Example with table aliases (columns must still be quoted):
+SELECT t."firstName", t."lastName", c."short" 
+FROM "allTeams" t 
+JOIN "allTrustControls" c ON t."category" = c."category" 
+WHERE t."role" = 'Technical Delivery Manager';
+
+`;
+
 
     const userPrompt = `Database schema is provided above.
 

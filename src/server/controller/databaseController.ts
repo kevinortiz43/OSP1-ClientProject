@@ -18,6 +18,14 @@ export const executeDatabaseQuery: RequestHandler = async (_req, res, next) => {
     const result = await db.query(databaseQuery);
     
     res.locals.databaseQueryResult = result.rows;
+    
+    // Update queryResult with the results and ensure source is preserved
+    if (res.locals.queryResult) {
+      res.locals.queryResult.results = result.rows;
+      // Make sure source is still "ai" (don't overwrite it)
+      console.log(`[DEBUG] After DB query - source is: ${res.locals.queryResult.source}`);
+    }
+    
     return next();
     
   } catch (error) {

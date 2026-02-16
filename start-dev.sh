@@ -1,10 +1,11 @@
 #!/bin/bash
 
+# Note: This script is designed for Linux/WSL2 environments
+# Windows users should use WSL2 or adapt for PowerShell
+
 # Make start-dev.sh executable (one-time)
 # chmod +x start-dev.sh
 # to run in terminal: ./start-dev.sh
-
-echo "Starting development environment..."
 
 # Step 1: Start Ollama and DB
 docker compose up -d ollama db
@@ -16,35 +17,65 @@ until docker compose exec ollama ollama list &>/dev/null; do
 done
 echo "Ollama ready!"
 
-# Step 3: Ensure models are pulled (idempotent)
-# only pulls if models aren't found (only should be pulled the 1st time you're downloading the model)
-# ollama list will show all installed models  
-
-# change model names as appropriate
+# Step 3: Ensure models are pulled (or running if already downloaded)
 echo "Ensuring models are available..."
-for model in "hf.co/mradermacher/Arctic-Text2SQL-R1-7B-GGUF:Q4_K_M" "hf.co/TheBloke/sqlcoder-7B-GGUF:Q4_K_M"; do
-  if ! docker compose exec ollama ollama list | grep -q "${model%%:*}"; then
-    echo "Pulling $model..."
-    docker compose exec ollama ollama pull "$model"
+
+# Arctic Text2SQL model
+if ! docker compose exec ollama ollama list | grep -q "arctic-text2sql"; then
+  echo "Pulling Arctic model..."
+  docker compose exec ollama ollama pull hf.co/mradermacher/Arctic-Text2SQL-R1-7B-GGUF:Q4_K_M
+  docker compose exec ollama ollama cp hf.co/mradermacher/Arctic-Text2SQL-R1-7B-GGUF:Q4_K_M arctic-text2sql
+  echo "Arctic model pulled"
+fi
+
+# SQLCoder model (optional)
+if ! docker compose exec ollama ollama list | grep -q "sqlcoder"; then
+  echo "Pulling SQLCoder model..."
+  docker compose exec ollama ollama pull hf.co/TheBloke/sqlcoder-7B-GGUF:Q4_K_M
+  docker compose exec ollama ollama cp hf.co/TheBloke/sqlcoder-7B-GGUF:Q4_K_M sqlcoder
+  echo "SQLCoder model pulled"
+fi
+
+# Phi-4-reasoning judge model (14B)
+if ! docker compose exec ollama ollama list | grep -q "phi4-reasoning"; then
+  echo "Pulling Phi-4-reasoning judge model (14B)..."
+  docker compose exec ollama ollama pull phi4-reasoning
+  echo "Phi-4-reasoning model pulled"
+fi
+
+# Step 4: Pre-load models into VRAM via API (non-blocking)
+echo "Pre-loading models into VRAM via API..."
+
+# Function to trigger model load
+load_model() {
+  local model_name=$1
+  echo "Loading ${model_name}..."
+  curl -s -X POST http://localhost:11434/api/generate \
+    -H "Content-Type: application/json" \
+    -d "{
+      \"model\": \"${model_name}\",
+      \"prompt\": \"\",
+      \"stream\": false,
+      \"options\": {\"num_predict\": 1}
+    }" > /dev/null
+  if [ $? -eq 0 ]; then
+    echo "${model_name} load triggered."
+  else
+    echo "Failed to trigger load for ${model_name}. It will load on first use."
   fi
-done
+}
 
-# Step 4: Ensure aliases exist
-# 2>/dev/null hides errors like 'alias already exists'
-# If the alias exists, it quietly does nothing
-# || true makes the script continue even if the cp fails
+# Load models sequentially (arctic fast, phi4 in background)
+load_model "arctic-text2sql"
+load_model "phi4-reasoning" &
 
-# change model names as appropriate 
-docker compose exec ollama ollama cp hf.co/mradermacher/Arctic-Text2SQL-R1-7B-GGUF:Q4_K_M arctic-text2sql 2>/dev/null || true
-docker compose exec ollama ollama cp hf.co/TheBloke/sqlcoder-7B-GGUF:Q4_K_M sqlcoder 2>/dev/null || true
+echo "Model loading initiated in background. Continuing setup..."
+# Give models a moment to start loading
+sleep 5
 
-# Step 5: Pre-load both models into VRAM 
-# change model names as appropriate
-echo "Pre-loading models into VRAM..."
-docker compose exec ollama ollama run arctic-text2sql "SELECT 1;" > /dev/null 2>&1 &
-docker compose exec ollama ollama run sqlcoder "SELECT 1;" > /dev/null 2>&1 &
-wait
-echo "Models loaded and ready"
+# Step 5: Verify VRAM usage (optional)
+echo "Current VRAM usage:"
+docker compose exec ollama nvidia-smi | grep "MiB /" | head -1
 
-# Step 6: Run database setup (your existing devo)
+# Step 6: Run database setup
 npm run devo

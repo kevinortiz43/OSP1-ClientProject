@@ -7,6 +7,8 @@ import { dataService } from "../services/dataService";
 import { parseNaturalLanguageQuery } from "../controller/naturalLanguageController";
 import { queryOfflineOpenAI } from "../controller/openaiController_local";
 import { executeDatabaseQuery } from "../controller/databaseController";  
+import { triggerBackgroundJudgment, collectMetrics } from '../controller/backgroundJobs';
+
 
 const router = express.Router();
 
@@ -103,13 +105,140 @@ router.post("/admin/clear-cache", (req, res) => {
 });
 
 // http://localhost:3000/api/ai/query
-// post user prompt convert to SQL query
+// // post user prompt convert to SQL query
+// router.post(
+//   '/ai/query',
+//   parseNaturalLanguageQuery,    // 1. Parse user input
+//   queryOfflineOpenAI,                 // 2. Try cache → search → AI
+//   executeDatabaseQuery,        // 3. Execute SQL (if any)
+//   (_req, res) => {           
+//     res.status(200).json({
+//       success: true,
+//       data: {
+//         query: res.locals.naturalLanguageQuery,
+//         source: res.locals.queryResult?.source || 'unknown',
+//         cached: res.locals.queryResult?.cached || false,
+//         results: res.locals.queryResult?.results || res.locals.databaseQueryResult || [],
+//         formatted: res.locals.queryResult?.formatted,
+//         sql: res.locals.databaseQuery,
+//         executionTime: res.locals.executionTime
+//       },
+//       timestamp: new Date().toISOString()
+//     });
+//   }
+// );
+
+
+
+
+
+
+// router.post(
+//   '/ai/query',
+//   parseNaturalLanguageQuery,
+//   queryOfflineOpenAI,
+//   executeDatabaseQuery,
+//   triggerBackgroundJudgment,  // Stores judgment data (only for AI path)
+//   // collectMetrics,             // Stores metrics data
+//   (_req, res) => {           
+//     // Send response immediately
+//     res.status(200).json({
+//       success: true,
+//       data: {
+//         query: res.locals.naturalLanguageQuery,
+//         source: res.locals.queryResult?.source || 'unknown',
+//         cached: res.locals.queryResult?.cached || false,
+//         results: res.locals.queryResult?.results || res.locals.databaseQueryResult || [],
+//         formatted: res.locals.queryResult?.formatted,
+//         sql: res.locals.databaseQuery,
+//         executionTime: res.locals.executionTime
+//       },
+//       timestamp: new Date().toISOString()
+//     });
+
+//     // AFTER response sent, run background jobs
+//     setImmediate(async () => {
+//       try {
+//         const promises = [];
+        
+//         // Only run judgment if we have data AND it's from AI source
+//         if (res.locals.judgmentData) {
+//           promises.push(
+//             import('../controller/backgroundJobs').then(m => 
+//               m.runBackgroundJudgment(res.locals.judgmentData)
+//             )
+//           );
+//         }
+       
+//         // Always run metrics if we have data
+//         // if (res.locals.metricsData) {
+//         //   promises.push(
+//         //     import('../controller/backgroundJobs').then(m => 
+//         //       m.runMetricsCollection(res.locals.metricsData)
+//         //     )
+//         //   );
+//         // }
+        
+//         if (promises.length > 0) {
+//           await Promise.all(promises);
+//         }
+//       } catch (error) {
+//         console.error('Background jobs failed:', error);
+//       }
+//     });
+//   }
+// );
+
+
+
 router.post(
   '/ai/query',
-  parseNaturalLanguageQuery,    // 1. Parse user input
-  queryOfflineOpenAI,                 // 2. Try cache → search → AI
-  executeDatabaseQuery,        // 3. Execute SQL (if any)
-  (_req, res) => {           
+  // DEBUG: Entry point
+  (req, res, next) => {
+    console.log('🔵 ROUTER: Entering /ai/query chain');
+    next();
+  },
+  
+  parseNaturalLanguageQuery,
+  
+  // DEBUG: After parse
+  (req, res, next) => {
+    console.log('🟢 After parseNaturalLanguageQuery');
+    console.log('   naturalLanguageQuery:', res.locals.naturalLanguageQuery);
+    next();
+  },
+  
+  queryOfflineOpenAI,
+  
+  // DEBUG: After AI
+  (req, res, next) => {
+    console.log('🟡 After queryOfflineOpenAI');
+    console.log('   source:', res.locals.queryResult?.source);
+    console.log('   hasSQL:', !!res.locals.databaseQuery);
+    next();
+  },
+  
+  executeDatabaseQuery,
+  
+  // DEBUG: After DB
+  (req, res, next) => {
+    console.log('🟠 After executeDatabaseQuery');
+    console.log('   results count:', (res.locals.databaseQueryResult || []).length);
+    next();
+  },
+  
+  triggerBackgroundJudgment,
+  
+  // DEBUG: After judgment trigger
+  (req, res, next) => {
+    console.log('🔴 After triggerBackgroundJudgment');
+    console.log('   judgmentData exists?', !!res.locals.judgmentData);
+    next();
+  },
+  
+  (_req, res) => {
+    console.log('⚫ Sending response');
+    
     res.status(200).json({
       success: true,
       data: {
@@ -123,11 +252,33 @@ router.post(
       },
       timestamp: new Date().toISOString()
     });
+
+    // AFTER response sent, run background jobs
+    setImmediate(async () => {
+      console.log('⚪ SETIMMEDIATE: Starting background jobs');
+      console.log('   judgmentData exists?', !!res.locals.judgmentData);
+      
+      try {
+        if (res.locals.judgmentData) {
+          console.log('   Importing backgroundJobs...');
+          const backgroundModule = await import('../controller/backgroundJobs');
+          console.log('   Running runBackgroundJudgment...');
+          await backgroundModule.runBackgroundJudgment(res.locals.judgmentData);
+          console.log('   Background judgment completed');
+        }
+      } catch (error) {
+        console.error('❌ Background jobs failed:', error);
+      }
+      console.log('⚪ SETIMMEDIATE: Finished');
+    });
   }
 );
 
 
 export default router;
+
+
+
 
 // test endpoint to see that eTags are automatically generated
 // router.get("/test-etag", (req, res) => {

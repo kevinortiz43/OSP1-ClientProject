@@ -50,6 +50,7 @@ services:
       - OLLAMA_MAX_LOADED_MODELS=2 # keep 2 models loaded
       - OLLAMA_KEEP_ALIVE=-1 # keep both models loaded forever
       - OLLAMA_DEBUG=0
+      - OLLAMA_CONTEXT_LENGTH=8192 
       - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility
     restart: unless-stopped
@@ -69,6 +70,8 @@ services:
       target: dev
     ports:
       - "3000:3000"
+    volumes:
+      - ./src/server/aiTest:/app/src/server/aiTest
     environment:
       - DATABASE_URL=postgresql://root:root@db:5432/test_db
       - NODE_ENV=development
@@ -81,7 +84,9 @@ services:
       - TEXT2SQL_URL=http://ollama:11434
       - TEXT2SQL_MODEL=${TEXT2SQL_MODEL:-arctic-text2sql} # change model here, also in .env
       # - TEXT2SQL_MODEL=${TEXT2SQL_MODEL:-sqlcoder}
-      # - TEXT2SQL_MODEL=${TEXT2SQL_MODEL:-qwen3-coder} 
+      # - TEXT2SQL_MODEL=${TEXT2SQL_MODEL:-qwen2.5-coder}
+      # - JUDGE_MODEL=${JUDGE_MODEL:-qwen3-32b} 
+      - JUDGE_MODEL=${JUDGE_MODEL:-phi4-reasoning} 
       - MODEL_REGISTRY_URL=http://ollama:11434/api/tags
       - HARDWARE_TIER=4090-workstation
     command: [ "npm", "run", "server" ]

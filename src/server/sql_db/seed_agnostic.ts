@@ -44,7 +44,7 @@ function getCSVHeadersAndFirstRow(csvPath: string): {
   const firstRow = Object.values(records[0]) as string[];
   
   console.log("parsed headers:", headers);
-  console.log("parsed 1st row:", firstRow);
+  // console.log("parsed 1st row:", firstRow);
   
   return { headers, firstRow };
 }
@@ -56,20 +56,20 @@ function inferTypeFromValue(value: string): string {
   
   // check for ISO 8601 timestamp format: "2024-01-15T10:30:00"
   if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value)) {
-    console.log('timestampz TYPE returned');
+    // console.log('timestampz TYPE returned');
     return "TIMESTAMPTZ"; // timestamp with timezone
   }
   
   // detect JSON arrays: "[1,2,3]" or '["a","b"]'
   if (value.trim().startsWith('[') && value.trim().endsWith(']')) {
-    console.log('JSONB TYPE returned for array');
+    // console.log('JSONB TYPE returned for array');
     return "JSONB"; // PostgreSQL binary JSON type
   }
 
   // detect boolean values (case-insensitive)
   const trimmedValue = value.trim().toLowerCase();
   if (trimmedValue === 'true' || trimmedValue === 'false') {
-    console.log('BOOLEAN detected:', trimmedValue);
+    // console.log('BOOLEAN detected:', trimmedValue);
     return "BOOLEAN";
   }
 
@@ -78,16 +78,16 @@ function inferTypeFromValue(value: string): string {
   if (!isNaN(num) && value.trim() !== '') {
     // check if integer (no decimal point)
     if (Number.isInteger(num) && !value.includes('.')) {
-      console.log(`INTEGER detected: ${value}`);
+      // console.log(`INTEGER detected: ${value}`);
       return "INTEGER";
     } else {
-      console.log(`NUMERIC detected: ${value}`);
+      // console.log(`NUMERIC detected: ${value}`);
       return "NUMERIC"; // decimal numbers
     }
   }
   
   // default to TEXT for strings and other types
-  console.log(`TEXT detected: ${value}`);
+  // console.log(`TEXT detected: ${value}`);
   return "TEXT";
 }
 
