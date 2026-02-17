@@ -1,9 +1,8 @@
 import { type RequestHandler } from "express";
-import { type ServerError } from "../types";
 import { AIService } from "../services/aiService";
 import db from "../sql_db/db_connect_agnostic";
 import { dataService } from "../services/dataService";
-// import { DockerDatabase } from "../sql_db/schemas-agnostic";
+import { createError } from "../errorHandler";
 import { generateSchemaDescription } from "../sql_db/schemas-helper";
 
 const aiService = new AIService();
@@ -68,7 +67,7 @@ function extractKeywords(query: string): string {
 }
 
 /**
- * Performs full-text search across all three tables using the pre-concatenated searchText column.
+ * Performs full-text search across all 3 tables using pre-concatenated searchText column.
  * 
  * WHY: This is the "fast path" - much faster than AI generation because:
  * 1. Direct database query (no AI latency)
@@ -155,18 +154,13 @@ async function fastTextSearch(query: string) {
  * - 80% of queries can be answered by cache or full-text search
  * - 20% need expensive AI generation
  */
-export const queryOfflineOpenAI: RequestHandler = async (req, res, next) => {
+export const queryOfflineOpenAI: RequestHandler = async (_, res, next) => {
   try {
     const { naturalLanguageQuery } = res.locals;
 
     if (!naturalLanguageQuery) {
-      const error: ServerError = {
-        log: "OpenAI query middleware did not receive a query",
-        status: 500,
-        message: { err: "An error occurred before querying OpenAI" },
+        return next(createError('naturalLanguageQuery not found', 400, 'openaiController'));
       };
-      return next(error);
-    }
 
     console.log("Processing query:", naturalLanguageQuery);
 
@@ -276,11 +270,19 @@ export const queryOfflineOpenAI: RequestHandler = async (req, res, next) => {
 
     return next();
     
-  } catch (error) {
-    console.error("Error in queryOfflineOpenAI:", error);
-    return next(error);
+    } catch (error) {
+      // Type guard to safely access error.message
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : 'Unknown error occurred';
+      
+      return next(createError(
+        `Failed to retrieve search results or generate SQL query: ${errorMessage}`,
+        500,
+        'openaiController'
+      ));
+    }
   }
-};
 
 
 

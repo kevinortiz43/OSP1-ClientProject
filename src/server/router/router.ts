@@ -1,13 +1,13 @@
 import express from "express";
-import faqController from "../controller/faqController";
-import trustController from "../controller/trustController";
-import teamsController from "../controller/teamsController";
+import {getTrustFaqs} from "../controller/faqController";
+import {getTrustControls} from "../controller/trustController";
+import {getTeams} from "../controller/teamsController";
 import { getCacheStats } from "../caching/cache";
 import { dataService } from "../services/dataService";
 import { parseNaturalLanguageQuery } from "../controller/naturalLanguageController";
 import { queryOfflineOpenAI } from "../controller/openaiController_local";
 import { executeDatabaseQuery } from "../controller/databaseController";  
-import { triggerBackgroundJudgment, collectMetrics } from '../controller/backgroundJobs';
+import { triggerBackgroundJudgment } from '../controller/backgroundJobs';
 
 
 const router = express.Router();
@@ -17,7 +17,7 @@ router.get("/test", (_, res) => {
 });
 
 // localhost:3000/api/trustControls
-router.get("/trustControls", trustController.getTrustControls, (req, res) => {
+router.get("/trustControls", getTrustControls, (_, res) => {
   // res.locals.dbResults contains the team data array
   // res.locals.cacheInfo contains cache metadata
   const controlsData = res.locals.dbResults;
@@ -35,7 +35,7 @@ router.get("/trustControls", trustController.getTrustControls, (req, res) => {
 });
 
 // localhost:3000/api/allTeams
-router.get("/allTeams", teamsController.getTeams, (req, res) => {
+router.get("/allTeams", getTeams, (_, res) => {
   // res.locals.dbResults contains the team data array
   // res.locals.cacheInfo contains cache metadata
   const teamsData = res.locals.dbResults;
@@ -53,7 +53,7 @@ router.get("/allTeams", teamsController.getTeams, (req, res) => {
 });
 
 // localhost:3000/api/trustFaqs
-router.get("/trustFaqs", faqController.getTrustFaqs, (req, res) => {
+router.get("/trustFaqs", getTrustFaqs, (_, res) => {
   // res.locals.dbResults contains the team data array
   // res.locals.cacheInfo contains cache metadata
   const faqsData = res.locals.dbResults;
@@ -71,8 +71,8 @@ router.get("/trustFaqs", faqController.getTrustFaqs, (req, res) => {
 });
 
 // get cache stats
-// http://localhost:3000/api/admin/cache-stats  (actually seems to work now?)
-router.get("/admin/cache-stats", (req, res) => {
+// http://localhost:3000/api/admin/cache-stats  (sometimes works, sometimes need to try again)
+router.get("/admin/cache-stats", (_, res) => {
   const stats = getCacheStats();
   res.json({
     hits: stats.hits,
@@ -105,141 +105,18 @@ router.post("/admin/clear-cache", (req, res) => {
   });
 });
 
+
+
+// POST: clean version
 // http://localhost:3000/api/ai/query
-// // post user prompt convert to SQL query
-// router.post(
-//   '/ai/query',
-//   parseNaturalLanguageQuery,    // 1. Parse user input
-//   queryOfflineOpenAI,                 // 2. Try cache → search → AI
-//   executeDatabaseQuery,        // 3. Execute SQL (if any)
-//   (_req, res) => {           
-//     res.status(200).json({
-//       success: true,
-//       data: {
-//         query: res.locals.naturalLanguageQuery,
-//         source: res.locals.queryResult?.source || 'unknown',
-//         cached: res.locals.queryResult?.cached || false,
-//         results: res.locals.queryResult?.results || res.locals.databaseQueryResult || [],
-//         formatted: res.locals.queryResult?.formatted,
-//         sql: res.locals.databaseQuery,
-//         executionTime: res.locals.executionTime
-//       },
-//       timestamp: new Date().toISOString()
-//     });
-//   }
-// );
-
-
-
-
-
-
-// router.post(
-//   '/ai/query',
-//   parseNaturalLanguageQuery,
-//   queryOfflineOpenAI,
-//   executeDatabaseQuery,
-//   triggerBackgroundJudgment,  // Stores judgment data (only for AI path)
-//   // collectMetrics,             // Stores metrics data
-//   (_req, res) => {           
-//     // Send response immediately
-//     res.status(200).json({
-//       success: true,
-//       data: {
-//         query: res.locals.naturalLanguageQuery,
-//         source: res.locals.queryResult?.source || 'unknown',
-//         cached: res.locals.queryResult?.cached || false,
-//         results: res.locals.queryResult?.results || res.locals.databaseQueryResult || [],
-//         formatted: res.locals.queryResult?.formatted,
-//         sql: res.locals.databaseQuery,
-//         executionTime: res.locals.executionTime
-//       },
-//       timestamp: new Date().toISOString()
-//     });
-
-//     // AFTER response sent, run background jobs
-//     setImmediate(async () => {
-//       try {
-//         const promises = [];
-        
-//         // Only run judgment if we have data AND it's from AI source
-//         if (res.locals.judgmentData) {
-//           promises.push(
-//             import('../controller/backgroundJobs').then(m => 
-//               m.runBackgroundJudgment(res.locals.judgmentData)
-//             )
-//           );
-//         }
-       
-//         // Always run metrics if we have data
-//         // if (res.locals.metricsData) {
-//         //   promises.push(
-//         //     import('../controller/backgroundJobs').then(m => 
-//         //       m.runMetricsCollection(res.locals.metricsData)
-//         //     )
-//         //   );
-//         // }
-        
-//         if (promises.length > 0) {
-//           await Promise.all(promises);
-//         }
-//       } catch (error) {
-//         console.error('Background jobs failed:', error);
-//       }
-//     });
-//   }
-// );
-
-
-
 router.post(
   '/ai/query',
-  // DEBUG: Entry point
-  (req, res, next) => {
-    console.log('ROUTER: Entering /ai/query chain');
-    next();
-  },
-  
   parseNaturalLanguageQuery,
-  
-  // DEBUG: After parse
-  (req, res, next) => {
-    console.log('After parseNaturalLanguageQuery');
-    console.log('   naturalLanguageQuery:', res.locals.naturalLanguageQuery);
-    next();
-  },
-  
-  queryOfflineOpenAI,
-  
-  // DEBUG: After AI
-  (req, res, next) => {
-    console.log('After queryOfflineOpenAI');
-    console.log('   source:', res.locals.queryResult?.source);
-    console.log('   hasSQL:', !!res.locals.databaseQuery);
-    next();
-  },
-  
+  queryOfflineOpenAI, 
   executeDatabaseQuery,
-  
-  // DEBUG: After DB
-  (req, res, next) => {
-    console.log('After executeDatabaseQuery');
-    console.log('   results count:', (res.locals.databaseQueryResult || []).length);
-    next();
-  },
-  
   triggerBackgroundJudgment,
-  
-  // DEBUG: After judgment trigger
-  (req, res, next) => {
-    console.log('After triggerBackgroundJudgment');
-    console.log('   judgmentData exists?', !!res.locals.judgmentData);
-    next();
-  },
-  
-  (_req, res) => {
-    console.log('Sending response');
-    
+  (_, res) => {
+    // Send response immediately
     res.status(200).json({
       success: true,
       data: {
@@ -255,37 +132,80 @@ router.post(
     });
 
     // AFTER response sent, run background jobs
- setImmediate(async () => {
-  console.log('SETIMMEDIATE: Starting background jobs');
-  console.log('   judgmentData exists?', !!res.locals.judgmentData);
+    setImmediate(async () => {
+    console.log('SETIMMEDIATE: Starting background jobs');
   
+  // Only call if we have data
   if (res.locals.judgmentData) {
-    console.log('   judgmentData structure:', Object.keys(res.locals.judgmentData));
-    console.log('   naturalLanguageQuery:', res.locals.judgmentData.naturalLanguageQuery);
-    console.log('   resultsCount:', res.locals.judgmentData.resultsCount);
-    
     try {
-      console.log('   Importing backgroundJobs...');
       const backgroundModule = await import('../controller/backgroundJobs');
-      console.log('   Running runBackgroundJudgment...');
       await backgroundModule.runBackgroundJudgment(res.locals.judgmentData);
-      console.log('Background judgment completed successfully');
     } catch (error) {
-      console.error('Background judgment failed:', error);
-      console.error('Error details:', error.message);
+      // Only log if the actual import/execution fails
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error(`Failed to execute background job: ${errorMessage}`);
     }
   } else {
-    console.log('   ⚠ No judgment data to process');
+    console.log('⚠ No judgment data to process');
   }
   console.log('SETIMMEDIATE: Finished');
-    });
-  }
-);
-
+});
 
 export default router;
 
-
+// POST: for debugging 
+// router.post(
+//   '/ai/query',
+//   (req, res, next) => {
+//     console.log('ROUTER: Entering /ai/query chain');
+//     next();
+//   },
+  
+//   parseNaturalLanguageQuery,
+//   (req, res, next) => {
+//     console.log('After parseNaturalLanguageQuery');
+//     console.log('   naturalLanguageQuery:', res.locals.naturalLanguageQuery);
+//     next();
+//   },
+  
+//   queryOfflineOpenAI, 
+//  (req, res, next) => {
+//     console.log('After queryOfflineOpenAI');
+//     console.log('   source:', res.locals.queryResult?.source);
+//     console.log('   hasSQL:', !!res.locals.databaseQuery);
+//     next();
+//   },
+  
+//   executeDatabaseQuery,
+//   (req, res, next) => {
+//     console.log('After executeDatabaseQuery');
+//     console.log('   results count:', (res.locals.databaseQueryResult || []).length);
+//     next();
+//   },
+  
+//   triggerBackgroundJudgment,
+//   (req, res, next) => {
+//     console.log('After triggerBackgroundJudgment');
+//     console.log('   judgmentData exists?', !!res.locals.judgmentData);
+//     next();
+//   },
+  
+//   (_req, res) => {
+//     console.log('Sending response');
+    
+//     res.status(200).json({
+//       success: true,
+//       data: {
+//         query: res.locals.naturalLanguageQuery,
+//         source: res.locals.queryResult?.source || 'unknown',
+//         cached: res.locals.queryResult?.cached || false,
+//         results: res.locals.queryResult?.results || res.locals.databaseQueryResult || [],
+//         formatted: res.locals.queryResult?.formatted,
+//         sql: res.locals.databaseQuery,
+//         executionTime: res.locals.executionTime
+//       },
+//       timestamp: new Date().toISOString()
+//     });
 
 
 // test endpoint to see that eTags are automatically generated

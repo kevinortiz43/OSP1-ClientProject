@@ -1,0 +1,13 @@
+{
+  "timestamp": "2026-02-17T21:24:16.995Z",
+  "naturalLanguageQuery": "sort all faqs and trust controls by category",
+  "generatedSQL": "SELECT * FROM (\n  SELECT \"category\", \"question\" AS \"faqQuestion\", NULL AS \"controlShort\", NULL AS \"controlLong\"\n  FROM \"allTrustFaqs\"\n  UNION ALL\n  SELECT \"category\", NULL AS \"faqQuestion\", \"short\" AS \"controlShort\", \"long\" AS \"controlLong\"\n  FROM \"allTrustControls\"\n) AS combined\nORDER BY \"category\";",
+  "resultsCount": 25,
+  "passed": false,
+  "score": 3,
+  "explanation": "<think>We are asked: \"You are a SQL expert judge. Evaluate if this SQL correctly answers the user's question.\" The user question is \"sort all faqs and trust controls by category\". The generated SQL is",
+  "source": "ai",
+  "executionTime": "2503ms",
+  "sqlModel": "arctic-text2sql",
+  "judgeModel": "phi4-reasoning"
+}

@@ -77,9 +77,9 @@ sleep 5
 echo "Current VRAM usage:"
 docker compose exec ollama nvidia-smi | grep "MiB /" | head -1
 
-# Step 6A: FIRST time setup only: Run database setup 
-# npm run devo
+# Step 6A: 1st time setup only: Run database setup 
+# npm run setup
 
-# Step 6B: For testing AI queries and using judge (after database already set up, backend, models, i.e. everything already set up)
+# Step 6B: Subsequent starting app (after database already set up, backend, models, i.e. everything already set up)
 # do NOT use --watch flag since it'll interfere with judge evaluation step
 docker compose up -d

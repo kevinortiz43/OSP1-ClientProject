@@ -1,31 +1,12 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
+import { type Judgment } from '../types'
 
 // set up paths
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-
-export interface Judgment {
-  timestamp: Date;
-  naturalLanguageQuery: string;
-  // Put generated and expected SQL next to each other for comparison
-  generatedSQL: string;
-  expectedSQL?: string;
-  // Results count comparison
-  resultsCount: number;
-  expectedCount?: number | string;
-  // Evaluation results
-  passed: boolean;
-  score: number;
-  explanation: string;
-  // Metadata
-  source: 'ai' | 'cache' | 'search';
-  executionTime?: string;
-  sqlModel?: string;
-  judgeModel?: string;
-}
 
 export class JudgeService {
   private readonly judgeModel: string;

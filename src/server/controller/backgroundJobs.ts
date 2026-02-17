@@ -1,8 +1,11 @@
 import { type RequestHandler } from 'express';
-import { JudgeService, type Judgment } from '../services/judgeService';
+import { JudgeService } from '../services/judgeService';
+import { type Judgment, TestSet } from '../types';
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
+import { createError } from "../errorHandler";
+ 
 
 // set up __dirname path
 const __filename = fileURLToPath(import.meta.url);
@@ -11,7 +14,7 @@ const __dirname = path.dirname(__filename);
 const judgeService = new JudgeService();
 
 // Load test set on startup - OS-agnostic path
-let testSet: Array<{ naturalLanguageQuery: string; expectedResponse: any }> = [];
+let testSet: TestSet = [];
 const testQuestionsPath = path.join(__dirname, '..', 'aiTest', 'test-questions.json');
 
 try {
@@ -30,7 +33,7 @@ try {
  * Trigger background judgment AFTER response is sent
  * Only runs for AI-generated SQL (not cache or search)
  */
-export const triggerBackgroundJudgment: RequestHandler = (req, res, next) => {
+export const triggerBackgroundJudgment: RequestHandler = (_, res, next) => {
   // DEBUG: Log everything
   console.log('=== TRIGGER BACKGROUND JUDGMENT ===');
   console.log('queryResult.source:', res.locals.queryResult?.source);
@@ -52,7 +55,7 @@ export const triggerBackgroundJudgment: RequestHandler = (req, res, next) => {
     console.log('  SQL:', res.locals.databaseQuery);
     console.log('  Results count:', resultsCount);
 
-    // FIX: Store ALL the data that runBackgroundJudgment needs
+    //  Store ALL the data that runBackgroundJudgment needs
     res.locals.judgmentData = {
       naturalLanguageQuery: res.locals.naturalLanguageQuery,
       generatedSQL: res.locals.databaseQuery,
@@ -316,12 +319,12 @@ function calculateOverallScore(scores: {
  */
 export async function runBackgroundJudgment(data: any): Promise<void> {
   if (!data) {
-    console.log('No judgment data to process');
+    console.log(createError('No judgment data to process', 400, 'backgroundJobs').log);
     return;
   }
 
   console.log(`Running background judgment for: "${data.naturalLanguageQuery?.substring(0, 50) || 'unknown'}"...`);
-  console.log('  Received data keys:', Object.keys(data));
+  console.log('Received data keys:', Object.keys(data));
 
   try {
     // Safely extract results - handle both possible structures
@@ -354,7 +357,7 @@ export async function runBackgroundJudgment(data: any): Promise<void> {
 
     // Check if this is a test case
     if (testCase) {
-      console.log('✓ Test case found, using rule-based evaluation');
+      console.log('Test case found, using rule-based evaluation');
       
       const expectedMinCount = extractExpectedCount(testCase.expectedResponse.resultsCount);
       
@@ -387,7 +390,7 @@ export async function runBackgroundJudgment(data: any): Promise<void> {
       judgment.explanation = explanations.join('. ');
       
     } else {
-      console.log('ℹ No test case found, using LLM judge for ad-hoc query');
+      console.log('No test case found, using LLM judge for ad-hoc query');
       
       // Only call LLM judge if we have results
       if (results.length > 0) {
@@ -410,39 +413,15 @@ export async function runBackgroundJudgment(data: any): Promise<void> {
     // Save to JSON file
     const filepath = await judgeService.saveJudgment(judgment);
     console.log(`Judgment saved: ${filepath}`);
-    console.log(`   Score: ${judgment.score}/5 - ${judgment.passed ? 'PASSED' : 'FAILED'}`);
+    console.log(`Score: ${judgment.score}/5 - ${judgment.passed ? 'PASSED' : 'FAILED'}`);
     
   } catch (error) {
-    console.error('Background judgment failed:', error);
-    console.error('   Error details:', error.message);
-    console.error('   Stack:', error.stack);
+    // Error handling lives WITH the background job logic
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error(createError(
+      `Background judgment failed: ${errorMessage}`,
+      500,
+      'backgroundJobs'
+    ).log);
+    }
   }
-}
-
-/**
- * Collect metrics placeholder
- */
-export const collectMetrics: RequestHandler = (req, res, next) => {
-  // Store metrics data for background processing
-  res.locals.metricsData = {
-    timestamp: new Date(),
-    path: req.path,
-    method: req.method,
-    responseTime: res.locals.executionTime,
-    source: res.locals.queryResult?.source,
-    model: process.env.TEXT2SQL_MODEL,
-    queryLength: res.locals.naturalLanguageQuery?.length || 0,
-    resultsCount: (res.locals.databaseQueryResult || []).length,
-    hasSQL: !!res.locals.databaseQuery
-  };
-
-  next();
-};
-
-export async function runMetricsCollection(data: any): Promise<void> {
-  // Placeholder for future metrics collection
-  console.log('Metrics collected (placeholder):', {
-    ...data,
-    timestamp: data.timestamp.toISOString()
-  });
-}

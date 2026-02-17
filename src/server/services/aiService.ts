@@ -1,9 +1,4 @@
-export interface TextToSQLOptions {
-    prompt: string;
-    schemaDescription: string;
-    categories?: string[];
-    instructions?: string;
-}
+import { type TextToSQLOptions } from "../types";
 
 export class AIService {
   private readonly modelUrl: string;

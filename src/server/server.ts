@@ -1,10 +1,9 @@
-// import path from "path";
+
 import cors from "cors";
-import express, { Request, Response, NextFunction } from "express";
-// import dotenv from "dotenv";
+import express from "express";
 import "dotenv/config";
 import router from "./router/router";
-
+import { notFound, errorHandler } from "./errorHandler"; 
 
 const PORT = 3000;
 
@@ -20,15 +19,21 @@ const corsOptions = {
 // add cors
 app.use(cors(corsOptions));
 
-
-app.use(express.json());
-
-app.use("/api", router);
-
 // parsing middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // if we have forms
 
+// ROUTES
+app.use("/api", router);
+
+// 404 handler - catches any routes that weren't matched
+// If request reaches here, no route handled it
+app.use(notFound);
+
+
+// Global error handler - catches any errors passed to next()
+// Must be LAST
+app.use(errorHandler);
 
 
 /* start server */

@@ -1,22 +1,10 @@
 import { getCache, setCache, clearCache, clearCacheByPattern } from '../caching/cache';
 import { dockerPool } from '../sql_db/db_connect_agnostic';
+import { type CachedSearchResult } from '../types';
 
 // cache keys for consistency
 // couldn't use enum due to "This syntax is not allowed when 'erasableSyntaxOnly' is enabled," means you are using a TypeScript construct that generates runtime JavaScript code, which is forbidden by the erasableSyntaxOnly compiler option. The enum declaration is one such construct. 
 
-// MOVE into types.ts later
-export interface CachedSearchResult {
-  results: Array<{
-    source: string;
-    id: string;
-    title: string;
-    description: string;
-    category?: string;
-    searchText?: string;
-  }>;
-  formatted: string;
-  timestamp: string;
-}
 
 // cache keys for consistency
 // couldn't use enum due to "This syntax is not allowed when 'erasableSyntaxOnly' is enabled," means you are using a TypeScript construct that generates runtime JavaScript code, which is forbidden by the erasableSyntaxOnly compiler option. The enum declaration is one such construct.

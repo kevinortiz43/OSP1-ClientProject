@@ -1,0 +1,13 @@
+{
+  "timestamp": "2026-02-17T21:23:17.990Z",
+  "naturalLanguageQuery": "who are all managers and what controls are they responsible for",
+  "generatedSQL": "SELECT t.\"firstName\", t.\"lastName\", c.\"short\" \nFROM \"allTeams\" t \nJOIN \"allTrustControls\" c ON t.\"category\" = c.\"category\" \nWHERE t.\"role\" ILIKE '%manager%';",
+  "resultsCount": 11,
+  "passed": false,
+  "score": 3,
+  "explanation": "<think>We are asked: \"You are a SQL expert judge. Evaluate if this SQL correctly answers the user's question.\" The question is: \"who are all managers and what controls are they responsible for\". The g",
+  "source": "ai",
+  "executionTime": "5179ms",
+  "sqlModel": "arctic-text2sql",
+  "judgeModel": "phi4-reasoning"
+}
