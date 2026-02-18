@@ -21,11 +21,9 @@ interface Faqs {
   selectedCategories: string[];
 }
 
-
-
-
-const Faqs = ({ selectedCategories }) => {
+const Faqs: React.FC<Faqs> = ({ selectedCategories }) => {
   const [faqs, setFaqs] = useState<FAQ[]>([]); //state to hold fetched FAQs
+  const [filteredFaqs, setFilteredFaqs] = useState<FAQ[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null); //state to track expanded FAQ (starts as null)
   const [loading, setLoading] = useState(true); //state to track loading status (starts as true)
   const [error, setError] = useState<string | null>(null); //state to track error status (starts as null which means no error)
@@ -39,6 +37,7 @@ const Faqs = ({ selectedCategories }) => {
 
         const infoObj = await response.json();
         setFaqs(infoObj.data);
+        setFilteredFaqs(infoObj.data);
         setLoading(false);
       } catch (err) {
         if (err && err.message) {
@@ -52,6 +51,18 @@ const Faqs = ({ selectedCategories }) => {
 
     fetchFaqs();
   }, []);
+
+  //filter FAQS when selected category change
+  useEffect(() => {
+    if (selectedCategories.length === 0) {
+      setFilteredFaqs(faqs); //show all if no filter
+    } else {
+      const filtered = faqs.filter((faq) =>
+        selectedCategories.includes(faq.category),
+      );
+      setFilteredFaqs(filtered);
+    }
+  }, [selectedCategories, faqs]); //re-run when filter or data changes
 
   //when clicking on FAQ, toggle its expanded state
   const toggleFaq = (id: string) => {
@@ -67,39 +78,43 @@ const Faqs = ({ selectedCategories }) => {
         <h1 className="faqs_title">FAQs</h1>
       </div>
 
-      <div className="faqs_list">
-        {faqs.map((faq) => (
-          <div key={faq.id} className="faq_card">
-            <button
-              className={`faq_button ${expandedId === faq.id ? "active" : ""}`}
-              onClick={() => toggleFaq(faq.id)}
-              aria-expanded={expandedId === faq.id}
-            >
-              <div className="faq_header">
-                <div className="faq_icon_wrapper">
+      {/* filter status */}
+      {selectedCategories.length > 0 && filteredFaqs.length === 0 ? (
+        <div className="no-results">No FAQs match the selected categories</div>
+      ) : (
+        <div className="faqs_list">
+          {filteredFaqs.map((faq) => (
+            <div key={faq.id} className="faq_card">
+              <button
+                className={`faq_button ${expandedId === faq.id ? "active" : ""}`}
+                onClick={() => toggleFaq(faq.id)}
+                aria-expanded={expandedId === faq.id}
+              >
+                <div className="faq_header">
+                  <div className="faq_icon_wrapper">
+                    <FontAwesomeIcon
+                      icon={faCircleQuestion}
+                      className="faq_icon"
+                    />
+                  </div>
+                  <div className="faq_text">
+                    <h3 className="faq_question">{faq.question}</h3>
+                  </div>
                   <FontAwesomeIcon
-                    icon={faCircleQuestion}
-                    className="faq_icon"
+                    icon={faChevronDown}
+                    className={`faq_chevron ${expandedId === faq.id ? "rotated" : ""}`}
                   />
                 </div>
-                <div className="faq_text">
-                  <h3 className="faq_question">{faq.question}</h3>
+              </button>
+              {expandedId === faq.id && (
+                <div className="faq_answer">
+                  <p>{faq.answer}</p>
                 </div>
-                <FontAwesomeIcon
-                  icon={faChevronDown}
-                  className={`faq_chevron ${expandedId === faq.id ? "rotated" : ""}`}
-                />
-              </div>
-            </button>
-            {/* conditional rendering if true show answer */}
-            {expandedId === faq.id && (
-              <div className="faq_answer">
-                <p>{faq.answer}</p>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

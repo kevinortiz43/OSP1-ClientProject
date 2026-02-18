@@ -1,5 +1,5 @@
 import Select from 'react-select';
-
+import "./SearchBar.css";
 
 interface MultiSelectProps {
   onFilterChange: (selectedCategories: string[]) => void;
