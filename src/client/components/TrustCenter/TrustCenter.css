@@ -1,4 +1,24 @@
 /* TrustCenter.css */
+
+@font-face {
+  font-family: Helvetica;
+
+  src: url("../Fonts/HelveticaNowDisplay.otf"), format("otf");
+}
+
+@font-face {
+  font-family: Helvetica;
+  src: url("../Fonts/HelveticaNowDisplayBold.otf"), format("otf");
+  font-weight: bold;
+}
+
+@font-face {
+  font-family: Helvetica;
+  src: url("../Fonts/HelveticaNowDisplayLight.otf"), format("otf");
+  font-weight: light;
+}
+
+
 .trusts_container {
   display: flex;
   flex-direction: column;
@@ -14,24 +34,20 @@
 
 .trusts_title {
   font-size: 28px;
-  font-weight: 700;
-  color: #1a1a1a;
+  font-weight: bold;
+  color: #262836;
   margin: 0 0 8px 0;
-  font-family: Arial, sans-serif;
+  font-family: Helvetica;
 }
 
 .trusts_subtitle {
+  font-family: Helvetica;
+  font-weight: 400;
   font-size: 15px;
-  color: #666666;
+  line-height: 20px;
   margin: 0;
-  font-family: Arial, sans-serif;
+  color: #5d6d78;
 }
-
-/* .trusts_list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-} */
 
 .trusts_list {
   display: grid;
@@ -59,7 +75,7 @@
   cursor: pointer;
   padding: 0;
   text-align: left;
-  font-family: Arial, sans-serif;
+  font-family: Helvetica;
 }
 
 .trust_header {
@@ -101,17 +117,18 @@
 }
 
 .trust_question {
+  font-family: Helvetica;
+  font-weight: 700;
   font-size: 16px;
-  font-weight: 600;
-  color: #1a1a1a;
+  line-height: 20px;
+  color: #262836;
   margin: 0 0 4px 0;
-  font-family: Arial, sans-serif;
 }
 
 .trust_category {
   font-size: 13px;
   color: #999999;
-  font-family: Arial, sans-serif;
+  font-family:  Helvetica;
 }
 
 .trust_chevron {
@@ -132,11 +149,12 @@
 }
 
 .trust_answer p {
+  font-family: Helvetica;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 20px;
   margin: 0;
-  font-size: 18px;
-  line-height: 1.6;
-  color: #666666;
-  font-family: Arial, sans-serif;
+  color: #5d6d78;
 }
 
 @keyframes slideDown {

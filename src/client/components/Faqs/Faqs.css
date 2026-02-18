@@ -1,4 +1,24 @@
 /* Faqs.css */
+
+@font-face {
+  font-family: Helvetica;
+
+  src: url("../Fonts/HelveticaNowDisplay.otf"), format("otf");
+}
+
+@font-face {
+  font-family: Helvetica;
+  src: url("../Fonts/HelveticaNowDisplayBold.otf"), format("otf");
+  font-weight: bold;
+}
+
+@font-face {
+  font-family: Helvetica;
+  src: url("../Fonts/HelveticaNowDisplayLight.otf"), format("otf");
+  font-weight: light;
+}
+
+
 .faqs_container {
   display: flex;
   flex-direction: column;
@@ -16,16 +36,16 @@
 .faqs_title {
   font-size: 28px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: #262836;
   margin: 0 0 8px 0;
-  font-family: Arial, sans-serif;
+  font-family: Helvetica;
 }
 
 .faqs_subtitle {
   font-size: 15px;
-  color: #666666;
+  color: #5d6d78;
   margin: 0;
-  font-family: Arial, sans-serif;
+  font-family: Helvetica;
 }
 
 .faqs_list {
@@ -54,7 +74,7 @@
   cursor: pointer;
   padding: 0;
   text-align: left;
-  font-family: Arial, sans-serif;
+  font-family: Helvetica;
 }
 
 .faq_header {
@@ -98,15 +118,15 @@
 .faq_question {
   font-size: 16px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: #262836;
   margin: 0 0 4px 0;
-  font-family: Arial, sans-serif;
+  font-family: helvetica;
 }
 
 .faq_category {
   font-size: 13px;
   color: #999999;
-  font-family: Arial, sans-serif;
+  font-family: Helvetica;
 }
 
 .faq_chevron {
@@ -128,10 +148,10 @@
 
 .faq_answer p {
   margin: 0;
-  font-size: 18px;
+  font-size: 16px;
   line-height: 1.6;
-  color: #666666;
-  font-family: Arial, sans-serif;
+  color: #5d6d78;
+  font-family: Helvetica;
 }
 
 @keyframes slideDown {
