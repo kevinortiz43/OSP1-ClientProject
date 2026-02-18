@@ -131,7 +131,81 @@ export const dataService = {
     
     setCache(cacheKey, cacheData, SEARCH_CACHE_TTL);
     console.log(`Search cache SET: ${normalizedQuery}`);
+  },
+
+// search cached data (to avoid querying database, if unnecessary)
+searchCachedData(keywords: string[]): Array<{
+  source: 'trust_control' | 'trust_faq' | 'team';
+  id: number;
+  title: string;
+  description: string;
+  category: string;
+  searchText: string;
+}> {
+  const results = [];
+  const keywordSet = new Set(keywords.map(k => k.toLowerCase()));
+  
+  // Helper function to check if any keyword matches searchText
+  const matches = (searchText: string): boolean => {
+    const text = searchText.toLowerCase();
+    return Array.from(keywordSet).some(keyword => text.includes(keyword));
+  };
+
+  // Search cached trust controls
+  const controls = getCache(CacheKeys.CONTROLS_ALL);
+  if (controls && Array.isArray(controls)) {
+    controls.forEach((item: any) => {
+      if (matches(item.searchText || '')) {
+        results.push({
+          source: 'trust_control',
+          id: item.id,
+          title: item.short,
+          description: item.long,
+          category: item.category,
+          searchText: item.searchText
+        });
+      }
+    });
   }
+
+  // Search cached FAQs
+  const faqs = getCache(CacheKeys.FAQS_ALL);
+  if (faqs && Array.isArray(faqs)) {
+    faqs.forEach((item: any) => {
+      if (matches(item.searchText || '')) {
+        results.push({
+          source: 'trust_faq',
+          id: item.id,
+          title: item.question,
+          description: item.answer,
+          category: item.category,
+          searchText: item.searchText
+        });
+      }
+    });
+  }
+
+  // Search cached teams
+  const teams = getCache(CacheKeys.TEAMS_ALL);
+  if (teams && Array.isArray(teams)) {
+    teams.forEach((item: any) => {
+      if (matches(item.searchText || '')) {
+        results.push({
+          source: 'team',
+          id: item.id,
+          title: `${item.firstName || ''} ${item.lastName || ''}`.trim(),
+          description: item.role,
+          category: item.category,
+          searchText: item.searchText
+        });
+      }
+    });
+  }
+
+  // Sort by source priority (controls first, then faqs, then teams)
+  const priority = { trust_control: 1, trust_faq: 2, team: 3 };
+  return results.sort((a, b) => priority[a.source] - priority[b.source]).slice(0, 10);
+}
 
   
 };

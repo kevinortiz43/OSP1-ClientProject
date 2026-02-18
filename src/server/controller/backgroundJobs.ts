@@ -13,7 +13,7 @@ const __dirname = path.dirname(__filename);
 
 const judgeService = new JudgeService();
 
-// Load test set on startup - OS-agnostic path
+// load test set - OS-agnostic path
 let testSet: TestSet = [];
 const testQuestionsPath = path.join(__dirname, '..', 'aiTest', 'test-questions.json');
 
@@ -34,11 +34,8 @@ try {
  * Only runs for AI-generated SQL (not cache or search)
  */
 export const triggerBackgroundJudgment: RequestHandler = (_, res, next) => {
-  // DEBUG: Log everything
-  console.log('=== TRIGGER BACKGROUND JUDGMENT ===');
-  console.log('queryResult.source:', res.locals.queryResult?.source);
-  console.log('databaseQuery:', res.locals.databaseQuery);
-  console.log('databaseQueryResult length:', (res.locals.databaseQueryResult || []).length);
+
+  console.log('TRIGGER BACKGROUND JUDGMENT');
 
   const source = res.locals.queryResult?.source;
   const hasSQL = !!res.locals.databaseQuery;
@@ -49,27 +46,18 @@ export const triggerBackgroundJudgment: RequestHandler = (_, res, next) => {
     const results = res.locals.databaseQueryResult || [];
     const resultsCount = results.length;
 
-    // DEBUG: Log exactly what's being stored
-    console.log('STORING JUDGMENT DATA:');
-    console.log('  Query:', res.locals.naturalLanguageQuery);
-    console.log('  SQL:', res.locals.databaseQuery);
-    console.log('  Results count:', resultsCount);
-
     //  Store ALL the data that runBackgroundJudgment needs
     res.locals.judgmentData = {
       naturalLanguageQuery: res.locals.naturalLanguageQuery,
       generatedSQL: res.locals.databaseQuery,
-      results: results,  // Use the variable, not the original
-      resultsCount: resultsCount,  // Use the variable, not the original
       expectedSQL: undefined,
+      results: results,
+      resultsCount: resultsCount,
       expectedCount: undefined,
       source: source,
       executionTime: res.locals.executionTime,
       sqlModel: process.env.TEXT2SQL_MODEL,
-      // FIX: Add these fields that runBackgroundJudgment expects
-      data: {  // Some parts of your code expect data.results
-        results: results
-      }
+      judgeModel: process.env.JUDGE_MODEL
     };
     console.log(`Judgment data stored for: "${res.locals.naturalLanguageQuery.substring(0, 50)}..."`);
     console.log('  Judgment data structure:', Object.keys(res.locals.judgmentData));
@@ -311,12 +299,6 @@ function calculateOverallScore(scores: {
 /**
  * Execute judgment in background (called after response)
  */
-/**
- * Execute judgment in background (called after response)
- */
-/**
- * Execute judgment in background (called after response)
- */
 export async function runBackgroundJudgment(data: any): Promise<void> {
   if (!data) {
     console.log(createError('No judgment data to process', 400, 'backgroundJobs').log);
@@ -328,10 +310,16 @@ export async function runBackgroundJudgment(data: any): Promise<void> {
 
   try {
     // Safely extract results - handle both possible structures
-    const results = data.results || (data.data?.results) || [];
-    const resultsCount = data.resultsCount || results.length || 0;
-    const generatedSQL = data.generatedSQL || '';
-    const naturalLanguageQuery = data.naturalLanguageQuery || '';
+    const {
+      naturalLanguageQuery,
+      generatedSQL,
+      results = [],
+      source = 'ai',
+      executionTime,
+      sqlModel
+    } = data;
+
+    const resultsCount = results.length;
     
     // Find matching test case
     const testCase = testSet.find(t => 
@@ -341,17 +329,17 @@ export async function runBackgroundJudgment(data: any): Promise<void> {
     // Create judgment with safe defaults
     const judgment: Judgment = {
       timestamp: new Date(),
-      naturalLanguageQuery: naturalLanguageQuery,
-      generatedSQL: generatedSQL,
+      naturalLanguageQuery,
+      generatedSQL,
       expectedSQL: testCase?.expectedResponse?.sql,
-      resultsCount: resultsCount,
+      resultsCount,
       expectedCount: testCase?.expectedResponse?.resultsCount,
       passed: false,
       score: 0,
       explanation: '',
-      source: data.source || 'ai',
-      executionTime: data.executionTime,
-      sqlModel: data.sqlModel || process.env.TEXT2SQL_MODEL,
+      source,
+      executionTime,
+      sqlModel: sqlModel || process.env.TEXT2SQL_MODEL,
       judgeModel: process.env.JUDGE_MODEL
     };
 

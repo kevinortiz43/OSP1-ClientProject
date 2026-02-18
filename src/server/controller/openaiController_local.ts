@@ -10,9 +10,6 @@ const aiService = new AIService();
 /**
  * Normalizes a query string for consistent cache key generation.
  * 
- * WHY: Different users might ask the same question in slightly different ways:
- * "Who handles security?" vs "who handles security?" should hit the same cache.
- * 
  * PROCESS:
  * 1. Lowercase everything
  * 2. Remove punctuation (replace with spaces)
@@ -33,13 +30,10 @@ function normalizeQuery(query: string): string {
 /**
  * Extracts meaningful keywords from query for full-text search.
  * 
- * WHY: PostgreSQL full-text search works best with significant keywords,
- * not common words (stop words) that appear in every query.
- * 
  * PROCESS:
  * 1. Lowercase and clean the query
  * 2. Split into individual words
- * 3. Remove words that are too short (< 3 chars) - they're usually not meaningful
+ * 3. Remove words that are too short (< 3 chars) - usually not meaningful
  * 4. Remove common English stop words that don't add search value
  * 5. Join remaining keywords with ' & ' for PostgreSQL tsquery format
  * 
@@ -57,7 +51,7 @@ function extractKeywords(query: string): string {
     .split(' ')                    // Split into words
     // Remove words that are too short to be meaningful
     .filter(word => word.length > 2)
-    // Remove common English stop words (words that don't help searching)
+    // Remove common English stop words (words that don't help searching) - add more as needed
     .filter(word => ![
       'what', 'who', 'where', 'when', 'why', 'how',  // Question words
       'the', 'and', 'for', 'are', 'is',              // Common articles/conjunctions
@@ -69,33 +63,63 @@ function extractKeywords(query: string): string {
 /**
  * Performs full-text search across all 3 tables using pre-concatenated searchText column.
  * 
- * WHY: This is the "fast path" - much faster than AI generation because:
+ * A pre-concatenated searchText column is a database technique where multiple fields (e.g., FirstName, LastName, role, etc.) 
+ * are combined into a single, dedicated text column (SearchText) to improve search performance and simplify queries. 
+ * Instead of searching across multiple different columns, the system only needs to scan this single column.
+ * 
+ * WHY: searchText as "fast path" than AI generation because:
  * 1. Direct database query (no AI latency)
- * 2. Uses PostgreSQL's optimized full-text search with GIN indexes
+ * 2. Uses PostgreSQL's optimized full-text search 
  * 3. No network calls to AI service
  * 
  * The searchText column is pre-concatenated at insert/update time with all searchable text,
  * making searches very efficient (single column search instead of multiple columns).
  * 
- * Returns results from all three tables with a sort_priority:
+ * Returns results from all 3 tables with a sort_priority:
  * 1 = Trust Controls (most relevant)
  * 2 = FAQs 
  * 3 = Team members
  */
 
-async function fastTextSearch(query: string) {
+async function fastTextSearch(query: string): Promise<{
+  results: any[];
+  source: 'search-cache' | 'search-db';
+}> {
   const keywords = extractKeywords(query);
 
-  
   // If no meaningful keywords after filtering, return empty results
   if (!keywords) {
-    return [];
+    return { results: [], source: 'search-db' }; // default to db source
   }
 
-   // Single query searching all three tables with UNION ALL
-  // to_tsvector('english', "searchText") creates a searchable text vector
-  // @@ is the match operator for tsquery
-  // to_tsquery('english', $1) converts keywords to PostgreSQL search format
+  // Split keywords for cached search (removes ' & ' formatting)
+  const keywordList = keywords.split(' & ').filter(k => k.length > 0);
+  
+  // TRY CACHED SEARCH FIRST (SUPER FAST - no database)
+  console.log("Attempting cached search first...");
+  const cachedResults = dataService.searchCachedData(keywordList);
+  
+  if (cachedResults.length > 0) {
+    console.log(`Found ${cachedResults.length} matches in cache`);
+    return { 
+      results: cachedResults, 
+      source: 'search-cache'  // Distinguish cache source
+    };
+  }
+
+  console.log("No matches in cache, falling back to database search...");
+
+// Single query searching all 3 tables with UNION ALL
+// to_tsvector('english', "searchText") creates a searchable text vector
+// @@ is the match operator for tsquery
+// to_tsquery('english', $1) converts keywords to PostgreSQL search format
+// "english": use english language rules (language-aware search) 
+// Ex: WHERE to_tsvector('english', "searchText") @@ to_tsquery('english', 'response & time & data & security & team')
+// Converts the "searchText" column into a searchable index, language-aware search
+//"Find me rows where the searchText, when analyzed as English text, contains ALL of the words: response, time, data, security, and team (considering their various forms)"
+// better than just doing LIKE '%security%' because it understands language
+//  UNION ALL like taping 3 different lists together
+
   const searchQuery = `
     SELECT 
       'trust_control' as source,
@@ -139,7 +163,10 @@ async function fastTextSearch(query: string) {
   `;
 
   const result = await db.query(searchQuery, [keywords]);
-  return result.rows;
+  return { 
+    results: result.rows, 
+    source: 'search-db'  // Distinguish database source
+  };
 }
 
 /**
@@ -147,13 +174,10 @@ async function fastTextSearch(query: string) {
  * 
  * PIPELINE (in order of increasing cost):
  * 1. Cache check (fastest) - Return previously computed results
- * 2. Full-text search (fast) - Direct database search using searchText
- * 3. AI generation (slowest) - Generate SQL and execute it
- * 
- * This tiered approach optimizes for the 80/20 rule:
- * - 80% of queries can be answered by cache or full-text search
- * - 20% need expensive AI generation
- */
+ * 2. Full-text search (fast) - First check if cached tables exist. If so, perform searchText search on cache.
+ * Otherwise, database search using searchText
+ * 3. AI generation (slowest) - Generate SQL and execute it via database query
+  */
 export const queryOfflineOpenAI: RequestHandler = async (_, res, next) => {
   try {
     const { naturalLanguageQuery } = res.locals;
@@ -164,11 +188,11 @@ export const queryOfflineOpenAI: RequestHandler = async (_, res, next) => {
 
     console.log("Processing query:", naturalLanguageQuery);
 
-    // ============= STAGE 1: NORMALIZATION =============
+    // STAGE 1: NORMALIZATION
     // Create a consistent cache key regardless of punctuation/casing variations
     const normalizedQuery = normalizeQuery(naturalLanguageQuery);
 
-    // ============= STAGE 2: CACHE CHECK =============
+    // STAGE 2: CACHE CHECK
     // Check if we've answered this exact normalized query before
     console.log("Checking cache...");
     const cachedResult = await dataService.getCachedSearch(normalizedQuery);
@@ -180,22 +204,22 @@ export const queryOfflineOpenAI: RequestHandler = async (_, res, next) => {
         source: "cache",
         results: cachedResult.results,
         formatted: cachedResult.formatted,
-        sql: null,                                      // No SQL for cached results
+        sql: null,                            
         cached: true,
         cacheTime: cachedResult.timestamp,
       };
 
       res.locals.databaseQuery = null;
-      return next();
+      return next(); // can exit middleware early if cachedResult is found
     }
 
     console.log("CACHE MISS");
 
-    // ============= STAGE 3: TEXT SEARCH =============
-    // Fast path: Try full-text search before going to AI
-    // This handles most common queries without AI latency/cost
+    // STAGE 3: TEXT SEARCH
+    // Fast path: Try full-text search first on cache, then database, before going to AI
+    // Hopefully handles most common queries without AI latency/cost
     console.log("Fast path: Searching searchText...");
-    const searchResults = await fastTextSearch(normalizedQuery);
+    const { results: searchResults, source: searchSource } = await fastTextSearch(normalizedQuery);
 
     if (searchResults.length > 0) {
       console.log(`Found ${searchResults.length} direct matches`);
@@ -223,7 +247,7 @@ export const queryOfflineOpenAI: RequestHandler = async (_, res, next) => {
       await dataService.setCachedSearch(normalizedQuery, resultData);
 
       res.locals.queryResult = {
-        source: "search",
+        source: searchSource,
         results: searchResults,
         formatted: formattedResults,
         sql: null,
@@ -236,7 +260,7 @@ export const queryOfflineOpenAI: RequestHandler = async (_, res, next) => {
 
     console.log("No direct matches found, falling back to AI path...");
 
-    // ============= STAGE 4: AI SQL GENERATION =============
+    // STAGE 4: AI SQL GENERATION
     // Expensive path: Only when cache miss AND no text search results
  
     console.log("AI path: Generating schema from type definitions...");
@@ -244,7 +268,7 @@ export const queryOfflineOpenAI: RequestHandler = async (_, res, next) => {
     const startTime = Date.now();
 
     // Generate schema description dynamically from the TypeScript interfaces
-    // This ensures schema is always in sync with our type definitions
+    // Ensures schema is always in sync with our type definitions
     const schemaDescription = generateSchemaDescription();
 
     const sqlQuery = await aiService.textToSQL({
@@ -260,18 +284,17 @@ export const queryOfflineOpenAI: RequestHandler = async (_, res, next) => {
     console.log("Generated SQL:", sqlQuery);
     console.log('AI execution time:', res.locals.executionTime);
 
-    res.locals.databaseQuery = sqlQuery;
-    res.locals.queryResult = {
+    res.locals.databaseQuery = sqlQuery; // for use in databaseController middleware
+    res.locals.queryResult = { // for response to frontend
       source: "ai",
       sql: sqlQuery,
-      results: null,
+      results: null, // will be populated after querying database
       cached: false
     };
 
     return next();
     
     } catch (error) {
-      // Type guard to safely access error.message
       const errorMessage = error instanceof Error 
         ? error.message 
         : 'Unknown error occurred';
@@ -284,70 +307,3 @@ export const queryOfflineOpenAI: RequestHandler = async (_, res, next) => {
     }
   }
 
-
-
-
-// Step 4: hard-coded version in case dynamic version fails
-    // Build schema description for the AI model
-    // Note: This duplicates the schema in aiService.ts system prompt
-    // We keep both because:
-    // 1. System prompt ensures AI follows formatting rules
-    // 2. This provides dynamic context specific to the query
-// let schemaDescription = "Database schema for security compliance:\n\n";
-
-// schemaDescription += `Table: "allTrustControls"\n`;
-// schemaDescription += `Columns:\n`;
-// schemaDescription += `  - id (string): Primary key\n`;
-// schemaDescription += `  - category (string): Values are 'Cloud Security', 'Data Security', 'Organizational Security', 'Secure Development', 'Privacy', 'Security Monitoring'\n`;
-// schemaDescription += `  - short (string): Brief control description\n`;
-// schemaDescription += `  - long (string): Detailed control description\n`;
-// schemaDescription += `  - searchText (string): Full-text search column\n\n`;
-
-// schemaDescription += `Table: "allTrustFaqs"\n`;
-// schemaDescription += `Columns:\n`;
-// schemaDescription += `  - id (string): Primary key\n`;
-// schemaDescription += `  - category (string): Values are 'Cloud Security', 'Data Security', 'Organizational Security', 'Secure Development', 'Privacy', 'Security Monitoring'\n`;
-// schemaDescription += `  - question (string): FAQ question\n`;
-// schemaDescription += `  - answer (string): FAQ answer\n`;
-// schemaDescription += `  - searchText (string): Full-text search column\n\n`;
-
-// schemaDescription += `Table: "allTeams"\n`;
-// schemaDescription += `Columns:\n`;
-// schemaDescription += `  - id (string): Primary key\n`;
-// schemaDescription += `  - firstName (string)\n`;
-// schemaDescription += `  - lastName (string)\n`;
-// schemaDescription += `  - role (string): Job title\n`;
-// schemaDescription += `  - email (string)\n`;
-// schemaDescription += `  - category (string): Team specialty area\n`;
-// schemaDescription += `  - searchText (string): Full-text search column\n\n`;
-
-//  // Generate SQL using AI
-//     const sqlQuery = await aiService.textToSQL({
-//       prompt: naturalLanguageQuery,
-//       schemaDescription: schemaDescription,  // Pass schema for context
-//       categories: [],                         // Not currently used
-//       instructions: ''                         // Not currently used
-//     });
-
-//     const endTime = Date.now();
-//     res.locals.executionTime = `${endTime - startTime}ms`;
-
-//     console.log("Generated SQL:", sqlQuery);
-//     console.log('AI execution time:', res.locals.executionTime);
-
-//    // Pass the SQL to the next middleware for execution
-//     res.locals.databaseQuery = sqlQuery;
-//     res.locals.queryResult = {
-//       source: "ai",
-//       sql: sqlQuery,
-//       results: null,      // Results will be populated after execution
-//       cached: false
-//     };
-
-//     return next();
-    
-//   } catch (error) {
-//     console.error("Error in queryOfflineOpenAI:", error);
-//     return next(error);
-//   }
-// };
