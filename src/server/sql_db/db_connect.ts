@@ -1,32 +1,31 @@
-import { Pool } from 'pg';
+import { Pool } from "pg";
 import type { QueryResult } from "pg";
 // import dotenv from "dotenv";
-import 'dotenv/config'; 
+import "dotenv/config";
 
 // dotenv.config(); // process.env
 
-
-
+// const pool = new Pool({
+//   host: process.env.DB_HOST ,
+//   port: Number(process.env.DB_PORT),
+//   database: process.env.DB_NAME,
+//   user: process.env.DB_USER,
+//   password: process.env.DB_PASSWORD ,
+// });
 
 const pool = new Pool({
-  host: process.env.DB_HOST ,
-  port: Number(process.env.DB_PORT), 
-  database: process.env.DB_NAME, 
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD ,
+  connectionString:
+    "postgresql://postgres.kgdlviaqzszogrdtktma:cl13ntPr0j12345!@aws-0-us-west-2.pooler.supabase.com:6543/postgres",
 });
 
-
-pool.connect( (err, client, release) => {
+pool.connect((err, client, release) => {
   if (err) {
-
-    console.error('Error connecting to offline database:', err.message);
+    console.error("Error connecting to offline database:", err.message);
   } else {
-    console.log('Successfully connected to offline database');
-    release(); 
+    console.log("Successfully connected to offline database");
+    release();
   }
 });
-
 
 // We export an object that contains a property called query,
 // which is a function that returns the invocation of pool.query() after logging the query
@@ -38,4 +37,4 @@ export default {
   },
 };
 
-export { pool }; 
+export { pool };
