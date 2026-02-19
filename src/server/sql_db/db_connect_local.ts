@@ -10,6 +10,18 @@ const dockerPool = new Pool({
   password: process.env.DB_PASSWORD || 'root',
 });
 
+// const dockerPool = new Pool({
+  // connectionString: 'postgresql://postgres.kgdlviaqzszogrdtktma:cl13ntPr0j12345!@aws-0-us-west-2.pooler.supabase.com:6543/postgres'
+
+// });
+
+// const pool = new Pool({
+//   // connectionString: process.env.PG_URI
+//   connectionString: 'postgresql://postgres.kgdlviaqzszogrdtktma:cl13ntPr0j12345!@aws-0-us-west-2.pooler.supabase.com:6543/postgres'
+// })
+
+
+
 dockerPool.connect((err, client, release) => {
   if (err) {
     console.error('Error connecting to Docker PostgreSQL:', err.message);

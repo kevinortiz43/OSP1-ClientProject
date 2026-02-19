@@ -1,26 +1,27 @@
-import type { RequestHandler } from "express";
-import type { ServerError } from "./types";
-import { AI_APIKEY } from "../../envVariables";
+import { AI_APIKEY, model } from "../../envVariables";
 import { InferenceClient } from "@huggingface/inference";
-import { model } from "../../envVariables";
 
 const client = new InferenceClient(AI_APIKEY);
 
-export const QueryOpenAI: RequestHandler = async (_, res, next) => {
-  try {
-    const { naturalLanguageQuery } = res.locals;
+interface AIResponseInput {
+  naturalLanguageQuery: string;
+  sqlQuery: string;
+}
 
-    if (!naturalLanguageQuery) {
-      const error: ServerError = {
-        log: "OpenAI query middleware did not receive a query. Check onlineAiController.ts",
-        status: 500,
-        message: { err: "An error occurred before querying AI" },
-      };
-      return next(error);
-    }
+interface AIResponseOutput {
+  databaseQuery?: string;
+  cleanSQL?: string;
+}
 
-    const systemPrompt = `You are a SQL expert for a security compliance database.
+export async function QueryOpenAI({
+  naturalLanguageQuery,
+}: AIResponseInput): Promise<AIResponseOutput> {
+  if (!naturalLanguageQuery) {
+    throw new Error("QueryOpenAI did not receive a query");
+  }
 
+  const systemPrompt = `You are a SQL expert for a security compliance database.
+  
 CRITICAL SCHEMA RULES:
 1. Table names MUST be double-quoted: "allTrustControls", "allTrustFaqs"
 2. Column "searchText" MUST be double quoted because it has mixed case: "searchText"
@@ -79,14 +80,10 @@ Now convert this query: "${naturalLanguageQuery}"
 
 CRITICAL: Remember to quote "searchText" - it MUST be "searchText" not searchText or searchtext!`;
 
+  try {
     const chatCompletion = await client.chatCompletion({
-      model: `${model}`,
-      messages: [
-        {
-          role: "system",
-          content: systemPrompt,
-        },
-      ],
+      model,
+      messages: [{ role: "system", content: systemPrompt }],
       max_tokens: 200,
       temperature: 0.3,
     });
@@ -95,11 +92,8 @@ CRITICAL: Remember to quote "searchText" - it MUST be "searchText" not searchTex
     let cleanSql = sqlQuery?.replace(/```sql\s*/gi, "").replace(/```\s*/gi, "");
 
     const sqlMatch = cleanSql?.match(/SELECT.*?;/is);
-    if (sqlMatch) {
-      cleanSql = sqlMatch[0];
-    }
+    if (sqlMatch) cleanSql = sqlMatch[0];
 
-    // Ensure table names are quoted
     cleanSql = cleanSql
       ?.replace(/FROM\s+allTrustControls/gi, 'FROM "allTrustControls"')
       .replace(/FROM\s+allTrustFaqs/gi, 'FROM "allTrustFaqs"')
@@ -116,15 +110,15 @@ CRITICAL: Remember to quote "searchText" - it MUST be "searchText" not searchTex
       ?.replace(/WHERE\s+WHERE/gi, "WHERE")
       ?.replace(/"\s*"\s*searchText\s*"\s*"/gi, '"searchText"');
 
-    if (!cleanSql?.endsWith(";")) {
-      cleanSql += ";";
-    }
+    if (!cleanSql?.endsWith(";")) cleanSql += ";";
 
     console.log("Final cleaned SQL:", cleanSql);
 
-    res.locals.databaseQuery = cleanSql;
-    return next();
+    return { databaseQuery: sqlQuery, cleanSQL: cleanSql };
   } catch (error) {
-    return next(error);
+    console.error("Error generating SQL query:", error);
+    throw new Error(
+      `QueryOpenAI error: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
   }
-};
+}

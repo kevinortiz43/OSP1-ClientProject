@@ -1,56 +1,46 @@
-# Base stage with dependencies
-FROM node:25.5.0-bullseye-slim AS base
+# Base stage
+FROM oven/bun:canary-alpine AS base
 WORKDIR /app
 
-# Builder stage for Vite frontend
+# Builder stage
 FROM base AS builder
 WORKDIR /app
-COPY package*.json ./
-RUN npm ci
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile
 COPY . .
-RUN npm run build
+RUN bun run build
 
 # Production stage
 FROM base AS production
 WORKDIR /app
 
-ENV NODE_ENV=production
+ENV BUN_ENV=production
 
-COPY package*.json ./
-RUN npm ci --only=production
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile --production
 
-# Create non-root user
-RUN addgroup --system --gid 1001 nodejs
+RUN addgroup --system --gid 1001 bunjs
 RUN adduser --system --uid 1001 appuser
 
-# Copy built frontend from builder
-COPY --from=builder --chown=appuser:nodejs /app/dist ./dist
-
-# Copy backend files
-COPY --chown=appuser:nodejs ./src/server ./src/server
-COPY --chown=appuser:nodejs package.json ./
+COPY --from=builder --chown=appuser:bunjs /app/dist ./dist
+COPY --chown=appuser:bunjs ./src/server ./src/server
+COPY --chown=appuser:bunjs package.json ./
 
 USER appuser
-
-# Expose backend port
 EXPOSE 3000
+CMD ["bun", "run", "dev"]
 
-CMD ["npm","run", "dev"]
-
-# Development stage
+# Dev stage
 FROM base AS dev
 WORKDIR /app
 
-ENV NODE_ENV=development
+ENV BUN_ENV=development
 
-# Install dependencies first (cached layer)
-COPY package*.json ./
-RUN npm install
+COPY package.json bun.lock ./
+RUN bun install
 
-# Copy application code
 COPY . .
 
 EXPOSE 5173
 EXPOSE 3000
-
-CMD ["npm", "run", "dev"]
+CMD ["bun", "run", "dev"]
