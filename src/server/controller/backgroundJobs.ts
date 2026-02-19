@@ -1,5 +1,5 @@
 import { type RequestHandler } from 'express';
-import { JudgeService } from '../services/judgeService';
+import { JudgeService, checkResultsCount } from '../services/judgeService';
 import { type Judgment, type TestSet } from '../types';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -56,6 +56,10 @@ export const triggerBackgroundJudgment: RequestHandler = (_, res, next) => {
   next();
 };
 
+/**
+ * Normalizes SQL for comparison by removing syntactic variations.
+ * This allows us to compare the logical structure rather than exact strings.
+ */
 export function normalizeSQL(sql: string): string {
   if (!sql) return '';
 
@@ -71,6 +75,9 @@ export function normalizeSQL(sql: string): string {
     .trim();
 }
 
+/**
+ * Extracts table names from FROM and JOIN clauses.
+ */
 function extractMainTables(sql: string): string {
   if (!sql) return '';
 
@@ -87,6 +94,9 @@ function extractMainTables(sql: string): string {
   return tableMatches.map(t => t.replace(/"/g, '')).sort().join(',');
 }
 
+/**
+ * Extracts and normalizes WHERE clause for comparison.
+ */
 function extractWhereClause(sql: string): string {
   if (!sql) return '';
 
@@ -108,6 +118,9 @@ function extractWhereClause(sql: string): string {
   return whereClause;
 }
 
+/**
+ * Extracts columns selected in the query.
+ */
 function extractSelectedColumns(sql: string): string[] {
   if (!sql) return [];
 
@@ -122,17 +135,18 @@ function extractSelectedColumns(sql: string): string[] {
     return ['*'];
   }
 
-  const columns = selectClause
+  return selectClause
     .split(',')
     .map(col => {
       const withoutAlias = col.replace(/\w+\./g, '');
       return withoutAlias.replace(/["']/g, '').trim();
     })
     .filter(col => col && col !== '');
-
-  return columns;
 }
 
+/**
+ * SCORING METHOD 1: INTENT-BASED SCORING
+ */
 function calculateIntentMatch(generatedSQL: string, userQuery: string): number {
   const sqlLower = generatedSQL.toLowerCase();
   const queryLower = userQuery.toLowerCase();
@@ -156,7 +170,6 @@ function calculateIntentMatch(generatedSQL: string, userQuery: string): number {
   
   if (queryLower.includes('short descriptions') && selectedColumns.includes('short')) score += 1;
   if (queryLower.includes('names') && (selectedColumns.includes('firstname') || selectedColumns.includes('lastname'))) score += 1;
-  
   if (queryLower.includes('count') && sqlLower.includes('count(')) score += 1;
   if (queryLower.includes('average') && sqlLower.includes('avg(')) score += 1;
   if (queryLower.includes('sum') && sqlLower.includes('sum(')) score += 1;
@@ -167,9 +180,7 @@ function calculateIntentMatch(generatedSQL: string, userQuery: string): number {
   if (queryLower.includes('data security') && sqlLower.includes('data')) score += 1;
   if (queryLower.includes('privacy') && sqlLower.includes('privacy')) score += 1;
   if (queryLower.includes('organizational security') && sqlLower.includes('organizational')) score += 1;
-  
   if (queryLower.includes('active') && sqlLower.includes('isactive')) score += 1;
-  
   if (queryLower.includes('technical delivery managers') && sqlLower.includes('technical delivery manager')) score += 1;
   
   if ((queryLower.includes('and faqs') || queryLower.includes('and controls')) && 
@@ -178,6 +189,9 @@ function calculateIntentMatch(generatedSQL: string, userQuery: string): number {
   return Math.min(5, Math.max(1, score));
 }
 
+/**
+ * SCORING METHOD 2: SQL CORRECTNESS
+ */
 function calculateSQLCorrectness(generatedSQL: string, expectedSQL: string): number {
   const genNormalized = normalizeSQL(generatedSQL);
   const expNormalized = normalizeSQL(expectedSQL);
@@ -216,50 +230,90 @@ function calculateSQLCorrectness(generatedSQL: string, expectedSQL: string): num
   return 3;
 }
 
-function calculateResultQuality(results: any[], expectedCount: number | string): number {
+/**
+ * Evaluates result quality based on row count expectations.
+ */
+function calculateResultQuality(
+  results: any[], 
+  expectedCount: number | string,
+  resultsCount: number
+): number {
   if (!results || results.length === 0) return 1;
   
-  const expectedMin = extractExpectedCount(expectedCount);
+  const meetsExpectations = checkResultsCount(resultsCount, expectedCount);
   
-  if (results.length >= expectedMin) return 5;
+  if (meetsExpectations) return 5;
   if (results.length > 0) return 3;
   
   return 1;
 }
 
+/**
+ * Combined faithfulness score.
+ */
 function calculateFaithfulness(
   generatedSQL: string,
   expectedSQL: string,
   results: any[],
   expectedCount?: number | string
 ): number {
-  if (results && results.length > 0) {
+  if (results?.length > 0) {
     if (expectedCount) {
-      const expectedMin = extractExpectedCount(expectedCount);
-      if (results.length >= expectedMin) {
-        return 5;
-      }
+      const meetsExpectations = checkResultsCount(results.length, expectedCount);
+      if (meetsExpectations) return 5;
     }
     return 4;
   }
-
   return calculateSQLCorrectness(generatedSQL, expectedSQL);
 }
 
+/**
+ * SCORING METHOD 3: WEIGHTED ENSEMBLE SCORE
+ */
+function calculateScoreWithLLMStyle(
+  generatedSQL: string,
+  expectedSQL: string,
+  results: any[],
+  expectedCount: number | string,
+  userQuery: string,
+  resultsCount: number
+): number {
+  const dimensions = {
+    intent: calculateIntentMatch(generatedSQL, userQuery),
+    correctness: calculateSQLCorrectness(generatedSQL, expectedSQL),
+    resultQuality: calculateResultQuality(results, expectedCount, resultsCount)
+  };
+  
+  const weights = { intent: 0.45, correctness: 0.35, resultQuality: 0.20 };
+  
+  const weightedScore = Object.entries(dimensions).reduce(
+    (sum, [key, val]) => sum + val * weights[key as keyof typeof weights], 0
+  );
+  
+  return judgeService.normalizeScore(weightedScore);
+}
+
+/**
+ * Generates human-readable explanation of the score.
+ */
 function generateDetailedExplanation(
   scores: { groundedness: number; faithfulness: number; intentScore: number },
   enhancedScore: number,
   resultsCount: number,
-  expectedMinCount: number
+  expectedMinCount: number | string
 ): string {
   const explanations = [];
   
+  const expectedDisplay = typeof expectedMinCount === 'number' 
+    ? expectedMinCount.toString() 
+    : expectedMinCount;
+  
   if (scores.groundedness >= 4) {
-    explanations.push(`Results: Found ${resultsCount} rows (meets minimum ${expectedMinCount})`);
+    explanations.push(`Results: Found ${resultsCount} rows (meets minimum ${expectedDisplay})`);
   } else if (resultsCount === 0) {
     explanations.push(`Results: No data returned - check query conditions`);
   } else {
-    explanations.push(`Results: Found ${resultsCount} rows, expected at least ${expectedMinCount}`);
+    explanations.push(`Results: Found ${resultsCount} rows, expected at least ${expectedDisplay}`);
   }
 
   if (scores.faithfulness >= 4) {
@@ -283,41 +337,9 @@ function generateDetailedExplanation(
   return explanations.join('. ');
 }
 
-function calculateScoreWithLLMStyle(
-  generatedSQL: string,
-  expectedSQL: string,
-  results: any[],
-  expectedCount: number | string,
-  userQuery: string
-): number {
-
-  const dimensions = {
-    intent: calculateIntentMatch(generatedSQL, userQuery),
-    correctness: calculateSQLCorrectness(generatedSQL, expectedSQL),
-    resultQuality: calculateResultQuality(results, expectedCount)
-  };
-  
-  const weights = { 
-    intent: 0.45,
-    correctness: 0.35,
-    resultQuality: 0.20
-  };
-  
-  const weightedScore = Object.entries(dimensions).reduce(
-    (sum, [key, val]) => sum + val * weights[key as keyof typeof weights], 0
-  );
-  
-const judgeService = new JudgeService();
-return judgeService.normalizeScore(weightedScore);
-}
-
-function extractExpectedCount(expectedCount: number | string | undefined): number {
-  if (expectedCount === undefined || expectedCount === null) return 0;
-  if (typeof expectedCount === 'number') return expectedCount;
-  const match = expectedCount.match(/\d+/);
-  return match ? parseInt(match[0], 10) : 0;
-}
-
+/**
+ * MAIN JUDGMENT EXECUTION - 2 Paths
+ */
 export async function runBackgroundJudgment(data: any): Promise<void> {
   if (!data) {
     console.log(createError('No judgment data to process', 400, 'backgroundJobs').log);
@@ -361,15 +383,15 @@ export async function runBackgroundJudgment(data: any): Promise<void> {
     if (testCase) {
       console.log('Test case found, using enhanced rule-based evaluation');
       
-      const expectedMinCount = extractExpectedCount(testCase.expectedResponse.resultsCount);
+      const expectedMinCount = testCase.expectedResponse.resultsCount;
       
       const componentScores = {
-        groundedness: calculateResultQuality(results, testCase.expectedResponse.resultsCount),
+        groundedness: calculateResultQuality(results, expectedMinCount, resultsCount),
         faithfulness: calculateFaithfulness(
           generatedSQL, 
           testCase.expectedResponse.sql,
           results,
-          testCase.expectedResponse.resultsCount
+          expectedMinCount
         ),
         intentScore: calculateIntentMatch(generatedSQL, naturalLanguageQuery)
       };
@@ -378,8 +400,9 @@ export async function runBackgroundJudgment(data: any): Promise<void> {
         generatedSQL,
         testCase.expectedResponse.sql,
         results,
-        testCase.expectedResponse.resultsCount,
-        naturalLanguageQuery
+        expectedMinCount,
+        naturalLanguageQuery,
+        resultsCount
       );
       
       judgment.score = enhancedScore;
@@ -391,23 +414,22 @@ export async function runBackgroundJudgment(data: any): Promise<void> {
         expectedMinCount
       );
       
-    } else {
+    } else if (results.length > 0) {
       console.log('No test case found, using LLM judge for ad-hoc query');
       
-      if (results.length > 0) {
-        const llmJudgment = await judgeService.evaluateWithLLM(
-          naturalLanguageQuery,
-          generatedSQL,
-          results
-        );
-        judgment.score = llmJudgment.score;
-        judgment.explanation = llmJudgment.explanation;
-        judgment.passed = llmJudgment.score >= 4;
-      } else {
-        judgment.score = 1;
-        judgment.explanation = 'Query returned no results';
-        judgment.passed = false;
-      }
+      const llmJudgment = await judgeService.evaluateWithLLM(
+        naturalLanguageQuery,
+        generatedSQL,
+        results
+      );
+      judgment.score = llmJudgment.score;
+      judgment.explanation = llmJudgment.explanation;
+      judgment.passed = llmJudgment.score >= 4;
+      
+    } else {
+      judgment.score = 1;
+      judgment.explanation = 'Query returned no results';
+      judgment.passed = false;
     }
 
     const filepath = await judgeService.saveJudgment(judgment);

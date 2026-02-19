@@ -1,0 +1,16 @@
+{
+  "id": "ea4535e7-7d32-4a6b-b1fb-1914c050623b",
+  "timestamp": "2026-02-19T23:48:44.986Z",
+  "naturalLanguageQuery": "who are active team members in organizational security",
+  "generatedSQL": "SELECT \"firstName\", \"lastName\", \"email\", \"role\" FROM \"allTeams\" WHERE \"category\" ILIKE 'Organizational Security' AND \"isActive\" = true;",
+  "expectedSQL": "SELECT * FROM \"allTeams\" WHERE \"category\" ILIKE 'Organizational Security' AND \"isActive\" = true;",
+  "resultsCount": 3,
+  "expectedCount": ">=3",
+  "passed": true,
+  "score": 4.5,
+  "explanation": "Results: Found 3 rows (meets minimum >=3). SQL Structure: Correct tables and conditions. Intent: SQL correctly addresses the question. Overall score: 4.5/5",
+  "source": "ai",
+  "executionTime": "481ms",
+  "sqlModel": "distil-qwen3-4b:latest",
+  "judgeModel": "qwen2.5-coder:14b"
+}

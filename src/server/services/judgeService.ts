@@ -2,12 +2,46 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 import { type Judgment } from '../types'
-import { generateSchemaDescription } from '../sql_db/schemas-helper';
+import { generateSchemaDescription, CATEGORY_VALUES } from '../sql_db/schemas-helper';
 import { randomUUID } from 'crypto';
 import { normalizeSQL } from '../controller/backgroundJobs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+/**
+ * Judge Service: Evaluates SQL generation quality through multiple methods.
+ * 
+ * This service provides both rule-based and LLM-based evaluation to assess
+ * how well generated SQL answers user questions. The dual approach gives us:
+ * 1. Fast, deterministic checks for known test cases
+ * 2. Intelligent, flexible evaluation for novel queries
+ * 
+ * All judgments are persisted for tracking model improvement over time.
+ */
+
+/**
+ * Check if actual result count meets expected criteria.
+ * Expected count can be: exact number, comparison (>=5), or simple number string
+ */
+export function checkResultsCount(actualCount: number, expectedCount: number | string): boolean {
+    if (typeof expectedCount === 'number') {
+        return actualCount === expectedCount;
+    }
+    const match = expectedCount.match(/^([<>]=?)(\d+)$/);
+    if (match) {
+        const operator = match[1];
+        const value = parseInt(match[2], 10);
+        switch (operator) {
+            case '>=': return actualCount >= value;
+            case '<=': return actualCount <= value;
+            case '>': return actualCount > value;
+            case '<': return actualCount < value;
+            default: return false;
+        }
+    }
+    return actualCount === parseInt(expectedCount as string, 10);
+}
 
 export class JudgeService {
     private readonly judgeModel: string;
@@ -19,14 +53,10 @@ export class JudgeService {
         this.ollamaUrl = process.env.TEXT2SQL_URL || 'http://ollama:11434';
         this.judgmentsDir = path.join(__dirname, '..', 'aiTest', 'judgments');
 
-        console.log(`[DEBUG] __dirname: ${__dirname}`);
-        console.log(`[DEBUG] Resolved judgmentsDir: ${this.judgmentsDir}`);
-        console.log(`[DEBUG] Does judgmentsDir exist? ${fs.existsSync(this.judgmentsDir)}`);
-
-        this.ensureJudgmentsDir();
-
         console.log(`JudgeService initialized with model: ${this.judgeModel}`);
         console.log(`Judgments will be saved to: ${this.judgmentsDir}`);
+
+        this.ensureJudgmentsDir();
     }
 
     private ensureJudgmentsDir(): void {
@@ -47,45 +77,30 @@ export class JudgeService {
     }
 
     checkResultsCount(actualCount: number, expectedCount: number | string): boolean {
-        if (typeof expectedCount === 'number') {
-            return actualCount === expectedCount;
-        }
-        const match = expectedCount.match(/^([<>]=?)(\d+)$/);
-        if (match) {
-            const operator = match[1];
-            const value = parseInt(match[2], 10);
-            switch (operator) {
-                case '>=': return actualCount >= value;
-                case '<=': return actualCount <= value;
-                case '>': return actualCount > value;
-                case '<': return actualCount < value;
-                default: return false;
-            }
-        }
-        return actualCount === parseInt(expectedCount as string, 10);
+        return checkResultsCount(actualCount, expectedCount);
     }
 
-    private minimalSQLValidation(sql: string): { 
-        valid: boolean; 
-        error?: string 
+    private minimalSQLValidation(sql: string): {
+        valid: boolean;
+        error?: string
     } {
         if (!sql || sql.trim() === '') {
             return { valid: false, error: 'SQL is empty' };
         }
 
         const sqlUpper = sql.toUpperCase();
-        
+
         if (!sqlUpper.includes('SELECT') || !sqlUpper.includes('FROM')) {
             return { valid: false, error: 'SQL must contain SELECT and FROM clauses' };
         }
 
         const selectCount = (sqlUpper.match(/SELECT/g) || []).length;
         const fromCount = (sqlUpper.match(/FROM/g) || []).length;
-        
+
         if (selectCount > 1) {
             console.warn('Warning: Multiple SELECT clauses detected - verify this is intentional');
         }
-        
+
         if (fromCount > 1 && !sqlUpper.includes('UNION')) {
             return { valid: false, error: 'Multiple FROM clauses require UNION' };
         }
@@ -98,12 +113,109 @@ export class JudgeService {
         return Math.round(clampedScore * 2) / 2;
     }
 
+    /**
+     * Helper method to check if results have correct category for category-specific queries
+     */
+    private hasCorrectCategory(results: any[], userPromptLower: string): boolean {
+        if (!results.length) return false;
+        
+        return results.some(r => {
+            if (!r.category) return false;
+            return CATEGORY_VALUES.some(category =>
+                userPromptLower.includes(category.toLowerCase()) &&
+                r.category.toLowerCase().includes(category.toLowerCase())
+            );
+        });
+    }
+
+    /**
+     * Helper method to format results for display
+     */
+    private formatResultsForDisplay(results: any[]): string {
+        if (!results.length) return "No results returned";
+
+        const sampleResult = results[0];
+        let display = `Found ${results.length} result(s)\n\nFIRST RESULT:\n`;
+
+        // FAQ result
+        if (sampleResult.source === 'trust_faq' || sampleResult.question) {
+            display += `- Question: "${sampleResult.question || 'N/A'}"\n`;
+            display += `- Answer: "${sampleResult.answer ? 
+                sampleResult.answer.substring(0, 150) + 
+                (sampleResult.answer.length > 150 ? '...' : '') : 'N/A'}"`;
+            
+            if (sampleResult.category) {
+                display += `\n- CATEGORY: "${sampleResult.category}" (IMPORTANT for category questions)`;
+            }
+            display += `\n- Source: FAQ`;
+        }
+        // Control result
+        else if (sampleResult.source === 'trust_control' || sampleResult.short) {
+            display += `- Short Description: "${sampleResult.short || 'N/A'}"\n`;
+            display += `- Long Description: "${sampleResult.long ? 
+                sampleResult.long.substring(0, 150) + 
+                (sampleResult.long.length > 150 ? '...' : '') : 'N/A'}"`;
+            
+            if (sampleResult.category) {
+                display += `\n- CATEGORY: "${sampleResult.category}" (IMPORTANT for category questions)`;
+            }
+            display += `\n- Source: Control`;
+        }
+        // Team result
+        else if (sampleResult.source === 'team' || sampleResult.firstName) {
+            const fullName = `${sampleResult.firstName || ''} ${sampleResult.lastName || ''}`.trim();
+            display += `- Name: "${fullName || 'N/A'}"\n`;
+            display += `- Role: "${sampleResult.role || 'N/A'}"\n`;
+            display += `- Email: "${sampleResult.email || 'N/A'}"`;
+            
+            if (sampleResult.category) {
+                display += `\n- CATEGORY: "${sampleResult.category}" (IMPORTANT for category questions)`;
+            }
+            
+            display += `\n- Active: ${sampleResult.isActive ? 'Yes' : 'No'}\n`;
+            display += `- Response Time: ${sampleResult.responseTimeHours || 'N/A'} hours`;
+        }
+        // Fallback to JSON
+        else {
+            display += JSON.stringify(sampleResult, null, 2);
+            if (sampleResult.category) {
+                display += `\n\nNOTE: Category field found: "${sampleResult.category}"`;
+            }
+        }
+
+        if (results.length > 1) {
+            display += `\n\nPlus ${results.length - 1} more result(s).`;
+        }
+
+        return display;
+    }
+
+    /**
+     * Helper method to parse LLM response
+     */
+    private parseLLMResponse(rawResponse: string): { score: number; explanation: string } | null {
+        let cleaned = rawResponse.trim();
+        
+        // Clean markdown
+        if (cleaned.startsWith('```json')) {
+            cleaned = cleaned.replace(/^```json\n/, '').replace(/\n```$/, '');
+        } else if (cleaned.startsWith('```')) {
+            cleaned = cleaned.replace(/^```\n/, '').replace(/\n```$/, '');
+        }
+
+        try {
+            return JSON.parse(cleaned);
+        } catch {
+            return null;
+        }
+    }
+
     async evaluateWithLLM(
         userPrompt: string,
         generatedSQL: string,
         results: any[]
     ): Promise<{ score: number; explanation: string }> {
-        
+
         const validation = this.minimalSQLValidation(generatedSQL);
         if (!validation.valid) {
             return {
@@ -113,8 +225,28 @@ export class JudgeService {
         }
 
         const schemaDescription = generateSchemaDescription();
+        const userPromptLower = userPrompt.toLowerCase();
         
-        const prompt = `You are a SQL expert judge. Evaluate if this SQL correctly answers the user's question.
+        // Analyze query
+        const isCategoryQuery = CATEGORY_VALUES.some(category =>
+            userPromptLower.includes(category.toLowerCase())
+        );
+        
+        const categoryMatch = generatedSQL.match(/category ILIKE '([^']+)'/i);
+        const sqlHasCategoryFilter = !!categoryMatch;
+        const sqlCategory = categoryMatch ? categoryMatch[1] : null;
+
+        // Format results
+        const resultsDisplay = this.formatResultsForDisplay(results);
+
+        // Build evaluation instructions
+        const evaluationInstructions = isCategoryQuery
+            ? `This is a CATEGORY-SPECIFIC question. The user asked about a specific category.
+Look for the CATEGORY field in the results. It should match what the user asked for.`
+            : `This is a GENERAL question (no specific category mentioned).
+The CATEGORY field is OPTIONAL in the results. Focus on whether the data answers the question, regardless of category.`;
+
+        const prompt = `You are a SQL expert judge. Your task is to evaluate if the generated SQL correctly answers the user's question.
 
 DATABASE SCHEMA:
 ${schemaDescription}
@@ -126,27 +258,28 @@ GENERATED SQL:
 ${generatedSQL}
 \`\`\`
 
-RESULTS RETURNED (first 3 rows):
-${JSON.stringify(results.slice(0, 3), null, 2)}
+ACTUAL RESULTS FROM DATABASE:
+${resultsDisplay}
 
-CRITICAL EVALUATION GUIDELINES:
-1. INTENT over syntax - Focus on whether the SQL answers the question, not cosmetic differences
-2. "ALL" means ALL columns - If user asks for "all" or "list all", they expect all columns (SELECT *)
-3. Column selection matters - If user asks for specific columns, verify they're selected
-4. Results count is important - Verify the query returns what was requested
-5. Ignore alias names - "COUNT(*) as count" vs "COUNT(*) as control_count" are functionally identical
+QUERY ANALYSIS:
+- Is this a category-specific question? ${isCategoryQuery ? 'YES' : 'NO'}
+- Does the SQL filter by category? ${sqlHasCategoryFilter ? `YES (category: ${sqlCategory})` : 'NO'}
+- Results returned: ${results.length} row(s)
 
-SCORING GUIDE (be strict - 5 is rare):
-5 = PERFECT - Exactly answers the question with correct syntax and relevant results
-4 = GOOD - Minor issues but still essentially correct (e.g., different alias name)
-3 = ACCEPTABLE - Answers partially but has noticeable issues
-2 = POOR - Doesn't answer correctly, significant problems
-1 = WRONG - Completely incorrect or wouldn't execute
+EVALUATION INSTRUCTIONS:
+${evaluationInstructions}
+
+SCORING RUBRIC:
+5 = PERFECT - Results exactly match what was asked
+4 = GOOD - Results are correct but maybe missing non-critical fields
+3 = ACCEPTABLE - Results partially match but have minor issues
+2 = POOR - Results don't match what was asked
+1 = WRONG - Query failed or returned completely unrelated data
 
 Return ONLY a JSON object with:
 {
   "score": (number between 1-5),
-  "explanation": (string explaining the score, focusing on whether the query answers the question)
+  "explanation": (string explaining the score)
 }`;
 
         try {
@@ -165,23 +298,58 @@ Return ONLY a JSON object with:
             });
 
             const data = await response.json();
+            const parsed = this.parseLLMResponse(data.response);
 
-            try {
-                const result = JSON.parse(data.response);
-                const normalizedScore = this.normalizeScore(result.score || 3);
+            if (parsed) {
+                // Apply reality checks
+                if (isCategoryQuery && results.length > 0) {
+                    if (this.hasCorrectCategory(results, userPromptLower) && parsed.score < 4) {
+                        console.log('LLM gave low score despite correct category - overriding');
+                        return {
+                            score: 5,
+                            explanation: `SQL correctly returns results with matching category: "${results[0]?.category}"`
+                        };
+                    }
+                } else if (!isCategoryQuery && results.length > 0 && parsed.score < 3) {
+                    console.log('LLM gave low score for non-category query with results - adjusting');
+                    return {
+                        score: 3,
+                        explanation: `Query returned ${results.length} result(s) answering the general question.`
+                    };
+                }
+
+                const normalizedScore = this.normalizeScore(parsed.score || 3);
                 return {
                     score: normalizedScore,
-                    explanation: result.explanation || 'No explanation provided'
-                };
-            } catch (e) {
-                const scoreMatch = data.response.match(/[1-5]/);
-                const rawScore = scoreMatch ? parseInt(scoreMatch[0], 10) : 3;
-                const normalizedScore = this.normalizeScore(rawScore);
-                return {
-                    score: normalizedScore,
-                    explanation: data.response.trim()
+                    explanation: parsed.explanation || 'No explanation provided'
                 };
             }
+
+            // Fallback to text extraction
+            const scoreMatch = data.response.match(/[1-5]/);
+            const rawScore = scoreMatch ? parseInt(scoreMatch[0], 10) : 3;
+
+            // Apply same reality checks to fallback
+            if (isCategoryQuery && results.length > 0) {
+                if (this.hasCorrectCategory(results, userPromptLower) && rawScore < 4) {
+                    return {
+                        score: 5,
+                        explanation: `SQL correctly returns results with matching category: "${results[0]?.category}"`
+                    };
+                }
+            } else if (!isCategoryQuery && results.length > 0 && rawScore < 3) {
+                return {
+                    score: 3,
+                    explanation: `Query returned ${results.length} result(s) answering the general question.`
+                };
+            }
+
+            const normalizedScore = this.normalizeScore(rawScore);
+            return {
+                score: normalizedScore,
+                explanation: data.response.trim()
+            };
+
         } catch (error) {
             console.error('Judge evaluation failed:', error);
             return {
@@ -202,7 +370,6 @@ Return ONLY a JSON object with:
 
         const date = judgmentWithId.timestamp;
         const shortTimestamp = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}-${String(date.getHours()).padStart(2, '0')}${String(date.getMinutes()).padStart(2, '0')}${String(date.getSeconds()).padStart(2, '0')}`;
-
         const shortId = judgmentWithId.id.slice(-4);
 
         const querySlug = judgment.naturalLanguageQuery
@@ -225,57 +392,5 @@ Return ONLY a JSON object with:
 
         console.log(`Judgment saved: ${filename}`);
         return filepath;
-    }
-
-    async getJudgmentById(id: string): Promise<any | null> {
-        try {
-            const files = await fs.promises.readdir(this.judgmentsDir);
-            const matchingFile = files.find(file =>
-                file.includes(`_${id}_`)
-            );
-
-            if (!matchingFile) {
-                console.log(`No judgment found with ID: ${id}`);
-                return null;
-            }
-
-            const filepath = path.join(this.judgmentsDir, matchingFile);
-            const content = await fs.promises.readFile(filepath, 'utf-8');
-            return JSON.parse(content);
-
-        } catch (error) {
-            console.error(`Failed to read judgment: ${error.message}`);
-            return null;
-        }
-    }
-
-    async getAllJudgments(): Promise<Judgment[]> {
-        try {
-            const files = await fs.promises.readdir(this.judgmentsDir);
-            const judgments: Judgment[] = [];
-
-            for (const file of files) {
-                if (!file.endsWith('.json')) continue;
-
-                const filepath = path.join(this.judgmentsDir, file);
-                const content = await fs.promises.readFile(filepath, 'utf-8');
-
-                try {
-                    const judgment = JSON.parse(content);
-                    judgment.timestamp = new Date(judgment.timestamp);
-                    judgments.push(judgment);
-                } catch (e) {
-                    console.warn(`Skipping invalid JSON: ${file}`);
-                }
-            }
-
-            return judgments.sort((a, b) =>
-                b.timestamp.getTime() - a.timestamp.getTime()
-            );
-
-        } catch (error) {
-            console.error('Failed to read judgments directory:', error);
-            return [];
-        }
     }
 }

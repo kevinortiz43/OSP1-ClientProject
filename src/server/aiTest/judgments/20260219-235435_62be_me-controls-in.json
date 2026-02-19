@@ -1,0 +1,14 @@
+{
+  "id": "37b3ea31-80a2-4a9f-9c2b-c8feb2ac62be",
+  "timestamp": "2026-02-19T23:54:35.129Z",
+  "naturalLanguageQuery": "tell me about controls in regions like austrailia",
+  "generatedSQL": "SELECT \"short\", \"long\" FROM \"allTrustControls\" WHERE \"searchText\" ILIKE '%australia%' OR \"searchText\" ILIKE '%Australia%';",
+  "resultsCount": 1,
+  "passed": true,
+  "score": 4,
+  "explanation": "The SQL query correctly identifies controls related to Australia, which answers the user's question. However, it does not include the category field in the results, which is an optional but useful piece of information for context.",
+  "source": "ai",
+  "executionTime": "564ms",
+  "sqlModel": "distil-qwen3-4b:latest",
+  "judgeModel": "qwen2.5-coder:14b"
+}

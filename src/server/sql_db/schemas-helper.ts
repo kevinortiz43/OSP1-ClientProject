@@ -1,15 +1,24 @@
+// Export constants for use in other files
+export const TABLE_NAMES = ['allTrustControls', 'allTrustFaqs', 'allTeams'] as const;
+
+export const COLUMN_NAMES = [
+  'firstName', 'lastName', 'searchText', 'isActive', 'employeeId',
+  'responseTimeHours', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy',
+  'short', 'long', 'question', 'answer', 'id', 'category', 'role', 'email'
+] as const;
+
+export const CATEGORY_VALUES = [
+  'Cloud Security',
+  'Data Security',
+  'Organizational Security',
+  'Secure Development',
+  'Privacy',
+  'Security Monitoring'
+] as const;
+
 // Helper function to generate schema description for AI
 export function generateSchemaDescription(): string {
-  const categoryValues = [
-    'Cloud Security',
-    'Data Security',
-    'Organizational Security',
-    'Secure Development',
-    'Privacy',
-    'Security Monitoring'
-  ];
-  
-  const categoryList = categoryValues.map(v => `'${v}'`).join(', ');
+  const categoryList = CATEGORY_VALUES.map(v => `'${v}'`).join(', ');
   
   return `Database schema for security compliance:
 

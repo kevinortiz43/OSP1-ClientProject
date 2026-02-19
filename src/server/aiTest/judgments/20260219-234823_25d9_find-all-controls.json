@@ -1,0 +1,16 @@
+{
+  "id": "ebf64a3c-9f95-4aee-8da7-f96e073025d9",
+  "timestamp": "2026-02-19T23:48:23.591Z",
+  "naturalLanguageQuery": "find all controls and faqs about privacy",
+  "generatedSQL": "SELECT \"short\", \"long\", \"category\" FROM \"allTrustControls\" WHERE \"category\" ILIKE 'Privacy' \nUNION ALL \nSELECT \"question\", \"answer\", \"category\" FROM \"allTrustFaqs\" WHERE \"category\" ILIKE 'Privacy';",
+  "expectedSQL": "SELECT \"short\", \"long\" FROM \"allTrustControls\" WHERE \"category\" ILIKE 'Privacy' UNION ALL SELECT \"question\", \"answer\" FROM \"allTrustFaqs\" WHERE \"category\" ILIKE 'Privacy';",
+  "resultsCount": 2,
+  "expectedCount": ">=2",
+  "passed": true,
+  "score": 4.5,
+  "explanation": "Results: Found 2 rows (meets minimum >=2). SQL Structure: Correct tables and conditions. Intent: SQL correctly addresses the question. Overall score: 4.5/5",
+  "source": "ai",
+  "executionTime": "593ms",
+  "sqlModel": "distil-qwen3-4b:latest",
+  "judgeModel": "qwen2.5-coder:14b"
+}

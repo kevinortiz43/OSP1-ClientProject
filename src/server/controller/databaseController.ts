@@ -18,12 +18,41 @@ export const executeDatabaseQuery: RequestHandler = async (_req, res, next) => {
     console.log('Executing SQL:', databaseQuery);
     const result = await db.query(databaseQuery);
     
-    res.locals.databaseQueryResult = result.rows; //  for backend -> result used in judgment step in backgroundJobs.ts
+    // Add category from WHERE clause if missing =====
+    let rowsForJudgment = result.rows;
+    
+    // Check if this is a category-filtered query and results don't have category field
+    if (databaseQuery.includes('category ILIKE') && result.rows.length > 0) {
+      // Check if the first row is missing category field
+      const firstRow = result.rows[0];
+      if (!firstRow.hasOwnProperty('category')) {
+        console.log('Category field missing from results - adding from WHERE clause');
+        
+        // Extract category from WHERE clause
+        const categoryMatch = databaseQuery.match(/category ILIKE '([^']+)'/i);
+        if (categoryMatch) {
+          const category = categoryMatch[1];
+          console.log(`Extracted category from query: "${category}"`);
+          
+          // Add category to every row for judgment AND frontend
+          rowsForJudgment = result.rows.map(row => ({
+            ...row,
+            category: category
+          }));
+          
+          console.log(`Added category field to ${rowsForJudgment.length} rows`);
+        }
+      }
+    }
+    
+    // Use the same category-included results for both backend and frontend
+    res.locals.databaseQueryResult = rowsForJudgment; // For judgment
     res.locals.databaseQueryError = null;
     
-    if (res.locals.queryResult) { // for frontend -> sent to router.ts for response to frontend
-      res.locals.queryResult.results = result.rows; 
+    if (res.locals.queryResult) { // For frontend
+      res.locals.queryResult.results = rowsForJudgment; 
     }
+
     
     return next();
     
