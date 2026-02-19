@@ -58,3 +58,9 @@ export interface Judgment {
 };
 
 
+interface ScoreWeights {
+  semantic: number;    // Does SQL capture user intent?
+  syntactic: number;   // Is SQL well-formed and valid?
+  results: number;     // Are results relevant and complete?
+  efficiency: number;  // Is SQL optimized? 
+}

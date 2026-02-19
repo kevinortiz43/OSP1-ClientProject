@@ -1,0 +1,16 @@
+{
+  "id": "0d02bd6a-75f5-4cc8-8c68-e5fbb13ed56e",
+  "timestamp": "2026-02-19T05:35:57.514Z",
+  "naturalLanguageQuery": "find controls related to incident response in organizational security",
+  "generatedSQL": "SELECT \"short\", \"long\"\nFROM \"allTrustControls\"\nWHERE \"category\" ILIKE 'Organizational Security' AND (\"searchText\" ILIKE '%incident response%' OR \"short\" ILIKE '%incident response%');",
+  "expectedSQL": "SELECT * FROM \"allTrustControls\" WHERE \"category\" ILIKE 'Organizational Security' AND \"searchText\" ILIKE '%incident%';",
+  "resultsCount": 1,
+  "expectedCount": ">=1",
+  "passed": true,
+  "score": 4,
+  "explanation": "Results: Found 1 rows (meets minimum 1). SQL Structure: Correct tables and conditions. Intent: SQL correctly addresses the question. Overall score: 4/5",
+  "source": "ai",
+  "executionTime": "594ms",
+  "sqlModel": "arctic-text2sql:latest",
+  "judgeModel": "qwen2.5-coder:14b"
+}

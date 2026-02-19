@@ -306,4 +306,3 @@ export const queryOfflineOpenAI: RequestHandler = async (_, res, next) => {
       ));
     }
   }
-

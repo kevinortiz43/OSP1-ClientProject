@@ -1,5 +1,6 @@
 import { type TextToSQLOptions } from "../types";
 
+
 /**
  * DEVELOPMENT TEXT-TO-SQL SERVICE
  * 
@@ -129,13 +130,13 @@ export class AIService {
   }
 
   // 9. REMOVE BAD JOINS
-  // if (sql.includes('"allTeams"') && sql.includes('JOIN') && sql.includes('"allTrustControls"')) {
-  //   const match = sql.match(/WHERE\s+.*?"allTrustControls"\.category\s*=\s*'([^']+)'/i);
-  //   if (match) {
-  //     const category = match[1];
-  //     sql = `SELECT "firstName", "lastName", "role" FROM "allTeams" WHERE "category" ILIKE '${category}';`;
-  //   }
-  // }
+  if (sql.includes('"allTeams"') && sql.includes('JOIN') && sql.includes('"allTrustControls"')) {
+    const match = sql.match(/WHERE\s+.*?"allTrustControls"\.category\s*=\s*'([^']+)'/i);
+    if (match) {
+      const category = match[1];
+      sql = `SELECT "firstName", "lastName", "role" FROM "allTeams" WHERE "category" ILIKE '${category}';`;
+    }
+  }
 
   // 10. Convert category = 'value' to category ILIKE 'value'
   sql = sql.replace(/WHERE\s+(\w+\.)?"category"\s*=\s*'([^']+)'/gi, 'WHERE $1"category" ILIKE \'$2\'');
@@ -183,9 +184,8 @@ CRITICAL RULES - YOU MUST FOLLOW:
 3. Column names MUST be double-quoted (all columns in the schema below are camelCase and need quotes)
 4. Use ILIKE for all string comparisons (case-insensitive)
 5. Category values must use EXACT case as shown in the schema
-6. Joins between "allTeams" and other tables ARE PERMITTED when the query requires combining team information with controls or FAQs
-7. Always use proper JOIN syntax with ON clauses
-8. The response must be a single SQL statement ending with a semicolon
+6. NEVER join "allTeams" with other tables
+7. The response must be a single SQL statement ending with a semicolon
 
 ${options.schemaDescription}
 

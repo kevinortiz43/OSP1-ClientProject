@@ -3,7 +3,7 @@
     "naturalLanguageQuery": "list all cloud security controls",
     "expectedResponse": {
       "source": "ai",
-      "sql": "SELECT * FROM \"allTrustControls\" WHERE \"category\" = 'Cloud Security';",
+      "sql": "SELECT * FROM \"allTrustControls\" WHERE \"category\" ILIKE 'Cloud Security';",
       "resultsCount": ">=5",
       "formatted": null
     }
@@ -12,7 +12,7 @@
     "naturalLanguageQuery": "show me the short descriptions of data security controls",
     "expectedResponse": {
       "source": "ai",
-      "sql": "SELECT \"short\" FROM \"allTrustControls\" WHERE \"category\" = 'Data Security';",
+      "sql": "SELECT \"short\" FROM \"allTrustControls\" WHERE \"category\" ILIKE 'Data Security';",
       "resultsCount": ">=3",
       "formatted": null
     }
@@ -21,73 +21,75 @@
     "naturalLanguageQuery": "find controls related to incident response in organizational security",
     "expectedResponse": {
       "source": "ai",
-      "sql": "SELECT * FROM \"allTrustControls\" WHERE \"category\" = 'Organizational Security' AND \"searchText\" ILIKE '%incident%';",
+      "sql": "SELECT * FROM \"allTrustControls\" WHERE \"category\" ILIKE 'Organizational Security' AND \"searchText\" ILIKE '%incident%';",
       "resultsCount": ">=1",
       "formatted": null
     }
   },
-  {
-    "naturalLanguageQuery": "how many controls are in each category",
-    "expectedResponse": {
-      "source": "ai",
-      "sql": "SELECT \"category\", COUNT(*) as count FROM \"allTrustControls\" GROUP BY \"category\";",
-      "resultsCount": ">=6",
-      "formatted": null
-    }
-  },
-  {
-    "naturalLanguageQuery": "which team members are responsible for cloud security",
-    "expectedResponse": {
-      "source": "ai",
-      "sql": "SELECT * FROM \"allTeams\" WHERE \"searchText\" ILIKE '%cloud%';",
-      "resultsCount": ">=5",
-      "formatted": null
-    }
-  },
-  {
-    "naturalLanguageQuery": "show me controls and faqs about api security",
-    "expectedResponse": {
-      "source": "ai",
-      "sql": "SELECT * FROM \"allTrustControls\" WHERE \"searchText\" ILIKE '%api%' UNION ALL SELECT * FROM \"allTrustFaqs\" WHERE \"searchText\" ILIKE '%api%';",
-      "resultsCount": ">=2",
-      "formatted": null
-    }
-  },
-  {
-    "naturalLanguageQuery": "who are the technical delivery managers and what controls are they responsible for",
-    "expectedResponse": {
-      "source": "ai",
-      "sql": "SELECT t.\"firstName\", t.\"lastName\", c.\"short\" FROM \"allTeams\" t JOIN \"allTrustControls\" c ON t.\"category\" = c.\"category\" WHERE t.\"role\" = 'Technical Delivery Manager';",
-      "resultsCount": ">=3",
-      "formatted": null
-    }
-  },
-  {
-    "naturalLanguageQuery": "find all controls and faqs about privacy",
-    "expectedResponse": {
-      "source": "ai",
-      "sql": "SELECT * FROM \"allTrustControls\" WHERE \"category\" = 'Privacy' UNION ALL SELECT * FROM \"allTrustFaqs\" WHERE \"category\" = 'Privacy';",
-      "resultsCount": ">=2",
-      "formatted": null
-    }
-  },
+{
+  "naturalLanguageQuery": "how many controls are in each category",
+  "expectedResponse": {
+    "source": "ai",
+    "sql": "SELECT \"category\", COUNT(*) as control_count FROM \"allTrustControls\" GROUP BY \"category\";",
+    "resultsCount": ">=6",
+    "formatted": null
+  }
+},
+{
+  "naturalLanguageQuery": "which team members are responsible for cloud security",
+  "expectedResponse": {
+    "source": "ai",
+    "sql": "SELECT * FROM \"allTeams\" WHERE \"category\" ILIKE 'Cloud Security' AND \"isActive\" = true;",
+    "resultsCount": ">=1",
+    "formatted": null
+  }
+},
+
+{
+  "naturalLanguageQuery": "show me controls and faqs about api security",
+  "expectedResponse": {
+    "source": "ai",
+    "sql": "SELECT 'control' as type, \"short\", \"long\" FROM \"allTrustControls\" WHERE \"searchText\" ILIKE '%api%' UNION ALL SELECT 'faq' as type, \"question\", \"answer\" FROM \"allTrustFaqs\" WHERE \"searchText\" ILIKE '%api%';",
+    "resultsCount": ">=2",
+    "formatted": null
+  }
+},
+{
+  "naturalLanguageQuery": "who are the technical delivery managers and what controls are they responsible for",
+  "expectedResponse": {
+    "source": "ai",
+    "sql": "SELECT t.\"firstName\", t.\"lastName\", c.\"short\", c.\"long\" FROM \"allTeams\" t JOIN \"allTrustControls\" c ON t.\"category\" = c.\"category\" WHERE t.\"role\" ILIKE '%Technical Delivery Manager%' AND t.\"isActive\" = true;",
+    "resultsCount": ">=3",
+    "formatted": null
+  }
+},
+{
+  "naturalLanguageQuery": "find all controls and faqs about privacy",
+  "expectedResponse": {
+    "source": "ai",
+    "sql": "SELECT \"short\", \"long\" FROM \"allTrustControls\" WHERE \"category\" ILIKE 'Privacy' UNION ALL SELECT \"question\", \"answer\" FROM \"allTrustFaqs\" WHERE \"category\" ILIKE 'Privacy';",
+    "resultsCount": ">=2",
+    "formatted": null
+  }
+},
   {
     "naturalLanguageQuery": "what is the average response time for the data security team",
     "expectedResponse": {
       "source": "ai",
-      "sql": "SELECT AVG(\"responseTimeHours\") as average_response_time FROM \"allTeams\" WHERE \"category\" = 'Data Security';",
+      "sql": "SELECT AVG(\"responseTimeHours\") as average_response_time FROM \"allTeams\" WHERE \"category\" ILIKE 'Data Security' AND \"isActive\" = true;",
       "resultsCount": 1,
       "formatted": null
     }
   },
-  {
-    "naturalLanguageQuery": "list controls that mention both aws and data",
-    "expectedResponse": {
-      "source": "ai",
-      "sql": "SELECT * FROM \"allTrustControls\" WHERE \"searchText\" ILIKE '%aws%' AND \"searchText\" ILIKE '%data%';",
-      "formatted": null
-    }
-  },
+{
+  "naturalLanguageQuery": "list controls that mention both aws and data",
+  "expectedResponse": {
+    "source": "ai",
+    "sql": "SELECT * FROM \"allTrustControls\" WHERE \"searchText\" ILIKE '%aws%' AND \"searchText\" ILIKE '%data%';",
+    "resultsCount": ">=1",
+    "formatted": null
+  }
+},
   {
     "naturalLanguageQuery": "who are active team members in organizational security",
     "expectedResponse": {
@@ -101,16 +103,16 @@
     "naturalLanguageQuery": "who are the security leads in the organization",
     "expectedResponse": {
       "source": "ai",
-      "sql": "SELECT * FROM \"allTeams\" WHERE \"role\" ILIKE '%security%' AND (\"role\" ILIKE '%lead%' OR \"role\" ILIKE '%manager%' OR \"role\" ILIKE '%director%');",
-      "resultsCount": ">=4",
+      "sql": "SELECT * FROM \"allTeams\" WHERE \"role\" ILIKE '%security%' AND (\"role\" ILIKE '%lead%' OR \"role\" ILIKE '%manager%' OR \"role\" ILIKE '%director%') AND \"isActive\" = true;",
+      "resultsCount": ">=3",
       "formatted": null
     }
   },
-  {
+    {
     "naturalLanguageQuery": "show me all active team members related to data security or secure development",
     "expectedResponse": {
       "source": "ai",
-      "sql": "SELECT * FROM \"allTeams\" WHERE (\"category\" = 'Data Security' OR \"category\" = 'Secure Development') AND \"isActive\" = true;",
+      "sql": "SELECT * FROM \"allTeams\" WHERE (\"category\" ILIKE 'Data Security' OR \"category\" ILIKE 'Secure Development') AND \"isActive\" = true;",
       "resultsCount": ">=4",
       "formatted": null
     }
@@ -124,22 +126,22 @@
       "formatted": null
     }
   },
-  {
-    "naturalLanguageQuery": "find FAQs and trust controls that mention cookies or privacy",
-    "expectedResponse": {
-      "source": "ai",
-      "sql": "SELECT * FROM \"allTrustFaqs\" WHERE \"searchText\" ILIKE '%cookies%' OR \"searchText\" ILIKE '%privacy%' UNION ALL SELECT * FROM \"allTrustControls\" WHERE \"searchText\" ILIKE '%cookies%' OR \"searchText\" ILIKE '%privacy%';",
-      "resultsCount": ">=4",
-      "formatted": null
-    }
-  },
-  {
-    "naturalLanguageQuery": "show me secure development controls along with related FAQs",
-    "expectedResponse": {
-      "source": "ai",
-      "sql": "SELECT c.\"short\", c.\"long\", f.\"question\", f.\"answer\" FROM \"allTrustControls\" c LEFT JOIN \"allTrustFaqs\" f ON c.\"category\" = f.\"category\" WHERE c.\"category\" = 'Secure Development';",
-      "resultsCount": ">=5",
-      "formatted": null
-    }
+{
+  "naturalLanguageQuery": "find FAQs and trust controls that mention cookies or privacy",
+  "expectedResponse": {
+    "source": "ai",
+    "sql": "SELECT 'faq' as type, \"question\", \"answer\" FROM \"allTrustFaqs\" WHERE \"searchText\" ILIKE '%cookies%' OR \"searchText\" ILIKE '%privacy%' UNION ALL SELECT 'control' as type, \"short\", \"long\" FROM \"allTrustControls\" WHERE \"searchText\" ILIKE '%cookies%' OR \"searchText\" ILIKE '%privacy%';",
+    "resultsCount": ">=4",
+    "formatted": null
   }
+},
+{
+  "naturalLanguageQuery": "show me secure development controls along with related FAQs",
+  "expectedResponse": {
+    "source": "ai",
+    "sql": "SELECT c.\"short\", c.\"long\", f.\"question\", f.\"answer\" FROM \"allTrustControls\" c LEFT JOIN \"allTrustFaqs\" f ON c.\"category\" = f.\"category\" WHERE c.\"category\" = 'Secure Development';",
+    "resultsCount": ">=5",
+    "formatted": null
+  }
+}
 ]

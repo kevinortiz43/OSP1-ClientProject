@@ -1,0 +1,16 @@
+{
+  "id": "39beb2c5-5a9c-4544-8f45-34b71bdbf7bf",
+  "timestamp": "2026-02-19T05:28:20.736Z",
+  "naturalLanguageQuery": "show me secure development controls along with related FAQs",
+  "generatedSQL": "SELECT c.\"short\", c.\"long\", f.\"question\", f.\"answer\" \nFROM \"allTrustControls\" c \nJOIN \"allTrustFaqs\" f ON c.\"category\" = f.\"category\" \nWHERE c.\"category\" ILIKE 'Secure Development';",
+  "expectedSQL": "SELECT c.\"short\", c.\"long\", f.\"question\", f.\"answer\" FROM \"allTrustControls\" c LEFT JOIN \"allTrustFaqs\" f ON c.\"category\" = f.\"category\" WHERE c.\"category\" = 'Secure Development';",
+  "resultsCount": 5,
+  "expectedCount": ">=5",
+  "passed": true,
+  "score": 4,
+  "explanation": "Results: Found 5 rows (meets minimum 5). SQL Structure: Correct tables and conditions. Intent: Partially addresses the question. Overall score: 4/5",
+  "source": "ai",
+  "executionTime": "478ms",
+  "sqlModel": "distil-qwen3-4b:latest",
+  "judgeModel": "qwen2.5-coder:14b"
+}

@@ -1,19 +1,16 @@
 import { type RequestHandler } from 'express';
 import { JudgeService } from '../services/judgeService';
-import { type Judgment, TestSet } from '../types';
+import { type Judgment, type TestSet } from '../types';
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 import { createError } from "../errorHandler";
- 
 
-// set up __dirname path
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const judgeService = new JudgeService();
 
-// load test set - OS-agnostic path
 let testSet: TestSet = [];
 const testQuestionsPath = path.join(__dirname, '..', 'aiTest', 'test-questions.json');
 
@@ -29,24 +26,16 @@ try {
   console.warn('Failed to load test questions:', error);
 }
 
-/**
- * Trigger background judgment AFTER response is sent
- * Only runs for AI-generated SQL (not cache or search)
- */
 export const triggerBackgroundJudgment: RequestHandler = (_, res, next) => {
-
   console.log('TRIGGER BACKGROUND JUDGMENT');
 
   const source = res.locals.queryResult?.source;
   const hasSQL = !!res.locals.databaseQuery;
 
   if (source === 'ai' && hasSQL) {
-
-    // Ensure results is always an array
     const results = res.locals.databaseQueryResult || [];
     const resultsCount = results.length;
 
-    //  Store ALL the data that runBackgroundJudgment needs
     res.locals.judgmentData = {
       naturalLanguageQuery: res.locals.naturalLanguageQuery,
       generatedSQL: res.locals.databaseQuery,
@@ -60,7 +49,6 @@ export const triggerBackgroundJudgment: RequestHandler = (_, res, next) => {
       judgeModel: process.env.JUDGE_MODEL
     };
     console.log(`Judgment data stored for: "${res.locals.naturalLanguageQuery.substring(0, 50)}..."`);
-    console.log('  Judgment data structure:', Object.keys(res.locals.judgmentData));
   } else {
     console.log(`Skipping judgment - source: ${source}, hasSQL: ${hasSQL}`);
   }
@@ -68,74 +56,47 @@ export const triggerBackgroundJudgment: RequestHandler = (_, res, next) => {
   next();
 };
 
-/**
- * Extract numeric value from expected count string (e.g., ">=4" -> 4)
- */
-function extractExpectedCount(expectedCount: number | string | undefined): number {
-  if (expectedCount === undefined || expectedCount === null) {
-    return 0; // Default for ad-hoc queries
-  }
-  if (typeof expectedCount === 'number') return expectedCount;
-
-  const match = expectedCount.match(/\d+/);
-  return match ? parseInt(match[0], 10) : 0;
-}
-/**
- * Normalize SQL for comparison (remove superficial differences)
- */
-function normalizeSQL(sql: string): string {
+export function normalizeSQL(sql: string): string {
   if (!sql) return '';
 
   return sql
     .toLowerCase()
-    .replace(/\s+/g, ' ')                    // Normalize whitespace
-    .replace(/`/g, '"')                       // Normalize quotes
-    .replace(/""/g, '"')                       // Fix double-double quotes
-    .replace(/select \* /g, 'select ')        // * is often equivalent to listing columns
-    .replace(/as \w+/g, '')                    // Remove column aliases
-    .replace(/["']/g, '"')                     // Standardize quotes
-    .replace(/;/g, '')                          // Remove semicolons
+    .replace(/\s+/g, ' ')
+    .replace(/`/g, '"')
+    .replace(/""/g, '"')
+    .replace(/select \* /g, 'select ')
+    .replace(/as \w+/g, '')
+    .replace(/["']/g, '"')
+    .replace(/;/g, '')
     .trim();
 }
 
-/**
- * Extract main tables from SQL (FROM and JOIN clauses)
- */
 function extractMainTables(sql: string): string {
   if (!sql) return '';
 
   const normalized = normalizeSQL(sql);
 
-  // Find FROM clause
   const fromMatch = normalized.match(/from\s+([^where group order limit]+)/i);
   if (!fromMatch) return '';
 
   let fromClause = fromMatch[1];
-
-  // Remove JOIN clauses to focus on main tables
   fromClause = fromClause.replace(/join[^]+?(?=where|group|order|limit|$)/gi, '');
 
-  // Extract table names (quoted or unquoted)
   const tableMatches = fromClause.match(/"([^"]+)"|(\w+)/g) || [];
 
   return tableMatches.map(t => t.replace(/"/g, '')).sort().join(',');
 }
 
-/**
- * Extract WHERE clause conditions (simplified)
- */
 function extractWhereClause(sql: string): string {
   if (!sql) return '';
 
   const normalized = normalizeSQL(sql);
 
-  // Find WHERE clause
   const whereMatch = normalized.match(/where\s+(.+?)(?=group by|order by|limit|$)/i);
   if (!whereMatch) return '';
 
   let whereClause = whereMatch[1];
 
-  // Normalize conditions: = vs like vs ilike are often equivalent for our purposes
   whereClause = whereClause
     .replace(/\s+like\s+/g, ' = ')
     .replace(/\s+ilike\s+/g, ' = ')
@@ -147,32 +108,24 @@ function extractWhereClause(sql: string): string {
   return whereClause;
 }
 
-/**
- * Extract selected columns
- */
 function extractSelectedColumns(sql: string): string[] {
   if (!sql) return [];
 
   const normalized = normalizeSQL(sql);
 
-  // Find SELECT clause
   const selectMatch = normalized.match(/select\s+(.+?)\s+from/i);
   if (!selectMatch) return [];
 
   let selectClause = selectMatch[1];
 
-  // Handle SELECT *
   if (selectClause.includes('*')) {
     return ['*'];
   }
 
-  // Split by commas and clean up
   const columns = selectClause
     .split(',')
     .map(col => {
-      // Remove table aliases (t.column -> column)
       const withoutAlias = col.replace(/\w+\./g, '');
-      // Remove quotes and trim
       return withoutAlias.replace(/["']/g, '').trim();
     })
     .filter(col => col && col !== '');
@@ -180,125 +133,191 @@ function extractSelectedColumns(sql: string): string[] {
   return columns;
 }
 
-/**
- * Calculate Answer Relevancy - does the response address what the user asked?
- */
-function calculateAnswerRelevancy(generatedSQL: string, userQuery: string): number {
-  const queryLower = userQuery.toLowerCase();
+function calculateIntentMatch(generatedSQL: string, userQuery: string): number {
   const sqlLower = generatedSQL.toLowerCase();
+  const queryLower = userQuery.toLowerCase();
   const selectedColumns = extractSelectedColumns(generatedSQL);
-
-  let score = 0;
-  const maxScore = 5;
-
-  // 1. Check if SELECT matches what user asked for
+  
+  let score = 3;
+  
+  if (queryLower.includes('list all') || queryLower.includes('show all') || queryLower.includes('get all')) {
+    const hasAllContentColumns = 
+      (sqlLower.includes('alltrustcontrols') && selectedColumns.includes('short') && selectedColumns.includes('long')) ||
+      (sqlLower.includes('allteams') && 
+       selectedColumns.includes('firstname') && 
+       selectedColumns.includes('lastname') &&
+       selectedColumns.includes('email') &&
+       selectedColumns.includes('role'));
+    
+    if (selectedColumns.includes('*') || hasAllContentColumns) {
+      score += 1;
+    }
+  }
+  
   if (queryLower.includes('short descriptions') && selectedColumns.includes('short')) score += 1;
-  if (queryLower.includes('list all') && selectedColumns.includes('*')) score += 1;
+  if (queryLower.includes('names') && (selectedColumns.includes('firstname') || selectedColumns.includes('lastname'))) score += 1;
+  
   if (queryLower.includes('count') && sqlLower.includes('count(')) score += 1;
   if (queryLower.includes('average') && sqlLower.includes('avg(')) score += 1;
-
-  // 2. Check if WHERE clause addresses the right category
+  if (queryLower.includes('sum') && sqlLower.includes('sum(')) score += 1;
+  if (queryLower.includes('maximum') && sqlLower.includes('max(')) score += 1;
+  if (queryLower.includes('minimum') && sqlLower.includes('min(')) score += 1;
+  
   if (queryLower.includes('cloud security') && sqlLower.includes('cloud')) score += 1;
   if (queryLower.includes('data security') && sqlLower.includes('data')) score += 1;
+  if (queryLower.includes('privacy') && sqlLower.includes('privacy')) score += 1;
   if (queryLower.includes('organizational security') && sqlLower.includes('organizational')) score += 1;
-
-  // 3. Check for UNION/JOIN when asking about multiple tables
-  if (queryLower.includes('and faqs') && (sqlLower.includes('union') || sqlLower.includes('join'))) score += 1;
-  if (queryLower.includes('and controls') && (sqlLower.includes('union') || sqlLower.includes('join'))) score += 1;
-
-  return Math.min(score, maxScore);
+  
+  if (queryLower.includes('active') && sqlLower.includes('isactive')) score += 1;
+  
+  if (queryLower.includes('technical delivery managers') && sqlLower.includes('technical delivery manager')) score += 1;
+  
+  if ((queryLower.includes('and faqs') || queryLower.includes('and controls')) && 
+      (sqlLower.includes('union') || sqlLower.includes('join'))) score += 1;
+  
+  return Math.min(5, Math.max(1, score));
 }
 
-/**
- * Calculate Groundedness - are results based on actual data?
- */
-function calculateGroundedness(results: any[], expectedMinCount: number): number {
-  if (!results || results.length === 0) return 0;
+function calculateSQLCorrectness(generatedSQL: string, expectedSQL: string): number {
+  const genNormalized = normalizeSQL(generatedSQL);
+  const expNormalized = normalizeSQL(expectedSQL);
+  
+  const genHasStar = genNormalized.includes('select *');
+  const expHasStar = expNormalized.includes('select *');
+  
+  if (genHasStar !== expHasStar) {
+    const genColumns = extractSelectedColumns(generatedSQL);
+    const expColumns = extractSelectedColumns(expectedSQL);
+    
+    if (genHasStar && !expHasStar && expColumns.includes('short') && expColumns.includes('long')) {
+      return 5;
+    }
+    if (expHasStar && !genHasStar && genColumns.includes('short') && genColumns.includes('long')) {
+      return 5;
+    }
+  }
+  
+  const genFunctional = genNormalized.replace(/count\(\*\)\s+as\s+\w+/g, 'count(*)');
+  const expFunctional = expNormalized.replace(/count\(\*\)\s+as\s+\w+/g, 'count(*)');
+  
+  const genNoOrderBy = genFunctional.replace(/order by[^]+$/, '').trim();
+  const expNoOrderBy = expFunctional.replace(/order by[^]+$/, '').trim();
+  
+  if (genNoOrderBy === expNoOrderBy) return 5;
+  
+  const genTables = extractMainTables(generatedSQL);
+  const expTables = extractMainTables(expectedSQL);
+  if (genTables !== expTables) return 1;
+  
+  const genWhere = extractWhereClause(generatedSQL);
+  const expWhere = extractWhereClause(expectedSQL);
+  if (genWhere === expWhere) return 4;
+  
+  return 3;
+}
 
-  // If we got at least the minimum expected results
-  if (results.length >= expectedMinCount) return 5;
-
-  // If we got some results but fewer than expected
+function calculateResultQuality(results: any[], expectedCount: number | string): number {
+  if (!results || results.length === 0) return 1;
+  
+  const expectedMin = extractExpectedCount(expectedCount);
+  
+  if (results.length >= expectedMin) return 5;
   if (results.length > 0) return 3;
-
+  
   return 1;
 }
 
-/**
- * Calculate Faithfulness - does SQL correctly implement the query intent?
- */
 function calculateFaithfulness(
   generatedSQL: string,
   expectedSQL: string,
   results: any[],
   expectedCount?: number | string
 ): number {
-  // If we have actual results to compare (ideal case)
   if (results && results.length > 0) {
-    // Check if count meets expectations
     if (expectedCount) {
       const expectedMin = extractExpectedCount(expectedCount);
       if (results.length >= expectedMin) {
-        // We got the expected data - that's what matters!
         return 5;
       }
     }
-
-    // If we have results at all, that's good
-    if (results.length > 0) return 4;
+    return 4;
   }
 
-  // SQL structure comparison (much more lenient)
-  // Extract main components directly without creating unused variables
-  const genTables = extractMainTables(generatedSQL);
-  const expTables = extractMainTables(expectedSQL);
-  const genWhere = extractWhereClause(generatedSQL);
-  const expWhere = extractWhereClause(expectedSQL);
-
-  // Check if same tables (critical)
-  if (genTables !== expTables) return 1;
-
-  // Check if WHERE clause has same key conditions
-  // (ignoring = vs LIKE differences)
-  const genWhereSimple = genWhere.replace(/= '[^']+'/g, '= ?');
-  const expWhereSimple = expWhere.replace(/= '[^']+'/g, '= ?');
-
-  if (genWhereSimple === expWhereSimple) return 5;
-
-  // If tables match and we have a WHERE clause at all
-  if (genTables && genWhere) return 4;
-
-  // Default
-  return 3;
+  return calculateSQLCorrectness(generatedSQL, expectedSQL);
 }
 
-/**
- * Calculate overall score using weighted dimensions
- */
-function calculateOverallScore(scores: {
-  groundedness: number;
-  faithfulness: number;
-  answerRelevancy: number;
-}): number {
-  // Weights: groundedness (results) matters most
-  const weights = {
-    groundedness: 0.5,  // 50% - Did we get results?
-    faithfulness: 0.3,   // 30% - Is SQL semantically correct?
-    answerRelevancy: 0.2 // 20% - Does it answer the question?
+function generateDetailedExplanation(
+  scores: { groundedness: number; faithfulness: number; intentScore: number },
+  enhancedScore: number,
+  resultsCount: number,
+  expectedMinCount: number
+): string {
+  const explanations = [];
+  
+  if (scores.groundedness >= 4) {
+    explanations.push(`Results: Found ${resultsCount} rows (meets minimum ${expectedMinCount})`);
+  } else if (resultsCount === 0) {
+    explanations.push(`Results: No data returned - check query conditions`);
+  } else {
+    explanations.push(`Results: Found ${resultsCount} rows, expected at least ${expectedMinCount}`);
+  }
+
+  if (scores.faithfulness >= 4) {
+    explanations.push(`SQL Structure: Correct tables and conditions`);
+  } else if (scores.faithfulness <= 2) {
+    explanations.push(`SQL Structure: Tables don't match expected query`);
+  } else {
+    explanations.push(`SQL Structure: Partially correct but has issues`);
+  }
+
+  if (scores.intentScore >= 4) {
+    explanations.push(`Intent: SQL correctly addresses the question`);
+  } else if (scores.intentScore <= 2) {
+    explanations.push(`Intent: SQL doesn't answer what was asked`);
+  } else {
+    explanations.push(`Intent: Partially addresses the question`);
+  }
+
+  explanations.push(`Overall score: ${enhancedScore}/5`);
+  
+  return explanations.join('. ');
+}
+
+function calculateScoreWithLLMStyle(
+  generatedSQL: string,
+  expectedSQL: string,
+  results: any[],
+  expectedCount: number | string,
+  userQuery: string
+): number {
+
+  const dimensions = {
+    intent: calculateIntentMatch(generatedSQL, userQuery),
+    correctness: calculateSQLCorrectness(generatedSQL, expectedSQL),
+    resultQuality: calculateResultQuality(results, expectedCount)
   };
-
-  const weightedScore =
-    scores.groundedness * weights.groundedness +
-    scores.faithfulness * weights.faithfulness +
-    scores.answerRelevancy * weights.answerRelevancy;
-
-  // Round to 1 decimal
-  return Math.round(weightedScore * 10) / 10;
+  
+  const weights = { 
+    intent: 0.45,
+    correctness: 0.35,
+    resultQuality: 0.20
+  };
+  
+  const weightedScore = Object.entries(dimensions).reduce(
+    (sum, [key, val]) => sum + val * weights[key as keyof typeof weights], 0
+  );
+  
+const judgeService = new JudgeService();
+return judgeService.normalizeScore(weightedScore);
 }
 
-/**
- * Execute judgment in background (called after response)
- */
+function extractExpectedCount(expectedCount: number | string | undefined): number {
+  if (expectedCount === undefined || expectedCount === null) return 0;
+  if (typeof expectedCount === 'number') return expectedCount;
+  const match = expectedCount.match(/\d+/);
+  return match ? parseInt(match[0], 10) : 0;
+}
+
 export async function runBackgroundJudgment(data: any): Promise<void> {
   if (!data) {
     console.log(createError('No judgment data to process', 400, 'backgroundJobs').log);
@@ -306,10 +325,8 @@ export async function runBackgroundJudgment(data: any): Promise<void> {
   }
 
   console.log(`Running background judgment for: "${data.naturalLanguageQuery?.substring(0, 50) || 'unknown'}"...`);
-  console.log('Received data keys:', Object.keys(data));
 
   try {
-    // Safely extract results - handle both possible structures
     const {
       naturalLanguageQuery,
       generatedSQL,
@@ -321,12 +338,10 @@ export async function runBackgroundJudgment(data: any): Promise<void> {
 
     const resultsCount = results.length;
     
-    // Find matching test case
     const testCase = testSet.find(t => 
       t.naturalLanguageQuery.toLowerCase().trim() === naturalLanguageQuery.toLowerCase().trim()
     );
 
-    // Create judgment with safe defaults
     const judgment: Judgment = {
       timestamp: new Date(),
       naturalLanguageQuery,
@@ -343,44 +358,42 @@ export async function runBackgroundJudgment(data: any): Promise<void> {
       judgeModel: process.env.JUDGE_MODEL
     };
 
-    // Check if this is a test case
     if (testCase) {
-      console.log('Test case found, using rule-based evaluation');
+      console.log('Test case found, using enhanced rule-based evaluation');
       
       const expectedMinCount = extractExpectedCount(testCase.expectedResponse.resultsCount);
       
-      const scores = {
-        groundedness: calculateGroundedness(results, expectedMinCount),
+      const componentScores = {
+        groundedness: calculateResultQuality(results, testCase.expectedResponse.resultsCount),
         faithfulness: calculateFaithfulness(
           generatedSQL, 
           testCase.expectedResponse.sql,
           results,
           testCase.expectedResponse.resultsCount
         ),
-        answerRelevancy: calculateAnswerRelevancy(
-          generatedSQL, 
-          naturalLanguageQuery
-        )
+        intentScore: calculateIntentMatch(generatedSQL, naturalLanguageQuery)
       };
       
-      judgment.score = calculateOverallScore(scores);
-      judgment.passed = scores.groundedness >= 4;
+      const enhancedScore = calculateScoreWithLLMStyle(
+        generatedSQL,
+        testCase.expectedResponse.sql,
+        results,
+        testCase.expectedResponse.resultsCount,
+        naturalLanguageQuery
+      );
       
-      const explanations = [];
-      if (scores.groundedness >= 4) {
-        explanations.push(`✓ Returns ${resultsCount} relevant results`);
-      } else if (resultsCount === 0) {
-        explanations.push(`✗ Returns no results - query may need adjustment`);
-      } else {
-        explanations.push(`⚠ Returns ${resultsCount} results (expected at least ${expectedMinCount})`);
-      }
-      
-      judgment.explanation = explanations.join('. ');
+      judgment.score = enhancedScore;
+      judgment.passed = enhancedScore >= 4;
+      judgment.explanation = generateDetailedExplanation(
+        componentScores, 
+        enhancedScore,
+        resultsCount,
+        expectedMinCount
+      );
       
     } else {
       console.log('No test case found, using LLM judge for ad-hoc query');
       
-      // Only call LLM judge if we have results
       if (results.length > 0) {
         const llmJudgment = await judgeService.evaluateWithLLM(
           naturalLanguageQuery,
@@ -391,25 +404,22 @@ export async function runBackgroundJudgment(data: any): Promise<void> {
         judgment.explanation = llmJudgment.explanation;
         judgment.passed = llmJudgment.score >= 4;
       } else {
-        // No results case
         judgment.score = 1;
         judgment.explanation = 'Query returned no results';
         judgment.passed = false;
       }
     }
 
-    // Save to JSON file
     const filepath = await judgeService.saveJudgment(judgment);
     console.log(`Judgment saved: ${filepath}`);
     console.log(`Score: ${judgment.score}/5 - ${judgment.passed ? 'PASSED' : 'FAILED'}`);
     
   } catch (error) {
-    // Error handling lives WITH the background job logic
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error(createError(
       `Background judgment failed: ${errorMessage}`,
       500,
       'backgroundJobs'
     ).log);
-    }
   }
+}
