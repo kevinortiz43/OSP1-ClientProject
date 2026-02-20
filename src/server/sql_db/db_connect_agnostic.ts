@@ -7,18 +7,18 @@ const isRunningInDocker =
   process.env.DB_HOST === "db" ||
   process.env.DB_HOST === "docker";
 
-// const dockerPool = new Pool({
-//   host: process.env.DB_HOST || 'localhost', // 'db' inside Docker, 'localhost' outside
-//   port: parseInt(process.env.DB_PORT || '5432'),
-//   database: process.env.DB_NAME || 'test_db',
-//   user: process.env.DB_USER || 'root',
-//   password: process.env.DB_PASSWORD || 'root',
-// });
-
 const dockerPool = new Pool({
-  connectionString:
-    "postgresql://postgres.kgdlviaqzszogrdtktma:cl13ntPr0j12345!@aws-0-us-west-2.pooler.supabase.com:6543/postgres",
+  host: process.env.DB_HOST || 'localhost', // 'db' inside Docker, 'localhost' outside
+  port: parseInt(process.env.DB_PORT || '5432'),
+  database: process.env.DB_NAME || 'test_db',
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || 'root',
 });
+
+// const dockerPool = new Pool({
+//   connectionString:
+//     "postgresql://postgres.kgdlviaqzszogrdtktma:cl13ntPr0j12345!@aws-0-us-west-2.pooler.supabase.com:6543/postgres",
+// });
 
 dockerPool.connect((err, client, release) => {
   if (err) {

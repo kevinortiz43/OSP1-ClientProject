@@ -1,6 +1,6 @@
 import { Elysia, t } from "elysia";
 import { dataService } from "../caching/dataService";
-import { getCache, getCacheStats } from "../caching/cache";
+import { getCacheStats } from "../caching/cache";
 import { databaseQuery } from "../controller/AI_Controller/databaseController";
 import { generateAIResponse } from "../controller/AI_Controller/generateAIResponse";
 import { QueryOpenAI } from "../controller/AI_Controller/onlineAIController";
@@ -36,15 +36,19 @@ router.get("/trustControls", async ({ error }) => {
   }
 });
 
-
-router.post('/ai-online', async ({ body, error }) => {
+router.post(
+  "/ai-online",
+  async ({ body, error }) => {
     try {
       // Step 1: Convert natural language to SQL
       const { naturalLanguageQuery } = body;
-      const { cleanSQL } = await QueryOpenAI({ naturalLanguageQuery, sqlQuery: '' });
+      const { cleanSQL } = await QueryOpenAI({
+        naturalLanguageQuery,
+        sqlQuery: "",
+      });
 
       if (!cleanSQL) {
-        return error(500, { err: 'Failed to generate SQL query' });
+        return error(500, { err: "Failed to generate SQL query" });
       }
 
       // Step 2: Run the SQL against the database
@@ -56,15 +60,16 @@ router.post('/ai-online', async ({ body, error }) => {
         databaseQueryResult: rows,
         sqlQuery: cleanSQL,
       });
-
     } catch (err) {
-      return error(500, { err: 'Failed to process AI query' });
+      return error(500, { err: "Failed to process AI query" });
     }
-  }, {
+  },
+  {
     body: t.Object({
-      naturalLanguageQuery: t.String()
-    })
-  });
+      naturalLanguageQuery: t.String(),
+    }),
+  },
+);
 
 router.get("/allTeams", async ({ error }) => {
   try {
@@ -138,14 +143,14 @@ router.post(
   },
 );
 
-router.get('/admin/cache-stats', () => {
-    const stats = getCacheStats();
+router.get("/admin/cache-stats", () => {
+  const stats = getCacheStats();
 
-    return {
-      hits: stats.hits,
-      misses: stats.misses,
-      keys: stats.keys,
-      ksize: stats.ksize,
-      vsize: stats.vsize,
-    };
-  });
+  return {
+    hits: stats.hits,
+    misses: stats.misses,
+    keys: stats.keys,
+    ksize: stats.ksize,
+    vsize: stats.vsize,
+  };
+});
