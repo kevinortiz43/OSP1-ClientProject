@@ -1,369 +1,366 @@
-:root[data-theme='dark'],
-body[data-theme='dark'],
-[data-theme='dark'] {
+:root[data-theme="dark"],
+body[data-theme="dark"],
+[data-theme="dark"] {
   color-scheme: dark;
 
-  --bg: #0b1220;
+  --bg: #262836;
   --surface: #0f172a;
-  --surface2: #111c33;
-  --surfaceHover: #16223f;
+  --surface2: #262836;
+  --surfaceHover: #003c55;
 
-  --text: #e5e7eb;
-  --muted: #a1a1aa;
+  --text: #ffff;
+  --muted: #e5eff0;
 
-  --border: #24314f;
-  --border2: #2b3a5f;
+  --border: #003c55;
+  --border2: #003c55;
 
-  --primary: #60a5fa;
-  --primarySoft: rgba(96, 165, 250, 0.15);
+  --primary: #0055a8;
+  --primarySoft: #e5eff0;
 
   --shadow1: 0 10px 22px rgba(0, 0, 0, 0.45);
   --shadow2: 0 18px 44px rgba(0, 0, 0, 0.55);
 }
 
-:root[data-theme='dark'] body,
-body[data-theme='dark'],
-[data-theme='dark'] {
+:root[data-theme="dark"] body,
+body[data-theme="dark"],
+[data-theme="dark"] {
   background: var(--bg);
   color: var(--text);
 }
 
-:root[data-theme='dark'] .trustFaqs_page,
-body[data-theme='dark'] .trustFaqs_page,
-[data-theme='dark'] .trustFaqs_page {
-  background: transparent; 
+:root[data-theme="dark"] .trustFaqs_page,
+body[data-theme="dark"] .trustFaqs_page,
+[data-theme="dark"] .trustFaqs_page {
+  background: transparent;
   color: var(--text);
 }
 
-:root[data-theme='dark'] #root,
-body[data-theme='dark'] #root,
-[data-theme='dark'] #root {
+:root[data-theme="dark"] #root,
+body[data-theme="dark"] #root,
+[data-theme="dark"] #root {
   color: var(--text);
 }
 
-:root[data-theme='dark'] .dropdown-content,
-body[data-theme='dark'] .dropdown-content,
-[data-theme='dark'] .dropdown-content {
+:root[data-theme="dark"] .dropdown-content,
+body[data-theme="dark"] .dropdown-content,
+[data-theme="dark"] .dropdown-content {
   background-color: var(--surface);
   border: 1px solid var(--border);
   color: var(--text);
   box-shadow: var(--shadow1);
 }
 
-:root[data-theme='dark'] .category-list .category-item,
-body[data-theme='dark'] .category-list .category-item,
-[data-theme='dark'] .category-list .category-item {
+:root[data-theme="dark"] .category-list .category-item,
+body[data-theme="dark"] .category-list .category-item,
+[data-theme="dark"] .category-list .category-item {
   background: var(--surface);
   border-color: var(--border);
 }
 
-:root[data-theme='dark'] .category-list .category-item > .category-header,
-:root[data-theme='dark'] .category-list .category-item > button.category-header,
-body[data-theme='dark'] .category-list .category-item > .category-header,
-body[data-theme='dark'] .category-list .category-item > button.category-header,
-[data-theme='dark'] .category-list .category-item > .category-header,
-[data-theme='dark'] .category-list .category-item > button.category-header {
+:root[data-theme="dark"] .category-list .category-item > .category-header,
+:root[data-theme="dark"] .category-list .category-item > button.category-header,
+body[data-theme="dark"] .category-list .category-item > .category-header,
+body[data-theme="dark"] .category-list .category-item > button.category-header,
+[data-theme="dark"] .category-list .category-item > .category-header,
+[data-theme="dark"] .category-list .category-item > button.category-header {
   background: var(--surface2);
   color: var(--text);
 }
 
-:root[data-theme='dark'] .category,
-body[data-theme='dark'] .category,
-[data-theme='dark'] .category {
+:root[data-theme="dark"] .category,
+body[data-theme="dark"] .category,
+[data-theme="dark"] .category {
   border-color: var(--border);
   background: var(--surface);
 }
 
-:root[data-theme='dark'] .category-header,
-body[data-theme='dark'] .category-header,
-[data-theme='dark'] .category-header {
+:root[data-theme="dark"] .category-header,
+body[data-theme="dark"] .category-header,
+[data-theme="dark"] .category-header {
   background: var(--surface2);
   color: var(--text);
 }
 
-:root[data-theme='dark'] .category-list .category-item .item-answer,
-:root[data-theme='dark'] .category .item-answer,
-body[data-theme='dark'] .category-list .category-item .item-answer,
-body[data-theme='dark'] .category .item-answer,
-[data-theme='dark'] .category-list .category-item .item-answer,
-[data-theme='dark'] .category .item-answer {
+:root[data-theme="dark"] .category-list .category-item .item-answer,
+:root[data-theme="dark"] .category .item-answer,
+body[data-theme="dark"] .category-list .category-item .item-answer,
+body[data-theme="dark"] .category .item-answer,
+[data-theme="dark"] .category-list .category-item .item-answer,
+[data-theme="dark"] .category .item-answer {
   background: var(--surface);
   border-top-color: var(--border);
   color: var(--muted);
 }
 
-:root[data-theme='dark'] .item-answer,
-body[data-theme='dark'] .item-answer,
-[data-theme='dark'] .item-answer {
+:root[data-theme="dark"] .item-answer,
+body[data-theme="dark"] .item-answer,
+[data-theme="dark"] .item-answer {
   color: var(--muted);
 }
 
-:root[data-theme='dark'] .show-answer,
-body[data-theme='dark'] .show-answer,
-[data-theme='dark'] .show-answer {
+:root[data-theme="dark"] .show-answer,
+body[data-theme="dark"] .show-answer,
+[data-theme="dark"] .show-answer {
   background: transparent;
   border-color: var(--border2);
   color: var(--text);
 }
 
-/* ---- TrustCenter.css ---- */
-:root[data-theme='dark'] .trusts_header,
-body[data-theme='dark'] .trusts_header,
-[data-theme='dark'] .trusts_header {
+:root[data-theme="dark"] .trusts_header,
+body[data-theme="dark"] .trusts_header,
+[data-theme="dark"] .trusts_header {
   background-color: var(--surface);
   border: 1px solid var(--border);
   box-shadow: none;
 }
 
-:root[data-theme='dark'] .trusts_title,
-body[data-theme='dark'] .trusts_title,
-[data-theme='dark'] .trusts_title {
+:root[data-theme="dark"] .trusts_title,
+body[data-theme="dark"] .trusts_title,
+[data-theme="dark"] .trusts_title {
   color: var(--text);
 }
 
-:root[data-theme='dark'] .trusts_subtitle,
-body[data-theme='dark'] .trusts_subtitle,
-[data-theme='dark'] .trusts_subtitle {
+:root[data-theme="dark"] .trusts_subtitle,
+body[data-theme="dark"] .trusts_subtitle,
+[data-theme="dark"] .trusts_subtitle {
   color: var(--muted);
 }
 
-:root[data-theme='dark'] .trust_card,
-body[data-theme='dark'] .trust_card,
-[data-theme='dark'] .trust_card {
+:root[data-theme="dark"] .trust_card,
+body[data-theme="dark"] .trust_card,
+[data-theme="dark"] .trust_card {
   background-color: var(--surface);
   border-color: var(--border);
   box-shadow: none;
 }
 
-:root[data-theme='dark'] .trust_card:hover,
-body[data-theme='dark'] .trust_card:hover,
-[data-theme='dark'] .trust_card:hover {
+:root[data-theme="dark"] .trust_card:hover,
+body[data-theme="dark"] .trust_card:hover,
+[data-theme="dark"] .trust_card:hover {
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
 }
 
-:root[data-theme='dark'] .trust_button:hover .trust_header,
-:root[data-theme='dark'] .trust_button.active .trust_header,
-body[data-theme='dark'] .trust_button:hover .trust_header,
-body[data-theme='dark'] .trust_button.active .trust_header,
-[data-theme='dark'] .trust_button:hover .trust_header,
-[data-theme='dark'] .trust_button.active .trust_header {
+:root[data-theme="dark"] .trust_button:hover .trust_header,
+:root[data-theme="dark"] .trust_button.active .trust_header,
+body[data-theme="dark"] .trust_button:hover .trust_header,
+body[data-theme="dark"] .trust_button.active .trust_header,
+[data-theme="dark"] .trust_button:hover .trust_header,
+[data-theme="dark"] .trust_button.active .trust_header {
   background-color: var(--surfaceHover);
 }
 
-:root[data-theme='dark'] .trust_button.active .trust_header,
-body[data-theme='dark'] .trust_button.active .trust_header,
-[data-theme='dark'] .trust_button.active .trust_header {
+:root[data-theme="dark"] .trust_button.active .trust_header,
+body[data-theme="dark"] .trust_button.active .trust_header,
+[data-theme="dark"] .trust_button.active .trust_header {
   border-bottom-color: var(--border);
 }
 
-:root[data-theme='dark'] .trust_icon_wrapper,
-body[data-theme='dark'] .trust_icon_wrapper,
-[data-theme='dark'] .trust_icon_wrapper {
+:root[data-theme="dark"] .trust_icon_wrapper,
+body[data-theme="dark"] .trust_icon_wrapper,
+[data-theme="dark"] .trust_icon_wrapper {
   background-color: var(--primarySoft);
 }
 
-:root[data-theme='dark'] .trust_icon,
-body[data-theme='dark'] .trust_icon,
-[data-theme='dark'] .trust_icon {
+:root[data-theme="dark"] .trust_icon,
+body[data-theme="dark"] .trust_icon,
+[data-theme="dark"] .trust_icon {
   color: var(--primary);
 }
 
-:root[data-theme='dark'] .trust_question,
-body[data-theme='dark'] .trust_question,
-[data-theme='dark'] .trust_question {
+:root[data-theme="dark"] .trust_question,
+body[data-theme="dark"] .trust_question,
+[data-theme="dark"] .trust_question {
   color: var(--text);
 }
 
-:root[data-theme='dark'] .trust_category,
-body[data-theme='dark'] .trust_category,
-[data-theme='dark'] .trust_category {
+:root[data-theme="dark"] .trust_category,
+body[data-theme="dark"] .trust_category,
+[data-theme="dark"] .trust_category {
   color: var(--muted);
 }
 
-:root[data-theme='dark'] .trust_chevron,
-body[data-theme='dark'] .trust_chevron,
-[data-theme='dark'] .trust_chevron {
+:root[data-theme="dark"] .trust_chevron,
+body[data-theme="dark"] .trust_chevron,
+[data-theme="dark"] .trust_chevron {
   color: var(--muted);
 }
 
-:root[data-theme='dark'] .trust_answer p,
-body[data-theme='dark'] .trust_answer p,
-[data-theme='dark'] .trust_answer p {
+:root[data-theme="dark"] .trust_answer p,
+body[data-theme="dark"] .trust_answer p,
+[data-theme="dark"] .trust_answer p {
   color: var(--muted);
 }
 
-/* ---- Faqs.css ---- */
-:root[data-theme='dark'] .faqs_header,
-body[data-theme='dark'] .faqs_header,
-[data-theme='dark'] .faqs_header {
+:root[data-theme="dark"] .faqs_header,
+body[data-theme="dark"] .faqs_header,
+[data-theme="dark"] .faqs_header {
   background-color: var(--surface);
   border: 1px solid var(--border);
   box-shadow: none;
 }
 
-:root[data-theme='dark'] .faqs_title,
-body[data-theme='dark'] .faqs_title,
-[data-theme='dark'] .faqs_title {
+:root[data-theme="dark"] .faqs_title,
+body[data-theme="dark"] .faqs_title,
+[data-theme="dark"] .faqs_title {
   color: var(--text);
 }
 
-:root[data-theme='dark'] .faqs_subtitle,
-body[data-theme='dark'] .faqs_subtitle,
-[data-theme='dark'] .faqs_subtitle {
+:root[data-theme="dark"] .faqs_subtitle,
+body[data-theme="dark"] .faqs_subtitle,
+[data-theme="dark"] .faqs_subtitle {
   color: var(--muted);
 }
 
-:root[data-theme='dark'] .faq_card,
-body[data-theme='dark'] .faq_card,
-[data-theme='dark'] .faq_card {
+:root[data-theme="dark"] .faq_card,
+body[data-theme="dark"] .faq_card,
+[data-theme="dark"] .faq_card {
   background-color: var(--surface);
   border-color: var(--border);
   box-shadow: none;
 }
 
-:root[data-theme='dark'] .faq_card:hover,
-body[data-theme='dark'] .faq_card:hover,
-[data-theme='dark'] .faq_card:hover {
+:root[data-theme="dark"] .faq_card:hover,
+body[data-theme="dark"] .faq_card:hover,
+[data-theme="dark"] .faq_card:hover {
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
 }
 
-:root[data-theme='dark'] .faq_button:hover .faq_header,
-:root[data-theme='dark'] .faq_button.active .faq_header,
-body[data-theme='dark'] .faq_button:hover .faq_header,
-body[data-theme='dark'] .faq_button.active .faq_header,
-[data-theme='dark'] .faq_button:hover .faq_header,
-[data-theme='dark'] .faq_button.active .faq_header {
+:root[data-theme="dark"] .faq_button:hover .faq_header,
+:root[data-theme="dark"] .faq_button.active .faq_header,
+body[data-theme="dark"] .faq_button:hover .faq_header,
+body[data-theme="dark"] .faq_button.active .faq_header,
+[data-theme="dark"] .faq_button:hover .faq_header,
+[data-theme="dark"] .faq_button.active .faq_header {
   background-color: var(--surfaceHover);
 }
 
-:root[data-theme='dark'] .faq_button.active .faq_header,
-body[data-theme='dark'] .faq_button.active .faq_header,
-[data-theme='dark'] .faq_button.active .faq_header {
+:root[data-theme="dark"] .faq_button.active .faq_header,
+body[data-theme="dark"] .faq_button.active .faq_header,
+[data-theme="dark"] .faq_button.active .faq_header {
   border-bottom-color: var(--border);
 }
 
-:root[data-theme='dark'] .faq_icon_wrapper,
-body[data-theme='dark'] .faq_icon_wrapper,
-[data-theme='dark'] .faq_icon_wrapper {
+:root[data-theme="dark"] .faq_icon_wrapper,
+body[data-theme="dark"] .faq_icon_wrapper,
+[data-theme="dark"] .faq_icon_wrapper {
   background-color: var(--primarySoft);
 }
 
-:root[data-theme='dark'] .faq_icon,
-body[data-theme='dark'] .faq_icon,
-[data-theme='dark'] .faq_icon {
+:root[data-theme="dark"] .faq_icon,
+body[data-theme="dark"] .faq_icon,
+[data-theme="dark"] .faq_icon {
   color: var(--primary);
 }
 
-:root[data-theme='dark'] .faq_question,
-body[data-theme='dark'] .faq_question,
-[data-theme='dark'] .faq_question {
+:root[data-theme="dark"] .faq_question,
+body[data-theme="dark"] .faq_question,
+[data-theme="dark"] .faq_question {
   color: var(--text);
 }
 
-:root[data-theme='dark'] .faq_category,
-body[data-theme='dark'] .faq_category,
-[data-theme='dark'] .faq_category {
+:root[data-theme="dark"] .faq_category,
+body[data-theme="dark"] .faq_category,
+[data-theme="dark"] .faq_category {
   color: var(--muted);
 }
 
-:root[data-theme='dark'] .faq_chevron,
-body[data-theme='dark'] .faq_chevron,
-[data-theme='dark'] .faq_chevron {
+:root[data-theme="dark"] .faq_chevron,
+body[data-theme="dark"] .faq_chevron,
+[data-theme="dark"] .faq_chevron {
   color: var(--muted);
 }
 
-:root[data-theme='dark'] .faq_answer p,
-body[data-theme='dark'] .faq_answer p,
-[data-theme='dark'] .faq_answer p {
+:root[data-theme="dark"] .faq_answer p,
+body[data-theme="dark"] .faq_answer p,
+[data-theme="dark"] .faq_answer p {
   color: var(--muted);
 }
 
-/* ---- chat-widget.css ---- */
-:root[data-theme='dark'] .chatWidgetFab,
-body[data-theme='dark'] .chatWidgetFab,
-[data-theme='dark'] .chatWidgetFab {
+:root[data-theme="dark"] .chatWidgetFab,
+body[data-theme="dark"] .chatWidgetFab,
+[data-theme="dark"] .chatWidgetFab {
   background: #0b1220;
   border-color: var(--border);
   color: var(--text);
   box-shadow: var(--shadow1);
 }
 
-:root[data-theme='dark'] .chatWidgetPanel,
-body[data-theme='dark'] .chatWidgetPanel,
-[data-theme='dark'] .chatWidgetPanel {
+:root[data-theme="dark"] .chatWidgetPanel,
+body[data-theme="dark"] .chatWidgetPanel,
+[data-theme="dark"] .chatWidgetPanel {
   background: var(--surface);
   border-color: var(--border);
   box-shadow: var(--shadow2);
 }
 
-:root[data-theme='dark'] .chatWidgetHeader,
-body[data-theme='dark'] .chatWidgetHeader,
-[data-theme='dark'] .chatWidgetHeader {
+:root[data-theme="dark"] .chatWidgetHeader,
+body[data-theme="dark"] .chatWidgetHeader,
+[data-theme="dark"] .chatWidgetHeader {
   background: var(--surface2);
   border-bottom-color: var(--border);
 }
 
-:root[data-theme='dark'] .chatWidgetTitle,
-body[data-theme='dark'] .chatWidgetTitle,
-[data-theme='dark'] .chatWidgetTitle {
+:root[data-theme="dark"] .chatWidgetTitle,
+body[data-theme="dark"] .chatWidgetTitle,
+[data-theme="dark"] .chatWidgetTitle {
   color: var(--text);
 }
 
-:root[data-theme='dark'] .chatWidgetIconButton,
-body[data-theme='dark'] .chatWidgetIconButton,
-[data-theme='dark'] .chatWidgetIconButton {
+:root[data-theme="dark"] .chatWidgetIconButton,
+body[data-theme="dark"] .chatWidgetIconButton,
+[data-theme="dark"] .chatWidgetIconButton {
   background: var(--surface);
   border-color: var(--border);
   color: var(--text);
 }
 
-:root[data-theme='dark'] .chatWidgetBody,
-body[data-theme='dark'] .chatWidgetBody,
-[data-theme='dark'] .chatWidgetBody {
+:root[data-theme="dark"] .chatWidgetBody,
+body[data-theme="dark"] .chatWidgetBody,
+[data-theme="dark"] .chatWidgetBody {
   background: var(--surface);
 }
 
-:root[data-theme='dark'] .chatBubble,
-body[data-theme='dark'] .chatBubble,
-[data-theme='dark'] .chatBubble {
+:root[data-theme="dark"] .chatBubble,
+body[data-theme="dark"] .chatBubble,
+[data-theme="dark"] .chatBubble {
   color: var(--text);
   background: var(--surface2);
   border-color: var(--border);
 }
 
-:root[data-theme='dark'] .chatBubbleRow.isUser .chatBubble,
-body[data-theme='dark'] .chatBubbleRow.isUser .chatBubble,
-[data-theme='dark'] .chatBubbleRow.isUser .chatBubble {
+:root[data-theme="dark"] .chatBubbleRow.isUser .chatBubble,
+body[data-theme="dark"] .chatBubbleRow.isUser .chatBubble,
+[data-theme="dark"] .chatBubbleRow.isUser .chatBubble {
   background: #1f2937;
   border-color: #1f2937;
   color: var(--text);
 }
 
-:root[data-theme='dark'] .chatWidgetComposer,
-body[data-theme='dark'] .chatWidgetComposer,
-[data-theme='dark'] .chatWidgetComposer {
+:root[data-theme="dark"] .chatWidgetComposer,
+body[data-theme="dark"] .chatWidgetComposer,
+[data-theme="dark"] .chatWidgetComposer {
   background: var(--surface);
   border-top-color: var(--border);
 }
 
-:root[data-theme='dark'] .chatWidgetInput,
-body[data-theme='dark'] .chatWidgetInput,
-[data-theme='dark'] .chatWidgetInput {
+:root[data-theme="dark"] .chatWidgetInput,
+body[data-theme="dark"] .chatWidgetInput,
+[data-theme="dark"] .chatWidgetInput {
   background: #0b1220;
   border-color: var(--border);
   color: var(--text);
 }
 
-:root[data-theme='dark'] .chatWidgetInput:focus,
-body[data-theme='dark'] .chatWidgetInput:focus,
-[data-theme='dark'] .chatWidgetInput:focus {
+:root[data-theme="dark"] .chatWidgetInput:focus,
+body[data-theme="dark"] .chatWidgetInput:focus,
+[data-theme="dark"] .chatWidgetInput:focus {
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.18);
 }
 
-:root[data-theme='dark'] .chatWidgetSend,
-body[data-theme='dark'] .chatWidgetSend,
-[data-theme='dark'] .chatWidgetSend {
+:root[data-theme="dark"] .chatWidgetSend,
+body[data-theme="dark"] .chatWidgetSend,
+[data-theme="dark"] .chatWidgetSend {
   background: #1f2937;
   border-color: var(--border);
   color: var(--text);
