@@ -103,21 +103,17 @@ export default function Interface() {
     try {
       const response = await fetch("http://localhost:3000/api/ai-online", {
         method: "POST",
-        headers: { "Content-Type": " application/json" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ naturalLanguageQuery: query }),
       });
       console.log(`${response.body}`);
       if (!response.ok) throw new Error("Server error");
 
-      await response.json();
-      console.log(`RESPONSE RESPONSE RESPONSE ${response}`);
-      // on the response text should be switched to whatever the response from
-      // doing a post request to localhost:3000/api/ai-online
-      // { role: "bot", text: `${response}` },
+      const data = await response.json();
       setMessages((prev) => [
         ...prev,
 
-        { role: "bot", text: "Got your results!" },
+        { role: "bot", text: data.response },
       ]);
       setIsLoading(false);
     } catch (err) {
