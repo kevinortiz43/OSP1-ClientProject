@@ -1,6 +1,6 @@
 {
-  "id": "89d2d163-de60-4685-9bc6-c02875cc51d7",
-  "timestamp": "2026-02-19T23:50:17.505Z",
+  "id": "e03b0de8-a3f8-4f4f-94fb-3b226e15d8c2",
+  "timestamp": "2026-02-20T02:03:23.687Z",
   "naturalLanguageQuery": "what are the longest response times for the security team",
   "generatedSQL": "SELECT \"firstName\", \"lastName\", \"email\", \"role\", \"category\", \"responseTimeHours\" \nFROM \"allTeams\" \nWHERE \"role\" ILIKE '%security%' \nAND \"responseTimeHours\" = (SELECT MAX(\"responseTimeHours\") FROM \"allTeams\" WHERE \"role\" ILIKE '%security%');",
   "resultsCount": 1,
@@ -8,7 +8,7 @@
   "score": 1,
   "explanation": "SQL validation failed: Multiple FROM clauses require UNION",
   "source": "ai",
-  "executionTime": "2987ms",
+  "executionTime": "3117ms",
   "sqlModel": "distil-qwen3-4b:latest",
   "judgeModel": "qwen2.5-coder:14b"
 }

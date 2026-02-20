@@ -1,0 +1,14 @@
+{
+  "id": "0a57859a-3160-4486-8949-ee122c84a892",
+  "timestamp": "2026-02-20T02:05:14.476Z",
+  "naturalLanguageQuery": "find FAQs that mention compliance or regulatory requirements",
+  "generatedSQL": "SELECT \"question\", \"answer\", \"category\" FROM \"allTrustFaqs\" WHERE \"searchText\" ILIKE '%compliance%' OR \"searchText\" ILIKE '%regulatory requirements%';",
+  "resultsCount": 2,
+  "passed": true,
+  "score": 4,
+  "explanation": "The SQL query correctly identifies FAQs that mention 'compliance' or 'regulatory requirements'. The results returned are relevant to the question, but they do not include the 'category' field in the output, which is optional but could be useful for context. The query does not filter by category, which is appropriate for a general question.",
+  "source": "ai",
+  "executionTime": "2218ms",
+  "sqlModel": "distil-qwen3-4b:latest",
+  "judgeModel": "qwen2.5-coder:14b"
+}

@@ -153,14 +153,16 @@ function requiresAIPath(query: string): boolean {
   
   return shouldUseAI;
 }
+
 /**
  * Enhanced fastTextSearch with smart path selection
  */
 async function fastTextSearch(query: string): Promise<{
   results: any[];
   source: 'search-cache' | 'search-db';
-  shouldUseAI: boolean;  // New flag to indicate if AI path is recommended
+  shouldUseAI: boolean;  // flag to indicate if AI path is recommended
 }> {
+  
   // First check if this query needs AI path
   const needsAI = requiresAIPath(query);
   
@@ -171,7 +173,7 @@ async function fastTextSearch(query: string): Promise<{
     return { 
       results: [], 
       source: 'search-db',
-      shouldUseAI: needsAI  // Still respect the AI requirement
+      shouldUseAI: needsAI  // Still respect AI requirement
     };
   }
 

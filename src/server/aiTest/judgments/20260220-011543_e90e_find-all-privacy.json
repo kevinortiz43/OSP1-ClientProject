@@ -1,0 +1,14 @@
+{
+  "id": "c539eed1-020e-4b05-a121-e66ecd62e90e",
+  "timestamp": "2026-02-20T01:15:43.825Z",
+  "naturalLanguageQuery": "find all privacy controls that mention data retention",
+  "generatedSQL": "SELECT \"short\", \"long\" FROM \"allTrustControls\" WHERE \"category\" ILIKE 'Privacy' AND \"searchText\" ILIKE '%data retention%';",
+  "resultsCount": 1,
+  "passed": false,
+  "score": 2,
+  "explanation": "The query did not filter by category, which is a critical requirement for this question. The results should have included only controls from the 'Privacy' category.",
+  "source": "ai",
+  "executionTime": "2711ms",
+  "sqlModel": "distil-qwen3-4b:latest",
+  "judgeModel": "qwen2.5-coder:14b"
+}

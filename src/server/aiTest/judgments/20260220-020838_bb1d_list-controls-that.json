@@ -1,6 +1,6 @@
 {
-  "id": "bb58a64f-3a09-4f92-ab2c-d61a05b191b7",
-  "timestamp": "2026-02-19T23:49:19.503Z",
+  "id": "cbad7fcd-bbf7-4708-94bd-46e4131abb1d",
+  "timestamp": "2026-02-20T02:08:38.273Z",
   "naturalLanguageQuery": "list controls that mention both aws and data",
   "generatedSQL": "SELECT \"short\", \"long\" FROM \"allTrustControls\" WHERE \"searchText\" ILIKE '%aws%' AND \"searchText\" ILIKE '%data%';",
   "expectedSQL": "SELECT * FROM \"allTrustControls\" WHERE \"searchText\" ILIKE '%aws%' AND \"searchText\" ILIKE '%data%';",
@@ -10,7 +10,7 @@
   "score": 4,
   "explanation": "Results: Found 1 rows (meets minimum >=1). SQL Structure: Correct tables and conditions. Intent: Partially addresses the question. Overall score: 4/5",
   "source": "ai",
-  "executionTime": "548ms",
+  "executionTime": "449ms",
   "sqlModel": "distil-qwen3-4b:latest",
   "judgeModel": "qwen2.5-coder:14b"
 }

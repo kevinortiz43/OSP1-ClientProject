@@ -25,23 +25,44 @@ const __dirname = path.dirname(__filename);
  * Expected count can be: exact number, comparison (>=5), or simple number string
  */
 export function checkResultsCount(actualCount: number, expectedCount: number | string): boolean {
-    if (typeof expectedCount === 'number') {
-        return actualCount === expectedCount;
+    if (typeof expectedCount === 'number') { // if simple number
+        return actualCount === expectedCount; // return true if counts match exactly
     }
-    const match = expectedCount.match(/^([<>]=?)(\d+)$/);
+
+    // expectedCount is a string with comparison operator (e.g., ">=5", "<10")
+    // This regex breaks down like this:
+    // ^         - start of string
+    // ([<>]=?)  - capture group 1: either < or >, optionally followed by =
+    // (\d+)     - capture group 2: one or more digits
+    // $         - end of string
+    // Examples of what this regex matches:
+    // ">=5"  → match[1] = ">=", match[2] = "5"
+    // "<=10" → match[1] = "<=", match[2] = "10"  
+    // ">3"   → match[1] = ">",  match[2] = "3"
+    // "<7"   → match[1] = "<",  match[2] = "7"
+
+    const match = expectedCount.match(/^([<>]=?)(\d+)$/); // The comparison operator (>=, <=, >, <)
     if (match) {
-        const operator = match[1];
-        const value = parseInt(match[2], 10);
+        const operator = match[1]; // some comparison operator
+        const value = parseInt(match[2], 10); // some digit(s)
         switch (operator) {
-            case '>=': return actualCount >= value;
-            case '<=': return actualCount <= value;
-            case '>': return actualCount > value;
-            case '<': return actualCount < value;
-            default: return false;
+            case '>=': return actualCount >= value;  // True if count is 5 or more for ">=5"
+            case '<=': return actualCount <= value;  // True if count is 10 or less for "<=10"
+            case '>': return actualCount > value; // True if count is greater than 3 for ">3"
+            case '<': return actualCount < value; // True if count is less than 7 for "<7"
+            default: return false; // unknown operator
         }
     }
+    // returns boolean
     return actualCount === parseInt(expectedCount as string, 10);
 }
+
+// Usage examples:
+// checkResultsCount(5, 5)        → true (exact match)
+// checkResultsCount(7, ">=5")    → true (7 is greater than or equal to 5)
+// checkResultsCount(3, ">=5")    → false (3 is not greater than or equal to 5)
+// checkResultsCount(10, "<=5")   → false (10 is not less than or equal to 5)
+// checkResultsCount(5, "5")      → true (parsed from string)
 
 export class JudgeService {
     private readonly judgeModel: string;
@@ -51,21 +72,27 @@ export class JudgeService {
     constructor() {
         this.judgeModel = process.env.JUDGE_MODEL || 'qwen2.5-coder:14b';
         this.ollamaUrl = process.env.TEXT2SQL_URL || 'http://ollama:11434';
-        this.judgmentsDir = path.join(__dirname, '..', 'aiTest', 'judgments');
+        this.judgmentsDir = path.join(__dirname, '..', 'aiTest', 'judgments'); // go up one level, then into aiTest/judgments
 
         console.log(`JudgeService initialized with model: ${this.judgeModel}`);
         console.log(`Judgments will be saved to: ${this.judgmentsDir}`);
 
+        // Create the directory if it doesn't exist
         this.ensureJudgmentsDir();
     }
 
     private ensureJudgmentsDir(): void {
         if (!fs.existsSync(this.judgmentsDir)) {
-            fs.mkdirSync(this.judgmentsDir, { recursive: true });
+            fs.mkdirSync(this.judgmentsDir, { recursive: true }); // recursive: true creates parent directories if needed // maybe rethink? might cause nested folders inside of folders
             console.log(`Created judgments directory: ${this.judgmentsDir}`);
         }
     }
 
+    /**
+        * Compares generated SQL against expected SQL at multiple levels.
+        * exactMatch: Strict string comparison (rarely matches due to formatting)
+        * normalizedMatch: Compares after removing aliases, standardizing quotes, etc.
+        */
     compareWithExpected(generatedSQL: string, expectedSQL: string): {
         exactMatch: boolean;
         normalizedMatch: boolean;
@@ -75,32 +102,43 @@ export class JudgeService {
             normalizedMatch: normalizeSQL(generatedSQL) === normalizeSQL(expectedSQL)
         };
     }
-
+    /**
+     * Delegates to the standalone function (allows both class and direct usage)
+     */
     checkResultsCount(actualCount: number, expectedCount: number | string): boolean {
         return checkResultsCount(actualCount, expectedCount);
     }
-
+    /**
+     * Quick validation to catch obvious SQL errors before LLM evaluation.
+     * Saves time and API calls by rejecting invalid SQL early.
+     */
     private minimalSQLValidation(sql: string): {
         valid: boolean;
         error?: string
     } {
+        // Check for empty SQL
         if (!sql || sql.trim() === '') {
             return { valid: false, error: 'SQL is empty' };
         }
 
         const sqlUpper = sql.toUpperCase();
 
+        // Must have basic SELECT/FROM structure
         if (!sqlUpper.includes('SELECT') || !sqlUpper.includes('FROM')) {
             return { valid: false, error: 'SQL must contain SELECT and FROM clauses' };
         }
 
+        // Count occurrences of SELECT and FROM
         const selectCount = (sqlUpper.match(/SELECT/g) || []).length;
         const fromCount = (sqlUpper.match(/FROM/g) || []).length;
 
+        // Multiple SELECTs might be subqueries - warn but don't reject
         if (selectCount > 1) {
             console.warn('Warning: Multiple SELECT clauses detected - verify this is intentional');
         }
 
+        // Multiple FROM without UNION is invalid syntax
+        // Example: "SELECT * FROM table1, table2" should use UNION or JOIN
         if (fromCount > 1 && !sqlUpper.includes('UNION')) {
             return { valid: false, error: 'Multiple FROM clauses require UNION' };
         }
@@ -108,9 +146,14 @@ export class JudgeService {
         return { valid: true };
     }
 
+    /**
+     * Normalizes scores to consistent 1-5 scale with 0.5 increments.
+     * Example: rawScore 4.7 → clamped to 5 → rounded to 5
+     * Example: rawScore 3.2 → clamped to 3.2 → rounded to 3.0
+     */
     public normalizeScore(rawScore: number): number {
-        const clampedScore = Math.min(5, Math.max(1, rawScore));
-        return Math.round(clampedScore * 2) / 2;
+        const clampedScore = Math.min(5, Math.max(1, rawScore));  // Clamp between 1 and 5
+        return Math.round(clampedScore * 2) / 2; // Round to nearest 0.5 (multiply by 2, round, divide by 2)
     }
 
     /**
@@ -118,9 +161,11 @@ export class JudgeService {
      */
     private hasCorrectCategory(results: any[], userPromptLower: string): boolean {
         if (!results.length) return false;
-        
+
+        // Check if any result has a category that matches what the user asked for     
         return results.some(r => {
             if (!r.category) return false;
+            // Compare user's query against known categories and result's category
             return CATEGORY_VALUES.some(category =>
                 userPromptLower.includes(category.toLowerCase()) &&
                 r.category.toLowerCase().includes(category.toLowerCase())
@@ -129,74 +174,14 @@ export class JudgeService {
     }
 
     /**
-     * Helper method to format results for display
-     */
-    private formatResultsForDisplay(results: any[]): string {
-        if (!results.length) return "No results returned";
-
-        const sampleResult = results[0];
-        let display = `Found ${results.length} result(s)\n\nFIRST RESULT:\n`;
-
-        // FAQ result
-        if (sampleResult.source === 'trust_faq' || sampleResult.question) {
-            display += `- Question: "${sampleResult.question || 'N/A'}"\n`;
-            display += `- Answer: "${sampleResult.answer ? 
-                sampleResult.answer.substring(0, 150) + 
-                (sampleResult.answer.length > 150 ? '...' : '') : 'N/A'}"`;
-            
-            if (sampleResult.category) {
-                display += `\n- CATEGORY: "${sampleResult.category}" (IMPORTANT for category questions)`;
-            }
-            display += `\n- Source: FAQ`;
-        }
-        // Control result
-        else if (sampleResult.source === 'trust_control' || sampleResult.short) {
-            display += `- Short Description: "${sampleResult.short || 'N/A'}"\n`;
-            display += `- Long Description: "${sampleResult.long ? 
-                sampleResult.long.substring(0, 150) + 
-                (sampleResult.long.length > 150 ? '...' : '') : 'N/A'}"`;
-            
-            if (sampleResult.category) {
-                display += `\n- CATEGORY: "${sampleResult.category}" (IMPORTANT for category questions)`;
-            }
-            display += `\n- Source: Control`;
-        }
-        // Team result
-        else if (sampleResult.source === 'team' || sampleResult.firstName) {
-            const fullName = `${sampleResult.firstName || ''} ${sampleResult.lastName || ''}`.trim();
-            display += `- Name: "${fullName || 'N/A'}"\n`;
-            display += `- Role: "${sampleResult.role || 'N/A'}"\n`;
-            display += `- Email: "${sampleResult.email || 'N/A'}"`;
-            
-            if (sampleResult.category) {
-                display += `\n- CATEGORY: "${sampleResult.category}" (IMPORTANT for category questions)`;
-            }
-            
-            display += `\n- Active: ${sampleResult.isActive ? 'Yes' : 'No'}\n`;
-            display += `- Response Time: ${sampleResult.responseTimeHours || 'N/A'} hours`;
-        }
-        // Fallback to JSON
-        else {
-            display += JSON.stringify(sampleResult, null, 2);
-            if (sampleResult.category) {
-                display += `\n\nNOTE: Category field found: "${sampleResult.category}"`;
-            }
-        }
-
-        if (results.length > 1) {
-            display += `\n\nPlus ${results.length - 1} more result(s).`;
-        }
-
-        return display;
-    }
-
-    /**
      * Helper method to parse LLM response
+     * Handles both JSON and markdown-wrapped JSON responses
      */
     private parseLLMResponse(rawResponse: string): { score: number; explanation: string } | null {
         let cleaned = rawResponse.trim();
-        
-        // Clean markdown
+
+        // Remove markdown code blocks if present
+        // Example: ```json\n{"score":5}\n``` → {"score":5}
         if (cleaned.startsWith('```json')) {
             cleaned = cleaned.replace(/^```json\n/, '').replace(/\n```$/, '');
         } else if (cleaned.startsWith('```')) {
@@ -210,12 +195,27 @@ export class JudgeService {
         }
     }
 
+    /**
+     * Main LLM evaluation method
+     * Steps:
+     * 1. Validate SQL syntax
+     * 2. Get schema description
+     * 3. Analyze if query is category-specific
+     * 4. stringify results
+     * 5. Build instructions for LLM
+     * 6. Construct full prompt for LLM
+     * 7. Call LLM API
+     * 8. Parse response and apply reality checks
+     * 9. Return normalized score and explanation
+     * 10. fallback in invalid JSON
+     */
     async evaluateWithLLM(
         userPrompt: string,
         generatedSQL: string,
-        results: any[]
+        results: any[] // from res.locals.judgementData.results (see backgroundJobs.ts, triggerBackgroundJudgement )
     ): Promise<{ score: number; explanation: string }> {
 
+        // Step 1: Quick validation
         const validation = this.minimalSQLValidation(generatedSQL);
         if (!validation.valid) {
             return {
@@ -223,29 +223,31 @@ export class JudgeService {
                 explanation: `SQL validation failed: ${validation.error}`
             };
         }
-
+        // Step 2: Get schema for context
         const schemaDescription = generateSchemaDescription();
         const userPromptLower = userPrompt.toLowerCase();
-        
-        // Analyze query
+
+        // Step 3: Analyze query characteristics
+        // Check if user asked about a specific category
         const isCategoryQuery = CATEGORY_VALUES.some(category =>
             userPromptLower.includes(category.toLowerCase())
         );
-        
+
         const categoryMatch = generatedSQL.match(/category ILIKE '([^']+)'/i);
         const sqlHasCategoryFilter = !!categoryMatch;
         const sqlCategory = categoryMatch ? categoryMatch[1] : null;
 
-        // Format results
-        const resultsDisplay = this.formatResultsForDisplay(results);
+        // Step 4: Just stringify the results 
+        const resultsJSON = JSON.stringify(results.slice(0, 3), null, 2);
 
-        // Build evaluation instructions
+        // Step 5: Build evaluation instructions based on query type
         const evaluationInstructions = isCategoryQuery
             ? `This is a CATEGORY-SPECIFIC question. The user asked about a specific category.
 Look for the CATEGORY field in the results. It should match what the user asked for.`
             : `This is a GENERAL question (no specific category mentioned).
 The CATEGORY field is OPTIONAL in the results. Focus on whether the data answers the question, regardless of category.`;
 
+        // Step 6: Construct the full prompt for LLM
         const prompt = `You are a SQL expert judge. Your task is to evaluate if the generated SQL correctly answers the user's question.
 
 DATABASE SCHEMA:
@@ -258,8 +260,8 @@ GENERATED SQL:
 ${generatedSQL}
 \`\`\`
 
-ACTUAL RESULTS FROM DATABASE:
-${resultsDisplay}
+RESULTS (first 3 rows as JSON):
+${resultsJSON}
 
 QUERY ANALYSIS:
 - Is this a category-specific question? ${isCategoryQuery ? 'YES' : 'NO'}
@@ -281,7 +283,7 @@ Return ONLY a JSON object with:
   "score": (number between 1-5),
   "explanation": (string explaining the score)
 }`;
-
+        // Step 7: Call Ollama API
         try {
             const response = await fetch(`${this.ollamaUrl}/api/generate`, {
                 method: 'POST',
@@ -298,10 +300,15 @@ Return ONLY a JSON object with:
             });
 
             const data = await response.json();
+
+            // Step 8: Parse LLM response
             const parsed = this.parseLLMResponse(data.response);
 
             if (parsed) {
-                // Apply reality checks
+                // Step 9: Apply reality checks to catch LLM hallucinations
+
+                // Case A: Category query with correct results but LLM gave low score
+
                 if (isCategoryQuery && results.length > 0) {
                     if (this.hasCorrectCategory(results, userPromptLower) && parsed.score < 4) {
                         console.log('LLM gave low score despite correct category - overriding');
@@ -310,6 +317,8 @@ Return ONLY a JSON object with:
                             explanation: `SQL correctly returns results with matching category: "${results[0]?.category}"`
                         };
                     }
+
+                    // Case B: Non-category query with results but LLM gave low score  
                 } else if (!isCategoryQuery && results.length > 0 && parsed.score < 3) {
                     console.log('LLM gave low score for non-category query with results - adjusting');
                     return {
@@ -317,7 +326,7 @@ Return ONLY a JSON object with:
                         explanation: `Query returned ${results.length} result(s) answering the general question.`
                     };
                 }
-
+                // Normal case: Use LLM's score
                 const normalizedScore = this.normalizeScore(parsed.score || 3);
                 return {
                     score: normalizedScore,
@@ -325,7 +334,8 @@ Return ONLY a JSON object with:
                 };
             }
 
-            // Fallback to text extraction
+            // Step 10: Fallback if response isn't valid JSON
+            // Extract just the number from text response
             const scoreMatch = data.response.match(/[1-5]/);
             const rawScore = scoreMatch ? parseInt(scoreMatch[0], 10) : 3;
 
@@ -358,7 +368,11 @@ Return ONLY a JSON object with:
             };
         }
     }
-
+    /**
+     * Saves judgment to file system with descriptive filename
+     * Filename format: YYYYMMDD-HHMMSS_last4uuid_keywords.json
+     * Example: 20260219-143022_3f7a_cloud-security.json
+     */
     async saveJudgment(judgment: Judgment): Promise<string> {
         const judgmentWithId = {
             id: randomUUID(),
@@ -369,21 +383,27 @@ Return ONLY a JSON object with:
         };
 
         const date = judgmentWithId.timestamp;
+
+        // Create timestamp part: YYYYMMDD-HHMMSS
         const shortTimestamp = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}-${String(date.getHours()).padStart(2, '0')}${String(date.getMinutes()).padStart(2, '0')}${String(date.getSeconds()).padStart(2, '0')}`;
+
+        // Get last 4 chars of UUID for uniqueness
         const shortId = judgmentWithId.id.slice(-4);
 
+        // Create readable slug from query
         const querySlug = judgment.naturalLanguageQuery
             .toLowerCase()
-            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/[^a-z0-9]+/g, '-') // Replace non-alphanumeric with hyphens
             .split('-')
             .filter(word => !['what', 'who', 'where', 'when', 'why', 'how', 'the', 'and', 'for', 'are', 'is', 'tell', 'about'].includes(word))
-            .slice(0, 3)
+            .slice(0, 3) // Take first 3 meaningful words
             .join('-')
-            .substring(0, 20);
+            .substring(0, 20);  // Limit length
 
         const filename = `${shortTimestamp}_${shortId}_${querySlug}.json`;
         const filepath = path.join(this.judgmentsDir, filename);
 
+        // Write file asynchronously
         await fs.promises.writeFile(
             filepath,
             JSON.stringify(judgmentWithId, null, 2),

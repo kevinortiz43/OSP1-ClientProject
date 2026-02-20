@@ -1,0 +1,14 @@
+{
+  "id": "06b95967-4756-4b9c-8fe5-378dfe9f5442",
+  "timestamp": "2026-02-20T02:04:54.097Z",
+  "naturalLanguageQuery": "list controls that have 'incident' in their short description",
+  "generatedSQL": "SELECT \"short\", \"long\" FROM \"allTrustControls\" WHERE \"short\" ILIKE '%incident%';",
+  "resultsCount": 1,
+  "passed": true,
+  "score": 5,
+  "explanation": "The SQL query correctly lists controls that have 'incident' in their short description. The results match exactly what was asked, and no category filtering was required.",
+  "source": "ai",
+  "executionTime": "2407ms",
+  "sqlModel": "distil-qwen3-4b:latest",
+  "judgeModel": "qwen2.5-coder:14b"
+}

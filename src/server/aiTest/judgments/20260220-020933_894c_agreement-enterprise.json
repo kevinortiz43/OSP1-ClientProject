@@ -1,0 +1,14 @@
+{
+  "id": "4d94152a-cbb3-459f-9f5d-62f24d19894c",
+  "timestamp": "2026-02-20T02:09:33.323Z",
+  "naturalLanguageQuery": "agreement, enterprise",
+  "generatedSQL": "SELECT \"firstName\", \"lastName\", \"email\", \"role\", \"category\" FROM \"allTeams\" WHERE \"searchText\" ILIKE '%agreement%' OR \"searchText\" ILIKE '%enterprise%';",
+  "resultsCount": 0,
+  "passed": false,
+  "score": 1,
+  "explanation": "Query returned no results",
+  "source": "ai",
+  "executionTime": "539ms",
+  "sqlModel": "distil-qwen3-4b:latest",
+  "judgeModel": "qwen2.5-coder:14b"
+}

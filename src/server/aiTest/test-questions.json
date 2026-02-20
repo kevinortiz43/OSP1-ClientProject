@@ -139,7 +139,7 @@
   "naturalLanguageQuery": "show me secure development controls along with related FAQs",
   "expectedResponse": {
     "source": "ai",
-    "sql": "SELECT c.\"short\", c.\"long\", f.\"question\", f.\"answer\" FROM \"allTrustControls\" c LEFT JOIN \"allTrustFaqs\" f ON c.\"category\" = f.\"category\" WHERE c.\"category\" = 'Secure Development';",
+    "sql": "SELECT c.\"short\", c.\"long\", f.\"question\", f.\"answer\" FROM \"allTrustControls\" c LEFT JOIN \"allTrustFaqs\" f ON c.\"category\" = f.\"category\" WHERE c.\"category\" ILIKE 'Secure Development';",
     "resultsCount": ">=5",
     "formatted": null
   }

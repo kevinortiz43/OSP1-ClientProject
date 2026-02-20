@@ -33,14 +33,17 @@ export const triggerBackgroundJudgment: RequestHandler = (_, res, next) => {
   const hasSQL = !!res.locals.databaseQuery;
 
   if (source === 'ai' && hasSQL) {
-    const results = res.locals.databaseQueryResult || [];
+    const results = res.locals.databaseQueryResult || []; // results from databaseController.ts
     const resultsCount = results.length;
+
+        console.log(`Found ${resultsCount} results for judgment`); // debug line
+    console.log('Sample result:', JSON.stringify(results[0], null, 2)); 
 
     res.locals.judgmentData = {
       naturalLanguageQuery: res.locals.naturalLanguageQuery,
       generatedSQL: res.locals.databaseQuery,
       expectedSQL: undefined,
-      results: results,
+      results: results, // from res.locals.databaseQueryResult
       resultsCount: resultsCount,
       expectedCount: undefined,
       source: source,
