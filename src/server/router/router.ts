@@ -7,7 +7,7 @@ import { dataService } from "../services/dataService";
 import { parseNaturalLanguageQuery } from "../controller/naturalLanguageController";
 import { queryOfflineOpenAI } from "../controller/openaiController_local";
 import { executeDatabaseQuery } from "../controller/databaseController";  
-import { triggerBackgroundJudgment } from '../controller/backgroundJobs';
+import { triggerBackgroundJudgment, runBackgroundJudgment } from '../controller/backgroundJobs';
 
 
 const router = express.Router();
@@ -16,10 +16,8 @@ router.get("/test", (_, res) => {
   return res.status(200).send("TEST TESTTEST ");
 });
 
-// localhost:3000/api/trustControls
+// localhost:3000/api/trustControls (added here for easy copy /paste during Postman testing)
 router.get("/trustControls", getTrustControls, (_, res) => {
-  // res.locals.dbResults contains the team data array
-  // res.locals.cacheInfo contains cache metadata
   const controlsData = res.locals.dbResults;
   const cacheInfo = res.locals.cacheInfo || {
     source: "unknown",
@@ -36,8 +34,6 @@ router.get("/trustControls", getTrustControls, (_, res) => {
 
 // localhost:3000/api/allTeams
 router.get("/allTeams", getTeams, (_, res) => {
-  // res.locals.dbResults contains the team data array
-  // res.locals.cacheInfo contains cache metadata
   const teamsData = res.locals.dbResults;
   const cacheInfo = res.locals.cacheInfo || {
     source: "unknown",
@@ -71,7 +67,7 @@ router.get("/trustFaqs", getTrustFaqs, (_, res) => {
 });
 
 // get cache stats
-// http://localhost:3000/api/admin/cache-stats  (sometimes works, sometimes need to try again)
+// http://localhost:3000/api/admin/cache-stats
 router.get("/admin/cache-stats", (_, res) => {
   const stats = getCacheStats();
   res.json({
@@ -84,11 +80,11 @@ router.get("/admin/cache-stats", (_, res) => {
 });
 
 
-// endpoint to manually clear cache for 'teams', 'controls', or 'faqs' or empty if want to clear all cache (for admin)
 // http://localhost:3000/api/admin/clear-cache
-// Example: {"type": ""} to clear all or {"type": "teams"} to clear specific keys 
+// endpoint to manually clear cache for 'teams', 'controls', or 'faqs' or empty if want to clear all cache
+// Examples: {"type": ""} to clear all or {"type": "teams"} to clear specific keys 
 router.post("/admin/clear-cache", (req, res) => {
-  const { type } = req.body; // 'teams', 'controls', 'faqs', or leave empty if want to clear all cache keys
+  const { type } = req.body;
 
   dataService.clearCache(type);
   const statsReset = getCacheStats();
@@ -106,8 +102,8 @@ router.post("/admin/clear-cache", (req, res) => {
 });
 
 
-// POST: clean version
 // http://localhost:3000/api/ai/query
+// fastTextSearch or AI route
 router.post(
   '/ai/query',
   parseNaturalLanguageQuery,
@@ -115,7 +111,6 @@ router.post(
   executeDatabaseQuery,
   triggerBackgroundJudgment,
   (_, res) => {
-    // Send response immediately
     res.status(200).json({
       success: true,
       data: {
@@ -130,22 +125,20 @@ router.post(
       timestamp: new Date().toISOString()
     });
 
-    // AFTER response sent, run background jobs
+    // after response sent, run background jobs (judge / evaluation step \ is non-blocking)
     setImmediate(async () => {
       console.log('SETIMMEDIATE: Starting background jobs');
     
-      // Only call if we have data
       if (res.locals.judgmentData) {
         try {
-          const backgroundModule = await import('../controller/backgroundJobs');
-          await backgroundModule.runBackgroundJudgment(res.locals.judgmentData);
+          await runBackgroundJudgment(res.locals.judgmentData);
+
         } catch (error) {
-          // Only log if the actual import/execution fails
           const errorMessage = error instanceof Error ? error.message : 'Unknown error';
           console.error(`Failed to execute background job: ${errorMessage}`);
         }
       } else {
-        console.log('⚠ No judgment data to process');
+        console.log('No judgment data to process');
       }
       console.log('SETIMMEDIATE: Finished');
     }); 

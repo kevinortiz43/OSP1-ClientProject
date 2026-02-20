@@ -33,14 +33,14 @@ export const triggerBackgroundJudgment: RequestHandler = (_, res, next) => {
   const hasSQL = !!res.locals.databaseQuery;
 
   if (source === 'ai' && hasSQL) {
-    const results = res.locals.databaseQueryResult || [];
+    const results = res.locals.databaseQueryResult || []; 
     const resultsCount = results.length;
 
     res.locals.judgmentData = {
       naturalLanguageQuery: res.locals.naturalLanguageQuery,
       generatedSQL: res.locals.databaseQuery,
       expectedSQL: undefined,
-      results: results,
+      results: results, 
       resultsCount: resultsCount,
       expectedCount: undefined,
       source: source,
@@ -64,58 +64,49 @@ export function normalizeSQL(sql: string): string {
   if (!sql) return '';
 
   return sql
-    .toLowerCase()                // Ignore case differences
-    .replace(/\s+/g, ' ')         // Collapse multiple spaces/tabs/newlines
-    .replace(/`/g, '"')           // Standardize backticks to double quotes
-    .replace(/""/g, '"')          // Fix double-double quotes
-    .replace(/select \* /g, 'select ') // Handle SELECT * variations
-    .replace(/as \w+/g, '')       // Remove aliases (they don't affect logic)
-    .replace(/["']/g, '"')        // Standardize all quotes to double quotes
-    .replace(/;/g, '')            // Remove trailing semicolons
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .replace(/`/g, '"')
+    .replace(/""/g, '"')
+    .replace(/select \* /g, 'select ')
+    .replace(/as \w+/g, '')
+    .replace(/["']/g, '"')
+    .replace(/;/g, '')
     .trim();
 }
 
 /**
  * Extracts table names from FROM and JOIN clauses.
- * fundamental to query correctness - wrong tables = wrong answer.
- * Used to compare if queries are querying the same data sources.
  */
 function extractMainTables(sql: string): string {
   if (!sql) return '';
 
   const normalized = normalizeSQL(sql);
 
-  // Extract everything after FROM until WHERE/GROUP/ORDER/LIMIT
   const fromMatch = normalized.match(/from\s+([^where group order limit]+)/i);
   if (!fromMatch) return '';
 
   let fromClause = fromMatch[1];
-  // Remove JOIN clauses to focus on main tables
   fromClause = fromClause.replace(/join[^]+?(?=where|group|order|limit|$)/gi, '');
 
-  // Match both quoted ("table") and unquoted (table) identifiers
   const tableMatches = fromClause.match(/"([^"]+)"|(\w+)/g) || [];
 
-  // Sort for consistent comparison (table order doesn't matter logically)
   return tableMatches.map(t => t.replace(/"/g, '')).sort().join(',');
 }
 
 /**
  * Extracts and normalizes WHERE clause for comparison.
- * we can compare if filtering logic is equivalent.
  */
 function extractWhereClause(sql: string): string {
   if (!sql) return '';
 
   const normalized = normalizeSQL(sql);
 
-  // Extract WHERE clause until GROUP BY, ORDER BY, or LIMIT
   const whereMatch = normalized.match(/where\s+(.+?)(?=group by|order by|limit|$)/i);
   if (!whereMatch) return '';
 
   let whereClause = whereMatch[1];
 
-  // Normalize comparison operators (LIKE/ILIKE are functionally equivalent to = for our purposes)
   whereClause = whereClause
     .replace(/\s+like\s+/g, ' = ')
     .replace(/\s+ilike\s+/g, ' = ')
@@ -129,61 +120,46 @@ function extractWhereClause(sql: string): string {
 
 /**
  * Extracts columns selected in the query.
- * Different column sets indicate different intents.
  */
 function extractSelectedColumns(sql: string): string[] {
   if (!sql) return [];
 
   const normalized = normalizeSQL(sql);
 
-  // Extract everything between SELECT and FROM
   const selectMatch = normalized.match(/select\s+(.+?)\s+from/i);
   if (!selectMatch) return [];
 
   let selectClause = selectMatch[1];
 
   if (selectClause.includes('*')) {
-    return ['*']; // SELECT * means all columns
+    return ['*'];
   }
 
-  const columns = selectClause
+  return selectClause
     .split(',')
     .map(col => {
-      // Remove table aliases (e.g., "t.firstName" -> "firstName")
       const withoutAlias = col.replace(/\w+\./g, '');
       return withoutAlias.replace(/["']/g, '').trim();
     })
     .filter(col => col && col !== '');
-
-  return columns;
 }
 
 /**
- * SCORING METHOD 1: INTENT-BASED SCORING
+ * Scoring method 1: Intent-based scoring
+ * Scores 1-5 based on keyword matching between user query and SQL.
+ * Logic breakdown:
+Starts at baseline 3
+Adds points for matching keywords (e.g., "count" ↔ COUNT(), "short descriptions" ↔ short column)
+Handles special cases ("list all" + SELECT * or specific columns)
  * 
- * WHY THIS APPROACH:
- * AI models still make subtle mistakes in understanding user intent. 
- * This rule-based scorer acts as a "safety net" that checks if the SQL actually 
- * answers what was asked, independent of exact SQL syntax.
- * 
- * SCORING LOGIC:
- * - Starts at baseline 3 (neutral)
- * - Adds points for matching intent indicators
- * - Caps at 5, floor at 1
- * 
- * EXAMPLE: "List all active team members with names and roles"
- * - Adds point if "isActive" appears in query
- * - Adds point if firstName/lastName columns are selected
- * - Adds point if role column is selected
  */
 function calculateIntentMatch(generatedSQL: string, userQuery: string): number {
   const sqlLower = generatedSQL.toLowerCase();
   const queryLower = userQuery.toLowerCase();
   const selectedColumns = extractSelectedColumns(generatedSQL);
   
-  let score = 3; // Start at neutral midpoint
+  let score = 3;
   
-  // Check for "list all" intent - user wants comprehensive data
   if (queryLower.includes('list all') || queryLower.includes('show all') || queryLower.includes('get all')) {
     const hasAllContentColumns = 
       (sqlLower.includes('alltrustcontrols') && selectedColumns.includes('short') && selectedColumns.includes('long')) ||
@@ -193,64 +169,47 @@ function calculateIntentMatch(generatedSQL: string, userQuery: string): number {
        selectedColumns.includes('email') &&
        selectedColumns.includes('role'));
     
-    // SELECT * or selecting all meaningful columns indicates "all" intent
     if (selectedColumns.includes('*') || hasAllContentColumns) {
       score += 1;
     }
   }
   
-  // Column-level intent matching
   if (queryLower.includes('short descriptions') && selectedColumns.includes('short')) score += 1;
   if (queryLower.includes('names') && (selectedColumns.includes('firstname') || selectedColumns.includes('lastname'))) score += 1;
-  
-  // Aggregation intent matching
   if (queryLower.includes('count') && sqlLower.includes('count(')) score += 1;
   if (queryLower.includes('average') && sqlLower.includes('avg(')) score += 1;
   if (queryLower.includes('sum') && sqlLower.includes('sum(')) score += 1;
   if (queryLower.includes('maximum') && sqlLower.includes('max(')) score += 1;
   if (queryLower.includes('minimum') && sqlLower.includes('min(')) score += 1;
   
-  // Category filtering intent (domain-specific)
   if (queryLower.includes('cloud security') && sqlLower.includes('cloud')) score += 1;
   if (queryLower.includes('data security') && sqlLower.includes('data')) score += 1;
   if (queryLower.includes('privacy') && sqlLower.includes('privacy')) score += 1;
   if (queryLower.includes('organizational security') && sqlLower.includes('organizational')) score += 1;
-  
-  // Status filtering intent
   if (queryLower.includes('active') && sqlLower.includes('isactive')) score += 1;
-  
-  // Role-specific intent
   if (queryLower.includes('technical delivery managers') && sqlLower.includes('technical delivery manager')) score += 1;
   
-  // Multi-table intent (joins/unions)
   if ((queryLower.includes('and faqs') || queryLower.includes('and controls')) && 
       (sqlLower.includes('union') || sqlLower.includes('join'))) score += 1;
   
-  return Math.min(5, Math.max(1, score)); // Clamp between 1-5
+  return Math.min(5, Math.max(1, score));
 }
 
 /**
- * SCORING METHOD 2: SQL CORRECTNESS (Structural comparison with expected SQL)
- * 
- * WHY THIS APPROACH:
- * When we have an expected SQL (from test cases), we can do structural comparison.
- *we understand that exact string matching is too brittle, but we still
- * need to verify the query structure is correct.
- * 
- * 
- * SCORING LEVELS:
- * 5: Semantically identical (ignoring aliases/ORDER BY)
- * 4: Same tables and WHERE clause
- * 3: Same tables only
- * 2: Different tables but plausible attempt
- * 1: Completely wrong (different tables, wrong structure)
+ * Scoring method 2: SQL Correctness
+ * Compares generated SQL against expected SQL.
+ * Logic breakdown:
+Normalizes both SQL strings (lowercase, whitespace, quote normalization)
+Special case: SELECT * vs explicit columns containing both 'short' and 'long' → auto 5/5
+Strips aliases, ORDER BY
+Compares tables → if mismatch, score 1
+Compares WHERE clauses → if match, score 4
+Otherwise score 3
  */
 function calculateSQLCorrectness(generatedSQL: string, expectedSQL: string): number {
   const genNormalized = normalizeSQL(generatedSQL);
   const expNormalized = normalizeSQL(expectedSQL);
   
-  // Special case: SELECT * vs explicit column selection
-  // Both can be correct if they cover the needed columns
   const genHasStar = genNormalized.includes('select *');
   const expHasStar = expNormalized.includes('select *');
   
@@ -258,69 +217,64 @@ function calculateSQLCorrectness(generatedSQL: string, expectedSQL: string): num
     const genColumns = extractSelectedColumns(generatedSQL);
     const expColumns = extractSelectedColumns(expectedSQL);
     
-    // If expected wants short/long and SELECT * gives them, that's fine
     if (genHasStar && !expHasStar && expColumns.includes('short') && expColumns.includes('long')) {
       return 5;
     }
-    // Or if explicit columns match what SELECT * would give
     if (expHasStar && !genHasStar && genColumns.includes('short') && genColumns.includes('long')) {
       return 5;
     }
   }
   
-  // Remove aliases and ORDER BY for semantic comparison
   const genFunctional = genNormalized.replace(/count\(\*\)\s+as\s+\w+/g, 'count(*)');
   const expFunctional = expNormalized.replace(/count\(\*\)\s+as\s+\w+/g, 'count(*)');
   
   const genNoOrderBy = genFunctional.replace(/order by[^]+$/, '').trim();
   const expNoOrderBy = expFunctional.replace(/order by[^]+$/, '').trim();
   
-  // Level 5: Semantically identical
   if (genNoOrderBy === expNoOrderBy) return 5;
   
-  // Level 3: Check if at least tables match
   const genTables = extractMainTables(generatedSQL);
   const expTables = extractMainTables(expectedSQL);
-  if (genTables !== expTables) return 1; // Wrong tables = completely wrong
+  if (genTables !== expTables) return 1;
   
-  // Level 4: Tables match AND WHERE clause matches
   const genWhere = extractWhereClause(generatedSQL);
   const expWhere = extractWhereClause(expectedSQL);
   if (genWhere === expWhere) return 4;
   
-  // Level 2-3: Tables match but WHERE differs (partial correctness)
   return 3;
 }
 
 /**
+ * Scoring method 3: results quality
  * Evaluates result quality based on row count expectations.
- * WHY: Even with correct SQL, database state affects results.
- * Empty results might mean correct query but no matching data.
- * 
- * FIXED: Now properly uses checkResultsCount and accepts parameters
+ * What it does: Scores based on row count expectations.
+ * Logic:
+No results → 1
+Meets expected count → 5
+Has results but wrong count → 3
  */
 function calculateResultQuality(
   results: any[], 
   expectedCount: number | string,
-  resultsCount: number  // Added parameter
+  resultsCount: number
 ): number {
   if (!results || results.length === 0) return 1;
   
-  // Use the imported checkResultsCount function
   const meetsExpectations = checkResultsCount(resultsCount, expectedCount);
   
-  if (meetsExpectations) return 5; // Met or exceeded expectations
-  if (results.length > 0) return 3; // Got some results, but fewer than expected
+  if (meetsExpectations) return 5;
+  if (results.length > 0) return 3;
   
-  return 1; // No results
+  return 1;
 }
 
 /**
- * Combined faithfulness score that prioritizes actual results over SQL structure.
- * WHY: Results are the ultimate truth. If we got good results, the SQL is likely
- * correct even if it looks different from expected.
- * 
- * FIXED: Removed extractExpectedCount, use checkResultsCount instead
+ * Scoring method 4" Combined faithfulness score
+ * Combined metric favoring result-based scoring over SQL comparison.
+ * Logic:
+If results exist AND meet count expectation → 5
+If results exist but wrong count → 4
+Else fall back to SQL correctness score
  */
 function calculateFaithfulness(
   generatedSQL: string,
@@ -328,39 +282,19 @@ function calculateFaithfulness(
   results: any[],
   expectedCount?: number | string
 ): number {
-  if (results && results.length > 0) {
+  if (results?.length > 0) {
     if (expectedCount) {
-      // Use checkResultsCount instead of extractExpectedCount
       const meetsExpectations = checkResultsCount(results.length, expectedCount);
-      if (meetsExpectations) {
-        return 5; // Got expected results - SQL is faithful
-      }
+      if (meetsExpectations) return 5;
     }
-    return 4; // Got some results, just fewer than expected
+    return 4;
   }
-
-  // Fall back to structural comparison if no results
   return calculateSQLCorrectness(generatedSQL, expectedSQL);
 }
 
 /**
- * SCORING METHOD 3: WEIGHTED ENSEMBLE SCORE ("Judge" approach)
- * 
- * WHY THIS APPROACH:
- * no single metric captures all aspects of
- * SQL quality. This combines multiple perspectives with domain-tuned weights:
- * 
- * - Intent (45%): Does it answer what was asked? (Heuristic, domain-aware)
- * - Correctness (35%): Is the SQL structure right? (Compare to expected)
- * - Result Quality (20%): Did we get the data we wanted? (Row count)
- * 
- * RATIONALE FOR WEIGHTS:
- * - Intent weighted highest because user satisfaction is paramount
- * - Correctness important but can vary (multiple SQL paths to same answer)
- * - Result Quality weighted lowest because it depends on database state
- * 
- * This mimics how an LLM judge would evaluate
- * 
+ * Scoring method 5: Weighted ensemble score
+ * Weighted average of intent, correctness, and result quality.
  */
 function calculateScoreWithLLMStyle(
   generatedSQL: string,
@@ -368,26 +302,20 @@ function calculateScoreWithLLMStyle(
   results: any[],
   expectedCount: number | string,
   userQuery: string,
-  resultsCount: number  // Added parameter
+  resultsCount: number
 ): number {
-
   const dimensions = {
     intent: calculateIntentMatch(generatedSQL, userQuery),
     correctness: calculateSQLCorrectness(generatedSQL, expectedSQL),
-    resultQuality: calculateResultQuality(results, expectedCount, resultsCount) // Pass resultsCount
+    resultQuality: calculateResultQuality(results, expectedCount, resultsCount)
   };
   
-  const weights = { 
-    intent: 0.45,
-    correctness: 0.35,
-    resultQuality: 0.20
-  };
+  const weights = { intent: 0.45, correctness: 0.35, resultQuality: 0.20 };
   
   const weightedScore = Object.entries(dimensions).reduce(
     (sum, [key, val]) => sum + val * weights[key as keyof typeof weights], 0
   );
   
-  // Use the judge service to normalize to 1-5 scale
   return judgeService.normalizeScore(weightedScore);
 }
 
@@ -398,19 +326,13 @@ function generateDetailedExplanation(
   scores: { groundedness: number; faithfulness: number; intentScore: number },
   enhancedScore: number,
   resultsCount: number,
-  expectedMinCount: number | string  // Change type to accept both
+  expectedMinCount: number | string
 ): string {
   const explanations = [];
   
-  // Get a display-friendly expected value
   const expectedDisplay = typeof expectedMinCount === 'number' 
     ? expectedMinCount.toString() 
     : expectedMinCount;
-  
-  // Get minimum numeric value for comparison messages
-  const minNumeric = typeof expectedMinCount === 'number' 
-    ? expectedMinCount 
-    : (parseInt(expectedMinCount.match(/\d+/)?.[0] || '0', 10));
   
   if (scores.groundedness >= 4) {
     explanations.push(`Results: Found ${resultsCount} rows (meets minimum ${expectedDisplay})`);
@@ -442,25 +364,7 @@ function generateDetailedExplanation(
 }
 
 /**
- * MAIN JUDGMENT EXECUTION - 2 Paths:
- * 
- * PATH A: Test Case Match (Rule-based ensemble scoring)
- * - We have expected SQL and expected result count
- * - Use weighted scoring combining intent, correctness, and results
- * - Fast, deterministic, interpretable
- * - Good for regression testing and benchmarking
- * 
- * PATH B: No Test Case (LLM-based scoring)
- * - No expected SQL to compare against
- * - Use LLM to evaluate if results answer the question
- * - More flexible but slower and costlier
- * - Good for ad-hoc queries during development
- * 
- * RATIONALE FOR 2 PATHS:
- * In production AI systems, we need both regression testing (Path A)
- * and flexible evaluation (Path B). Path A gives us consistent metrics
- * for model improvement; Path B lets us evaluate real user queries
- * that weren't in our test set.
+ * Main judgment execution - 2 Paths
  */
 export async function runBackgroundJudgment(data: any): Promise<void> {
   if (!data) {
@@ -482,7 +386,6 @@ export async function runBackgroundJudgment(data: any): Promise<void> {
 
     const resultsCount = results.length;
     
-    // Find matching test case (exact match on normalized query)
     const testCase = testSet.find(t => 
       t.naturalLanguageQuery.toLowerCase().trim() === naturalLanguageQuery.toLowerCase().trim()
     );
@@ -504,34 +407,32 @@ export async function runBackgroundJudgment(data: any): Promise<void> {
     };
 
     if (testCase) {
-      // PATH A: Test Case Match - Use ensemble rule-based scoring 
       console.log('Test case found, using enhanced rule-based evaluation');
       
       const expectedMinCount = testCase.expectedResponse.resultsCount;
       
       const componentScores = {
-        groundedness: calculateResultQuality(results, testCase.expectedResponse.resultsCount, resultsCount), // Pass resultsCount
+        groundedness: calculateResultQuality(results, expectedMinCount, resultsCount),
         faithfulness: calculateFaithfulness(
           generatedSQL, 
           testCase.expectedResponse.sql,
           results,
-          testCase.expectedResponse.resultsCount
+          expectedMinCount
         ),
         intentScore: calculateIntentMatch(generatedSQL, naturalLanguageQuery)
       };
       
-      // Combine into final score using weighted approach
       const enhancedScore = calculateScoreWithLLMStyle(
         generatedSQL,
         testCase.expectedResponse.sql,
         results,
-        testCase.expectedResponse.resultsCount,
+        expectedMinCount,
         naturalLanguageQuery,
-        resultsCount // Pass resultsCount
+        resultsCount
       );
       
       judgment.score = enhancedScore;
-      judgment.passed = enhancedScore >= 4; // Pass threshold = 4/5
+      judgment.passed = enhancedScore >= 4;
       judgment.explanation = generateDetailedExplanation(
         componentScores, 
         enhancedScore,
@@ -539,26 +440,22 @@ export async function runBackgroundJudgment(data: any): Promise<void> {
         expectedMinCount
       );
       
-    } else {
-      // PATH B: No Test Case - Use LLM judge 
+    } else if (results.length > 0) {
       console.log('No test case found, using LLM judge for ad-hoc query');
       
-      if (results.length > 0) {
-        // Let LLM evaluate if results answer the question
-        const llmJudgment = await judgeService.evaluateWithLLM(
-          naturalLanguageQuery,
-          generatedSQL,
-          results
-        );
-        judgment.score = llmJudgment.score;
-        judgment.explanation = llmJudgment.explanation;
-        judgment.passed = llmJudgment.score >= 4;
-      } else {
-        // No results = low score (can't be good if nothing returned)
-        judgment.score = 1;
-        judgment.explanation = 'Query returned no results';
-        judgment.passed = false;
-      }
+      const llmJudgment = await judgeService.evaluateWithLLM(
+        naturalLanguageQuery,
+        generatedSQL,
+        results
+      );
+      judgment.score = llmJudgment.score;
+      judgment.explanation = llmJudgment.explanation;
+      judgment.passed = llmJudgment.score >= 4;
+      
+    } else {
+      judgment.score = 1;
+      judgment.explanation = 'Query returned no results';
+      judgment.passed = false;
     }
 
     const filepath = await judgeService.saveJudgment(judgment);

@@ -1,16 +1,15 @@
-import { dockerPool } from "./db_connect_agnostic.js"; // use Docker local connection
+import { dockerPool } from "./db_connect_agnostic.js";
 import fs from 'fs';
 import path from "path";
 import { fileURLToPath } from "url";
 
-// OS-agnostic path setup
+// Note: This script auto-generates TypeScript interfaces based on PostgreSQL data types. It will auto-create a schemas-agnostic.ts file in sql_db folder.
+// Currently, this script is unused, but it could be useful if further functionality were added to this project.
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // generate TypeScript types from Docker PostgreSQL database schema
 async function generateTypesFromDocker() {
   try {
-    // get all table names from public schema
-    // information_schema.tables = PostgreSQL system catalog with metadata about all tables
     const { rows: tables } = await dockerPool.query(`
       SELECT table_name 
       FROM information_schema.tables 
@@ -21,11 +20,7 @@ async function generateTypesFromDocker() {
     // start building TypeScript interface content
     let typesContent = '\n\nexport interface DockerDatabase {\n';
 
-    // iterate through each table to get its column definitions
     for (const { table_name } of tables) {
-      // query for columns of current table
-      // information_schema.columns = system catalog with column metadata
-      // ordinal_position = column order in table definition
       const { rows: columns } = await dockerPool.query(`
         SELECT column_name, data_type, is_nullable
         FROM information_schema.columns 
@@ -54,22 +49,19 @@ async function generateTypesFromDocker() {
 
     typesContent += "}\n";
 
-    // write TypeScript types to file with OS-agnostic path
-    // schemas-agnostic.ts will contain auto-generated TypeScript interfaces
-    const outputPath = path.join(__dirname, 'schemas-agnostic.ts');
+    const outputPath = path.join(__dirname, 'schemas-agnostic.ts'); // customize the filename of the generated Typescript schema 
     fs.writeFileSync(outputPath, typesContent, { encoding: 'utf8' });
 
     console.log(`Generated Docker types for ${tables.length} tables at ${outputPath}`);
     await dockerPool.end();
 
-  } catch (error) {  // close database connection pool
+  } catch (error) { 
     console.error('Failed to generate Docker types:', error);
-    process.exit(1); // exit with error code on failure
+    process.exit(1);
   }
 }
 
 // helper: map PostgreSQL data types to TypeScript types
-// also seems to be a bug with typing varchar -> 'string' (fix if time permits)
 // Note: This is not an exhaustive list of all data types, i.e. BIGINT, REAL, etc. only most common types. Can add more types as needed
 
 function mapPgTypeToTs(pgType: string, columnName?: string): string {
@@ -94,9 +86,7 @@ function mapPgTypeToTs(pgType: string, columnName?: string): string {
     return 'string';  // fixing id type to string, not 'any'
   }
 
-  // special handling for categories columns (e.g., from CSV import)
   // categories columns contain JSONB arrays that should be typed as string[]
-  // (note: currently not used)
   if (pgType === 'jsonb' && columnName?.toLowerCase().includes('categor')) {
     return 'string[]';  // Your categories are string arrays
   }
@@ -111,12 +101,11 @@ const isMainModule = () => {
     return false;
   }
 
-  // Compare current file with the first argument using path resolution
+  // Compare current file with the 1st argument using path resolution
   const currentFile = fileURLToPath(import.meta.url);
   const mainFile = process.argv[1];
 
   // normalize paths for comparison across platforms
-  // script ONLY runs if called directly (not imported as module)
   return path.resolve(currentFile) === path.resolve(mainFile);
 };
 

@@ -22,8 +22,8 @@ const STOP_WORDS = new Set([
 function normalizeQuery(query: string): string {
   return query
     .toLowerCase()
-    .replace(/[^\w\s]/g, ' ')  // Replace punctuation with spaces
-    .replace(/\s+/g, ' ')      // Collapse multiple spaces
+    .replace(/[^\w\s]/g, ' ')  
+    .replace(/\s+/g, ' ') 
     .trim();
 }
 
@@ -63,7 +63,6 @@ function formatSearchResults(results: any[]): string {
  * Efficient pattern matching using Sets and RegExp groups
  * Time complexity: O(n) where n = number of patterns (still efficient)
  */
-
 
 const AI_PATTERNS = {
   // Terms that strongly indicate AI need (weight 2)

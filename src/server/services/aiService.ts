@@ -8,12 +8,12 @@ import { TABLE_NAMES, COLUMN_NAMES, CATEGORY_VALUES } from "../sql_db/schemas-he
  * A DEVELOPMENT TOOL designed for rapid prototyping, NOT production use.
  * 
  * Purpose:
- * - Provide quick feedback during prompt engineering
+ * - Provide quick feedback during prompt engineering using lightweight, open source models
  * - Test workflow integration before implementing proper SQL generation
  * - Mock the behavior of a text-to-SQL system
  * 
  * Limitations:
- * - Uses hardcoded table/column names (not schema-aware)
+ * - Prompt tailored to specific mock data
  * - Applies post-processing fixes that mask model errors
  * - Uses ILIKE for simplicity (not performance-optimized)
  * 
@@ -23,7 +23,7 @@ export class AIService {
   private readonly modelUrl: string;
   private readonly modelName: string;
 
-  // Constants now imported from schemas-helper.ts for single source of truth
+  // Constants imported from schemas-helper.ts as single source of truth
   private readonly TABLE_NAMES = TABLE_NAMES;
   private readonly COLUMN_NAMES = COLUMN_NAMES;
   private readonly CATEGORY_VALUES = CATEGORY_VALUES;

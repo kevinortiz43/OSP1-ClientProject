@@ -2,12 +2,22 @@ import { getCache, setCache, clearCache, clearCacheByPattern } from '../caching/
 import { dockerPool } from '../sql_db/db_connect_agnostic';
 import { type CachedSearchResult } from '../types';
 
-// cache keys for consistency
-// couldn't use enum due to "This syntax is not allowed when 'erasableSyntaxOnly' is enabled," means you are using a TypeScript construct that generates runtime JavaScript code, which is forbidden by the erasableSyntaxOnly compiler option. The enum declaration is one such construct. 
+/**
+ * CACHE SERVICE
+ * 
+ * A DEVELOPMENT TOOL designed for rapid prototyping, NOT production use.
+ * 
+ * Purpose:
+ * - Provide quick in-memory caching (not heavy Redis implementation)
+ * - Test workflow integration before implementing proper caching strategies
+ * - Mock the behavior of a caching system
+ * 
+ * Limitations:
+ * - Prompt tailored to specific mock data
+ * - Works only with small datasets
+ * 
+ */
 
-
-// cache keys for consistency
-// couldn't use enum due to "This syntax is not allowed when 'erasableSyntaxOnly' is enabled," means you are using a TypeScript construct that generates runtime JavaScript code, which is forbidden by the erasableSyntaxOnly compiler option. The enum declaration is one such construct.
 export const CacheKeys = {
   TEAMS_ALL: "teams:all",
   CONTROLS_ALL: "controls:all",
@@ -15,8 +25,7 @@ export const CacheKeys = {
   SEARCH_CACHE_PREFIX: "search:keywords"
 };
 
-
-const SEARCH_CACHE_TTL = 300; // 5 minutes - same as GET endpoints
+const SEARCH_CACHE_TTL = 300; // 5 minutes, can customize as needed
 
 export const dataService = {
   // GET with cache
@@ -33,8 +42,6 @@ export const dataService = {
     const result = await dockerPool.query('SELECT * FROM "allTeams"');
     const data = result.rows;
 
-    // cache for a long time (maybe 1 day?) since data rarely changes
-    // for testing, set to 5 minutes
 
     setCache(CacheKeys.TEAMS_ALL, data, 300);
 
@@ -120,7 +127,7 @@ export const dataService = {
     return null;
   },
 
-  // ============= FIX THE PARAMETER TYPE =============
+  // method to save results from fastTextSearch
   async setCachedSearch(normalizedQuery: string, resultData: CachedSearchResult): Promise<void> {
     const cacheKey = `${CacheKeys.SEARCH_CACHE_PREFIX}${normalizedQuery}`;
     const cacheData: CachedSearchResult = {
