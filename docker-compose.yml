@@ -7,9 +7,9 @@ services:
     ports:
       - "5173:5173"
     environment:
-      - NODE_ENV=development
+      - BUN_ENV=development
       - VITE_API_URL=http://localhost:3000
-    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+    command: ["bunx", "vite", "--host", "0.0.0.0"]
     # REMOVED volumes: section - let develop.watch handle it
     develop:
       watch:
@@ -57,7 +57,7 @@ services:
       - PG_URI=postgresql://postgres.kgdlviaqzszogrdtktma:cl13ntPr0j12345!@aws-0-us-west-2.pooler.supabase.com:6543/postgres
       - AI_APIKEY=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
       
-    command: ["npm", "run", "server"]
+    command: ["bun", "run", "server"]
     # REMOVED volumes: section - let develop.watch handle it
     develop:
       watch:

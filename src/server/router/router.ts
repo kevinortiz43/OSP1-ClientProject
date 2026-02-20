@@ -1,149 +1,156 @@
-import express from "express";
-import faqController from "../controller/faqController";
-import trustController from "../controller/trustController";
-import teamsController from "../controller/teamsController";
-import { getCacheStats } from "../caching/cache";
+import { Elysia, t } from "elysia";
 import { dataService } from "../caching/dataService";
-import { parseNaturalLanguageQuery } from "../controller/AI_Controller/naturalLanguageController";
-import { QueryOpenAI } from "../controller/AI_Controller/onlineAIController";
+import { getCacheStats } from "../caching/cache";
 import { databaseQuery } from "../controller/AI_Controller/databaseController";
-import { GenerateAIResponse } from "../controller/AI_Controller/generateAIResponse";
-const router = express.Router();
+import { generateAIResponse } from "../controller/AI_Controller/generateAIResponse";
+import { QueryOpenAI } from "../controller/AI_Controller/onlineAIController";
+export const router = new Elysia();
 
-router.get("/test", (_, res) => {
-  return res.status(200).send("TEST TESTTEST ");
+router.get("/", () => "Test");
+
+router.get("test", ({ _body, set }) => {
+  console.log("test");
+  set.status = 201;
+  return "test";
 });
 
-router.get("/ai", (req, res) => {
-  return res.status(200).send("Testing");
+router.get("/trustControls", async ({ error }) => {
+  try {
+    const result = await dataService.getControls();
+
+    if (!result) {
+      return error(404, { message: "No Trust Controls data found" });
+    }
+
+    return {
+      source: result.source,
+      data: result.data,
+      cached: result.source === "cache",
+      timestamp: new Date().toISOString(),
+    };
+  } catch (err) {
+    console.error(
+      `Error in Trust Controls route: ${err instanceof Error ? err.message : "Unknown error"}`,
+    );
+    return error(500, { err: "Failed to retrieve Trust Controls data" });
+  }
 });
 
 router.post(
   "/ai-online",
-  parseNaturalLanguageQuery,
-  QueryOpenAI,
-  databaseQuery,
-  GenerateAIResponse,
-  (_req, res) => {
-    return res.status(200).json({
-      databaseQuery: res.locals.databaseQuery,
-      databaseQueryResult: res.locals.databaseQueryResult,
-    });
+  async ({ body, error }) => {
+    try {
+      // Step 1: Convert natural language to SQL
+      const { naturalLanguageQuery } = body;
+      const { cleanSQL } = await QueryOpenAI({
+        naturalLanguageQuery,
+        sqlQuery: "",
+      });
+
+      if (!cleanSQL) {
+        return error(500, { err: "Failed to generate SQL query" });
+      }
+
+      // Step 2: Run the SQL against the database
+      const { rows } = await databaseQuery(cleanSQL);
+
+      // Step 3: Generate AI response from DB results
+      return await generateAIResponse({
+        naturalLanguageQuery,
+        databaseQueryResult: rows,
+        sqlQuery: cleanSQL,
+      });
+    } catch (err) {
+      return error(500, { err: "Failed to process AI query" });
+    }
+  },
+  {
+    body: t.Object({
+      naturalLanguageQuery: t.String(),
+    }),
   },
 );
 
-// router.get("/ai/", parseNaturalLanguageQuery,queryAI, queryDatabase, (req, res) =>{
-//   res.status(200).json({
+router.get("/allTeams", async ({ error }) => {
+  try {
+    const result = await dataService.getTeams();
 
-//   })
-// });
+    if (!result) {
+      return error(404, { message: "No All Teams data found" });
+    }
 
-// localhost:3000/api/trustControls
-router.get("/trustControls", trustController.getTrustControls, (req, res) => {
-  // res.locals.dbResults contains the team data array
-  // res.locals.cacheInfo contains cache metadata
-  const controlsData = res.locals.dbResults;
-  const cacheInfo = res.locals.cacheInfo || {
-    source: "unknown",
-    cached: false,
-  };
-
-  return res.json({
-    source: cacheInfo.source,
-    data: controlsData,
-    cached: cacheInfo.cached,
-    timestamp: new Date().toISOString(),
-  });
+    return {
+      source: result.source,
+      data: result.data,
+      cached: result.source === "cache",
+      timestamp: new Date().toISOString(),
+    };
+  } catch (err) {
+    console.error(
+      `Error in Trust Controls route: ${err instanceof Error ? err.message : "Unknown error"}`,
+    );
+    return error(500, { err: "Failed to retrieve All Teams data" });
+  }
 });
 
-// localhost:3000/api/allTeams
-router.get("/allTeams", teamsController.getTeams, (req, res) => {
-  // res.locals.dbResults contains the team data array
-  // res.locals.cacheInfo contains cache metadata
-  const teamsData = res.locals.dbResults;
-  const cacheInfo = res.locals.cacheInfo || {
-    source: "unknown",
-    cached: false,
-  };
+router.get("/trustFaqs", async ({ error }) => {
+  try {
+    const result = await dataService.getFaqs();
 
-  return res.json({
-    source: cacheInfo.source,
-    data: teamsData,
-    cached: cacheInfo.cached,
-    timestamp: new Date().toISOString(),
-  });
+    if (!result) {
+      return error(404, { message: "No FAQs data found" });
+    }
+
+    return {
+      source: result.source,
+      data: result.data,
+      cached: result.source === "cache",
+      timestamp: new Date().toISOString(),
+    };
+  } catch (err) {
+    console.error(
+      `Error in Trust Controls route: ${err instanceof Error ? err.message : "Unknown error"}`,
+    );
+    return error(500, { err: "Failed to retrieve FAQs data" });
+  }
 });
 
-// localhost:3000/api/trustFaqs
-router.get("/trustFaqs", faqController.getTrustFaqs, (req, res) => {
-  // res.locals.dbResults contains the team data array
-  // res.locals.cacheInfo contains cache metadata
-  const faqsData = res.locals.dbResults;
-  const cacheInfo = res.locals.cacheInfo || {
-    source: "unknown",
-    cached: false,
-  };
+router.post(
+  "/admin/clear-cache",
+  ({ body }) => {
+    const { type } = body;
 
-  return res.json({
-    source: cacheInfo.source,
-    data: faqsData,
-    cached: cacheInfo.cached,
-    timestamp: new Date().toISOString(),
-  });
-});
+    dataService.clearCache(type);
+    const statsReset = getCacheStats();
 
-// endpoint to manually clear cache for 'teams', 'controls', or 'faqs' or empty if want to clear all cache (for admin)
+    return {
+      success: true,
+      message: type ? `Cache cleared for ${type}` : "All cache cleared",
+      timestamp: new Date().toISOString(),
+      hits: statsReset.hits,
+      misses: statsReset.misses,
+      keys: statsReset.keys,
+      ksize: statsReset.ksize,
+      vsize: statsReset.vsize,
+    };
+  },
+  {
+    body: t.Object({
+      type: t.Optional(
+        t.Union([t.Literal("teams"), t.Literal("controls"), t.Literal("faqs")]),
+      ),
+    }),
+  },
+);
 
-// http://localhost:3000/api/admin/clear-cache
-router.post("/admin/clear-cache", (req, res) => {
-  const { type } = req.body; // 'teams', 'controls', 'faqs', or leave empty if want to clear all cache keys
-
-  dataService.clearCache(type);
-  const statsReset = getCacheStats();
-
-  res.json({
-    success: true,
-    message: type ? `Cache cleared for ${type}` : "All cache cleared",
-    timestamp: new Date().toISOString(),
-    hits: statsReset.hits,
-    misses: statsReset.misses,
-    keys: statsReset.keys,
-    ksize: statsReset.ksize,
-    vsize: statsReset.vsize,
-  });
-});
-
-// get cache stats
-// http://localhost:3000/api/admin/cache-stats  (seems buggy)
-router.get("/admin/cache-stats", (req, res) => {
+router.get("/admin/cache-stats", () => {
   const stats = getCacheStats();
-  res.json({
+
+  return {
     hits: stats.hits,
     misses: stats.misses,
     keys: stats.keys,
     ksize: stats.ksize,
     vsize: stats.vsize,
-  });
+  };
 });
-
-export default router;
-
-// test endpoint to see that eTags are automatically generated
-// router.get("/test-etag", (req, res) => {
-//   //check if Express adds anything automatically
-//   console.log("testing Express ETag");
-//   console.log("1. Initial headers:", res.getHeaders());
-
-//   // test what happens with res.json()?
-//   const data = { id: 1, name: "Test" };
-
-//   // manually set header to compare
-//   res.setHeader('X-Test-Manual', 'manual-header');
-
-//   console.log("2. After setting manual header:", res.getHeaders());
-
-//   // Send the response
-//   res.json(data);
-
-//   console.log("3. Headers sent to client (check Dev Tools Network tab)");
-// });

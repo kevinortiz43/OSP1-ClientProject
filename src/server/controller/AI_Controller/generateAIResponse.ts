@@ -1,42 +1,58 @@
-import type { RequestHandler } from "express";
-import type { ServerError } from "./types";
-import { AI_APIKEY } from "../../envVariables";
-import { InferenceClient } from "@huggingface/inference";
+import { AI_APIKEY, model } from '../../envVariables';
+import { InferenceClient } from '@huggingface/inference';
 
-import { model } from "../../envVariables";
 const client = new InferenceClient(AI_APIKEY);
 
-export const GenerateAIResponse: RequestHandler = async (_req, res, next) => {
-  try {
-    const { naturalLanguageQuery, databaseQueryResult } = res.locals;
+interface DBResult {
+  short?: string;
+  long?: string;
+  question?: string;
+  answer?: string;
+}
 
-    if (!databaseQueryResult || databaseQueryResult.length === 0) {
-      return res.status(200).json({
-        response:
-          "Answer not found at this time. Please try rephrasing your question",
-        found: false,
-        sqlQuery: res.locals.sqlQuery,
-      });
+interface AIResponseInput {
+  naturalLanguageQuery: string;
+  databaseQueryResult: DBResult[];
+  sqlQuery: string;
+}
+
+interface AIResponseOutput {
+  response: string;
+  found: boolean;
+  sources?: number;
+  sqlQuery: string;
+  rawData?: DBResult[];
+}
+
+export async function generateAIResponse({
+  naturalLanguageQuery,
+  databaseQueryResult,
+  sqlQuery,
+}: AIResponseInput): Promise<AIResponseOutput> {
+
+  if (!databaseQueryResult || databaseQueryResult.length === 0) {
+    return {
+      response: 'Answer not found at this time. Please try rephrasing your question',
+      found: false,
+      sqlQuery,
+    };
+  }
+
+  let context = 'Relevant information from the security compliance database:\n\n';
+
+  databaseQueryResult.forEach((result, index) => {
+    if (result.short && result.long) {
+      context += `Control ${index + 1}:\n`;
+      context += `Summary: ${result.short}\n`;
+      context += `Details: ${result.long}\n\n`;
+    } else if (result.question && result.answer) {
+      context += `FAQ ${index + 1}:\n`;
+      context += `Q: ${result.question}\n`;
+      context += `A: ${result.answer}\n\n`;
     }
+  });
 
-    let context =
-      "Relevant information from the security compliance database:\n\n";
-
-    databaseQueryResult.forEach((result: any, index: number) => {
-      if (result.short && result.long) {
-        // From allTrustControls
-        context += `Control ${index + 1}:\n`;
-        context += `Summary: ${result.short}\n`;
-        context += `Details: ${result.long}\n\n`;
-      } else if (result.question && result.answer) {
-        // From allTrustFaqs
-        context += `FAQ ${index + 1}:\n`;
-        context += `Q: ${result.question}\n`;
-        context += `A: ${result.answer}\n\n`;
-      }
-    });
-
-    const responsePrompt = `You are a helpful security compliance assistant. Based on the database information provided, answer the user's question in a clear, professional, and conversational manner.
+  const responsePrompt = `You are a helpful security compliance assistant. Based on the database information provided, answer the user's question in a clear, professional, and conversational manner.
 
 INSTRUCTIONS:
 1. Synthesize information from the provided controls/FAQs to directly answer the question
@@ -52,38 +68,26 @@ ${context}
 
 Provide a helpful, direct answer:`;
 
+  try {
     const responseCompletion = await client.chatCompletion({
-      model: `${model}`,
-      messages: [
-        {
-          role: "user",
-          content: responsePrompt,
-        },
-      ],
+      model,
+      messages: [{ role: 'user', content: responsePrompt }],
       max_tokens: 300,
       temperature: 0.7,
     });
 
     const aiResponse = responseCompletion.choices[0].message.content?.trim();
 
-    return res.status(200).json({
-      response:
-        aiResponse ||
-        "I found relevant information but encountered an issue formulating a response. Please try again.",
+    return {
+      response: aiResponse || 'I found relevant information but encountered an issue formulating a response. Please try again.',
       found: true,
       sources: databaseQueryResult.length,
-      sqlQuery: res.locals.sqlQuery,
-      // Optionally include raw data for debugging
+      sqlQuery,
       rawData: databaseQueryResult,
-    });
-  } catch (error) {
-    console.error("Error generating AI response:", error);
-
-    const serverError: ServerError = {
-      log: `AI response generation error: ${error instanceof Error ? error.message : "Unknown error"}`,
-      status: 500,
-      message: { err: "Failed to generate AI response" },
     };
-    return next(serverError);
+
+  } catch (error) {
+    console.error('Error generating AI response:', error);
+    throw new Error(`AI response generation error: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
-};
+}
