@@ -1,5 +1,5 @@
 services:
-  # --- Frontend ---
+  # Frontend service (Vite)
   frontend:
     build:
       context: .
@@ -7,9 +7,9 @@ services:
     ports:
       - "5173:5173"
     environment:
-      - NODE_ENV=development
+      - BUN_ENV=development
       - VITE_API_URL=http://localhost:3000
-    command: [ "npm", "run", "dev", "--", "--host", "0.0.0.0" ]
+    command: ["bunx", "vite", "--host", "0.0.0.0"]
     develop:
       watch:
         - action: sync
@@ -81,14 +81,18 @@ services:
       - DB_NAME=test_db
       - DB_USER=root
       - DB_PASSWORD=root
-      - TEXT2SQL_URL=http://ollama:11434
+      - MODEL_URL=${MODEL_URL:-http://ollama:11434/v1/chat/completions}
       # - TEXT2SQL_MODEL=${TEXT2SQL_MODEL:-arctic-text2sql} # change model here, also in .env
       - TEXT2SQL_MODEL=${TEXT2SQL_MODEL:-distil-qwen3-4b:latest}
       # - TEXT2SQL_MODEL=${TEXT2SQL_MODEL:-qwen2.5:7b}
-      - JUDGE_MODEL=${JUDGE_MODEL:-qwen2.5-coder:14b}
+      - AI_RESPONSE_MODEL=${AIRESP_MODEL:-qwen2.5-coder:7b}
+      - JUDGE_MODEL=${JUDGE_MODEL:-qwen2.5-coder:7b}
       - MODEL_REGISTRY_URL=http://ollama:11434/api/tags
       - HARDWARE_TIER=4090-workstation
-    command: [ "npm", "run", "server" ]
+      - PG_URI=postgresql://postgres.kgdlviaqzszogrdtktma:cl13ntPr0j12345!@aws-0-us-west-2.pooler.supabase.com:6543/postgres
+      - AI_APIKEY=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
+
+    command: ["bun", "run", "server"]
     develop:
       watch:
         - action: sync+restart

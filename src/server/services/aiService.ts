@@ -29,7 +29,7 @@ export class AIService {
   private readonly CATEGORY_VALUES = CATEGORY_VALUES;
 
   constructor() {
-    this.modelUrl = process.env.TEXT2SQL_URL || '';
+    this.modelUrl = process.env.MODEL_URL || '';
     this.modelName = process.env.TEXT2SQL_MODEL || '';
 
     console.log('AI Service initialized:', {
@@ -142,12 +142,7 @@ export class AIService {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
-  private buildEndpoint(): string {
-    const baseUrl = this.modelUrl.replace(/\/+$/, '');
-    return `${baseUrl}/v1/chat/completions`;
-  }
-
-  private buildSystemPrompt(schemaDescription: string): string {
+ private buildSystemPrompt(schemaDescription: string): string {
 
  // create formatted list of category values for the prompt
   const categoryList = CATEGORY_VALUES.map(c => `'${c}'`).join(', ');
@@ -244,7 +239,7 @@ FROM "allTeams";`;
     }
 
     const { prompt, schemaDescription } = options;
-    const endpoint = this.buildEndpoint();
+    const endpoint = process.env.MODEL_URL || 'http://ollama:11434/v1/chat/completions';
 
     console.log('Calling AI model:', {
       endpoint,

@@ -17,7 +17,7 @@ const TABLE_COLUMNS = {
 
 export function checkResultsCount(actualCount: number, expectedCount: number | string): boolean {
     if (typeof expectedCount === 'number') return actualCount === expectedCount;
-    
+
     const match = expectedCount.match(/^([<>]=?)(\d+)$/);
     if (match) {
         const operator = match[1];
@@ -34,15 +34,15 @@ export function checkResultsCount(actualCount: number, expectedCount: number | s
 }
 
 export class JudgeService {
-    private readonly judgmentsDir: string;
     private readonly judgeModel: string;
     private readonly ollamaUrl: string;
+    private readonly judgmentsDir: string;
 
     constructor() {
-        this.judgeModel = process.env.JUDGE_MODEL || 'qwen2.5-coder:14b';
-        this.ollamaUrl = process.env.TEXT2SQL_URL || 'http://ollama:11434';
+        this.judgeModel = process.env.JUDGE_MODEL || 'qwen2.5-coder:7b';
+        this.ollamaUrl = process.env.MODEL_URL || 'http://ollama:11434/v1/chat/completions';
         this.judgmentsDir = path.join(__dirname, '..', 'aiTest', 'judgments');
-        
+
         if (!fs.existsSync(this.judgmentsDir)) {
             fs.mkdirSync(this.judgmentsDir, { recursive: true });
         }
@@ -85,13 +85,13 @@ CRITICAL RULES:
      */
     private cleanLLMResponse(rawResponse: string): string {
         let cleaned = rawResponse.trim();
-        
+
         // Remove markdown code blocks
         cleaned = cleaned.replace(/^```json\n/, '');
         cleaned = cleaned.replace(/^```\n/, '');
         cleaned = cleaned.replace(/\n```$/, '');
         cleaned = cleaned.replace(/^```$/, '');
-        
+
         return cleaned;
     }
 
@@ -102,10 +102,10 @@ CRITICAL RULES:
         try {
             // Clean the response first
             const cleaned = this.cleanLLMResponse(rawResponse);
-            
+
             // Try to parse as JSON
             const parsed = JSON.parse(cleaned);
-            
+
             // Validate we have the required fields
             if (typeof parsed.score === 'number' && typeof parsed.explanation === 'string') {
                 return {
@@ -129,7 +129,7 @@ CRITICAL RULES:
                 };
             }
         }
-        
+
         return null;
     }
 
@@ -141,7 +141,7 @@ CRITICAL RULES:
         generatedSQL: string,
         results: any[]
     ): Promise<{ score: number; explanation: string }> {
-        
+
         // Build dynamic guidance based on results
         let resultsGuidance = '';
         if (results.length === 0) {
@@ -176,85 +176,83 @@ IMPORTANT: Return ONLY a valid JSON object. NO markdown, NO code blocks, NO extr
 }`;
 
         try {
-            const response = await fetch(`${this.ollamaUrl}/api/generate`, {
+            const response = await fetch(this.ollamaUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     model: this.judgeModel,
-                    prompt: prompt,
-                    stream: false,
-                    options: { 
-                        temperature: 0.1,
-                        num_predict: 500 // explanation length
-                    }
+                    messages: [{ role: 'user', content: prompt }], 
+                    temperature: 0.1,
+                    max_tokens: 500  
                 })
             });
 
             const data = await response.json();
-            
+            const llmResponse = data.choices[0].message.content;
+
             // Parse the LLM response so human-readable
-            const parsed = this.parseLLMResponse(data.response);
-            
+            const parsed = this.parseLLMResponse(llmResponse);
+
             if (parsed) {
                 return {
                     score: parsed.score,
                     explanation: parsed.explanation
                 };
             }
-            
+
             // Fallback if parsing fails
             return {
                 score: 3,
                 explanation: 'Could not parse LLM response'
             };
-            
+
         } catch (error) {
             console.error('LLM evaluation failed:', error);
-            return { 
-                score: 3, 
-                explanation: 'Evaluation service unavailable' 
+            return {
+                score: 3,
+                explanation: 'Evaluation service unavailable'
             };
         }
     }
 
-async saveJudgment(judgment: Judgment): Promise<string> {
-    const id = randomUUID();
-    const date = new Date();
-    
-    // Get all existing judgment files for today
-    const files = fs.readdirSync(this.judgmentsDir)
-        .filter(f => f.endsWith('.json'));
-    
-    // Create date prefix: YYYYMMDD
-    const datePrefix = `${date.getFullYear()}${String(date.getMonth()+1).padStart(2,'0')}${String(date.getDate()).padStart(2,'0')}`;
-    
-    // Find the highest counter for today
-    let maxCounter = 0;
-    const todayFiles = files.filter(f => f.startsWith(datePrefix));
-    
-    if (todayFiles.length > 0) {
-        // Extract counter numbers from existing files
-        // Format: YYYYMMDD_001_uuid.json
-        const counters = todayFiles.map(f => {
-            const match = f.match(/^\d{8}_(\d{3})_/);
-            return match ? parseInt(match[1], 10) : 0;
-        });
-        maxCounter = Math.max(...counters, 0);
+    async saveJudgment(judgment: Judgment): Promise<string> {
+        const id = randomUUID();
+        const date = new Date();
+
+        // Get all existing judgment files for today
+        const files = fs.readdirSync(this.judgmentsDir)
+            .filter(f => f.endsWith('.json'));
+
+        // Create date prefix: YYYYMMDD
+        const datePrefix = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
+
+        // Find the highest counter for today
+        let maxCounter = 0;
+        const todayFiles = files.filter(f => f.startsWith(datePrefix));
+
+        if (todayFiles.length > 0) {
+            // Extract counter numbers from existing files
+            // Format: YYYYMMDD_001_uuid.json
+            const counters = todayFiles.map(f => {
+                const match = f.match(/^\d{8}_(\d{3})_/);
+                return match ? parseInt(match[1], 10) : 0;
+            });
+            maxCounter = Math.max(...counters, 0);
+        }
+
+        // Increment counter and pad to 3 digits
+        const counter = String(maxCounter + 1).padStart(3, '0');
+
+        // Create filename: YYYYMMDD_001_last4uuid.json
+        const filename = `${datePrefix}_${counter}_${id.slice(-4)}.json`;
+        const filepath = path.join(this.judgmentsDir, filename);
+
+        await fs.promises.writeFile(
+            filepath,
+            JSON.stringify({ id, ...judgment }, null, 2)
+        );
+
+        console.log(`Judgment saved: ${filename}`);
+        return filepath;
     }
-    
-    // Increment counter and pad to 3 digits
-    const counter = String(maxCounter + 1).padStart(3, '0');
-    
-    // Create filename: YYYYMMDD_001_last4uuid.json
-    const filename = `${datePrefix}_${counter}_${id.slice(-4)}.json`;
-    const filepath = path.join(this.judgmentsDir, filename);
-    
-    await fs.promises.writeFile(
-        filepath, 
-        JSON.stringify({id, ...judgment}, null, 2)
-    );
-    
-    console.log(`Judgment saved: ${filename}`);
-    return filepath;
-}
 }

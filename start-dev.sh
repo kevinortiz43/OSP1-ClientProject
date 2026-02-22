@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Note: This script is designed for Linux/WSL2 environments
+# Note: This script is designed for Linux/WSL2 environments. Its purpose is to pre-load 2 local models so they are 'warm' and ready to use without the user having to wait for models to load every time a model runs.
 # Windows users should use WSL2 or adapt for PowerShell
 
 # Make start-dev.sh executable (one-time)
@@ -59,6 +59,7 @@ docker compose exec ollama ollama list
 echo "Pre-loading models into VRAM via API..."
 
 # Function to trigger model load
+# use ollama endpoint for preloading models, use openai-compatible v1/chat/completions endpoint for services
 load_model() {
   local model_name=$1
   echo "Loading ${model_name}..."
@@ -77,16 +78,17 @@ load_model() {
   fi
 }
 
-# Load ONLY 2 models total (one SQL generator + one judge)
-# Choose ONE SQL generator by uncommenting it, and keep the judge
+# Load ONLY 2 models total (one SQL generator + one AI generator)
+# Choose ONE SQL generator by uncommenting it, and keep the AI generator
+# 3rd model, i.e. judge model, will be online (using hugging face model that has inference provider available)
 # check .env and docker-compose.yml to make sure model choices are consistent
 echo "Loading SQL generator model (choose one)..."
 # load_model "arctic-text2sql:latest"        # Option 1: Arctic
 load_model "distil-qwen3-4b:latest"        # Option 2: Distil-Qwen3
 # load_model "qwen2.5-coder-7b:latest"       # Option 3: Qwen2.5-Coder-7B
 
-echo "Loading judge model..."
-load_model "qwen2.5-coder:14b" &           # Judge model (loads in background)
+echo "Loading ai response model..."
+load_model "qwen2.5-coder:7b" &           # ai response model (loads in background)
 
 echo "Model loading initiated in background. Continuing setup..."
 # Give models a moment to start loading
