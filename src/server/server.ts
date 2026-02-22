@@ -1,13 +1,10 @@
-
-import cors from "cors";
-import express from "express";
+import { cors } from "@elysiajs/cors";
+import { Elysia } from "elysia";
 import "dotenv/config";
-import router from "./router/router";
-import { notFound, errorHandler } from "./errorHandler"; 
-
+import { router } from "./router/router";
 const PORT = 3000;
 
-const app = express();
+const app = new Elysia({ prefix: "/api" });
 
 const corsOptions = {
   origin: "http://localhost:5173",
@@ -16,21 +13,10 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// ROUTES
-app.use("/api", router);
-
-// 404 handler - catches any routes that weren't matched
-app.use(notFound);
-
-
-// global error handler - catches any errors passed to next()
-app.use(errorHandler);
-
 app.listen(PORT, () => {
-  console.log(`Server listening on port: ${PORT}`);
+  console.log(`Server listening on port ${PORT}`);
 });
+
+app.use(router);
 
 export default app;

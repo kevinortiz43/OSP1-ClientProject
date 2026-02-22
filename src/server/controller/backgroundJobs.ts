@@ -1,10 +1,9 @@
-import { type RequestHandler } from 'express';
 import { JudgeService, checkResultsCount } from '../services/judgeService';
 import { type Judgment, type TestSet } from '../types';
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
-import { createError } from "../errorHandler";
+import { createError } from '../errorHandler';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -24,62 +23,81 @@ try {
   console.warn('Failed to load test questions:', error);
 }
 
-export const triggerBackgroundJudgment: RequestHandler = (_, res, next) => {
-  const source = res.locals.queryResult?.source;
-  const hasSQL = !!res.locals.databaseQuery;
+// ── Types ────────────────────────────────────────────────────────────────────
 
-  if (source === 'ai' && hasSQL) {
-    res.locals.judgmentData = {
-      naturalLanguageQuery: res.locals.naturalLanguageQuery,
-      generatedSQL: res.locals.databaseQuery,
-      results: res.locals.databaseQueryResult || [],
-      resultsCount: res.locals.databaseQueryResult?.length || 0,
+interface JudgmentInput {
+  naturalLanguageQuery: string;
+  generatedSQL: string;
+  results: any[];
+  source?: string;
+  executionTime?: number;
+  sqlModel?: string;
+}
+
+interface TriggerInput {
+  naturalLanguageQuery: string;
+  sqlQuery: string;
+  results: any[];
+  source?: string;
+  executionTime?: number;
+}
+
+// ── Replaces Express middleware triggerBackgroundJudgment ────────────────────
+
+export function triggerBackgroundJudgment(input: TriggerInput): JudgmentInput | null {
+  const { naturalLanguageQuery, sqlQuery, results, source, executionTime } = input;
+
+  // Only judge if source is 'ai' and SQL was generated
+  if (source === 'ai' && sqlQuery) {
+    return {
+      naturalLanguageQuery,
+      generatedSQL: sqlQuery,
+      results,
+      resultsCount: results.length,
       source,
-      executionTime: res.locals.executionTime,
+      executionTime,
       sqlModel: process.env.TEXT2SQL_MODEL,
-      judgeModel: process.env.JUDGE_MODEL
+      judgeModel: process.env.JUDGE_MODEL,
     };
   }
 
-  next();
-};
+  return null;
+}
 
-/**
- * Simple pass/fail based on results count expectations
- */
+// ── Count-based evaluation (unchanged) ──────────────────────────────────────
+
 function evaluateByCountOnly(
-  resultsCount: number, 
+  resultsCount: number,
   expectedCount: number | string
 ): { score: number; passed: boolean; explanation: string } {
   const meetsExpectations = checkResultsCount(resultsCount, expectedCount);
-  
+
   if (meetsExpectations) {
     return {
       score: 5,
       passed: true,
-      explanation: `Count OK: got ${resultsCount}, expected ${expectedCount}`
+      explanation: `Count OK: got ${resultsCount}, expected ${expectedCount}`,
     };
   }
-  
+
   if (resultsCount === 0) {
     return {
       score: 1,
       passed: false,
-      explanation: `No results, expected ${expectedCount}`
+      explanation: `No results, expected ${expectedCount}`,
     };
   }
-  
+
   return {
     score: 3,
     passed: false,
-    explanation: `Wrong count: got ${resultsCount}, expected ${expectedCount}`
+    explanation: `Wrong count: got ${resultsCount}, expected ${expectedCount}`,
   };
 }
 
-/**
- * Main judgment execution - 2 PATHS (1. if the naturalLanguageQuery is in test set, 2.) if naturalLanguageQuery NOT in test set
- */
-export async function runBackgroundJudgment(data: any): Promise<void> {
+// ── Main judgment execution (unchanged) ─────────────────────────────────────
+
+export async function runBackgroundJudgment(data: JudgmentInput): Promise<void> {
   if (!data) {
     console.log(createError('No judgment data', 400, 'backgroundJobs').log);
     return;
@@ -92,14 +110,16 @@ export async function runBackgroundJudgment(data: any): Promise<void> {
       results = [],
       source = 'ai',
       executionTime,
-      sqlModel
+      sqlModel,
     } = data;
 
     const resultsCount = results.length;
-    
+
     // Find test case - exact match only
-    const testCase = testSet.find(t => 
-      t.naturalLanguageQuery.toLowerCase().trim() === naturalLanguageQuery.toLowerCase().trim()
+    const testCase = testSet.find(
+      (t) =>
+        t.naturalLanguageQuery.toLowerCase().trim() ===
+        naturalLanguageQuery.toLowerCase().trim()
     );
 
     const judgment: Judgment = {
@@ -115,27 +135,26 @@ export async function runBackgroundJudgment(data: any): Promise<void> {
       source,
       executionTime,
       sqlModel: sqlModel || process.env.TEXT2SQL_MODEL,
-      judgeModel: process.env.JUDGE_MODEL
+      judgeModel: process.env.JUDGE_MODEL,
     };
 
     // PATH 1: Test case exists - deterministic count-based evaluation
     if (testCase) {
       console.log('Path 1: Test case found - using count-based evaluation');
-      
+
       const evaluation = evaluateByCountOnly(
-        resultsCount, 
+        resultsCount,
         testCase.expectedResponse.resultsCount
       );
-      
+
       judgment.score = evaluation.score;
       judgment.passed = evaluation.passed;
       judgment.explanation = evaluation.explanation;
-      
-    } 
+
     // PATH 2: No test case - LLM judge
-    else {
+    } else {
       console.log('Path 2: No test case - using LLM judge');
-      
+
       if (results.length > 0) {
         const llmJudgment = await judgeService.evaluateWithLLM(
           naturalLanguageQuery,
@@ -146,7 +165,6 @@ export async function runBackgroundJudgment(data: any): Promise<void> {
         judgment.explanation = llmJudgment.explanation;
         judgment.passed = llmJudgment.score >= 4;
       } else {
-        // Empty results is always 1
         judgment.score = 1;
         judgment.explanation = 'Query returned no results - not enough data to tell if correct or not';
         judgment.passed = false;
@@ -156,7 +174,7 @@ export async function runBackgroundJudgment(data: any): Promise<void> {
     await judgeService.saveJudgment(judgment);
     console.log(`Score: ${judgment.score}/5 - ${judgment.passed ? 'PASS' : 'FAIL'}`);
     console.log(`Explanation: ${judgment.explanation}`);
-    
+
   } catch (error) {
     console.error('Background judgment failed:', error);
   }
