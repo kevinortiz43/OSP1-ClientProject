@@ -1,5 +1,5 @@
 import { Elysia, t } from "elysia";
-import { dataService } from "../caching/dataService";
+import { dataService } from "../services/dataService";
 import { getCacheStats } from "../caching/cache";
 import { databaseQuery } from "../controller/databaseController";
 import { generateAIResponse } from "../controller/generateAIResponse_offline";
@@ -120,6 +120,10 @@ router.get("/trustFaqs", async ({ error }) => {
   }
 });
 
+
+// http://localhost:3000/api/admin/clear-cache
+// endpoint to manually clear cache for 'teams', 'controls', or 'faqs' or empty if want to clear all cache
+// Examples: {"type": ""} to clear all or {"type": "teams"} to clear specific keys 
 router.post(
   "/admin/clear-cache",
   ({ body }) => {
@@ -142,12 +146,13 @@ router.post(
   {
     body: t.Object({
       type: t.Optional(
-        t.Union([t.Literal("teams"), t.Literal("controls"), t.Literal("faqs")]),
+        t.Union([t.Literal("teams"), t.Literal("controls"), t.Literal("faqs"),  t.Literal("search"), t.Literal("") ]),
       ),
     }),
   },
 );
 
+// http://localhost:3000/api/admin/cache-stats
 router.get("/admin/cache-stats", () => {
   const stats = getCacheStats();
 
@@ -160,6 +165,8 @@ router.get("/admin/cache-stats", () => {
   };
 });
 
+// http://localhost:3000/api/ai/query
+// fastTextSearch or AI route
 router.post(
   "/ai/query",
   async ({ body, error }) => {

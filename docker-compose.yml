@@ -84,9 +84,9 @@ services:
       - MODEL_URL=${MODEL_URL:-http://ollama:11434/v1/chat/completions}
       # - TEXT2SQL_MODEL=${TEXT2SQL_MODEL:-arctic-text2sql} # change model here, also in .env
       - TEXT2SQL_MODEL=${TEXT2SQL_MODEL:-distil-qwen3-4b:latest}
-      # - TEXT2SQL_MODEL=${TEXT2SQL_MODEL:-qwen2.5:7b}
       - AI_RESPONSE_MODEL=${AIRESP_MODEL:-qwen2.5-coder:7b}
       - JUDGE_MODEL=${JUDGE_MODEL:-qwen2.5-coder:7b}
+      # - JUDGE_MODEL=${JUDGE_MODEL:-qwen2.5-coder:14b}
       - MODEL_REGISTRY_URL=http://ollama:11434/api/tags
       - HARDWARE_TIER=4090-workstation
       - PG_URI=postgresql://postgres.kgdlviaqzszogrdtktma:cl13ntPr0j12345!@aws-0-us-west-2.pooler.supabase.com:6543/postgres

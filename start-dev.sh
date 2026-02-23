@@ -59,7 +59,6 @@ docker compose exec ollama ollama list
 echo "Pre-loading models into VRAM via API..."
 
 # Function to trigger model load
-# use ollama endpoint for preloading models, use openai-compatible v1/chat/completions endpoint for services
 load_model() {
   local model_name=$1
   echo "Loading ${model_name}..."
@@ -78,29 +77,46 @@ load_model() {
   fi
 }
 
-# Load ONLY 2 models total (one SQL generator + one AI generator)
-# Choose ONE SQL generator by uncommenting it, and keep the AI generator
-# 3rd model, i.e. judge model, will be online (using hugging face model that has inference provider available)
-# check .env and docker-compose.yml to make sure model choices are consistent
-echo "Loading SQL generator model (choose one)..."
-# load_model "arctic-text2sql:latest"        # Option 1: Arctic
-load_model "distil-qwen3-4b:latest"        # Option 2: Distil-Qwen3
-# load_model "qwen2.5-coder-7b:latest"       # Option 3: Qwen2.5-Coder-7B
+# Function to warm up model with a real request
+warmup_model() {
+  local model_name=$1
+  echo "Warming up ${model_name} with test request..."
+  curl -s -X POST http://localhost:11434/v1/chat/completions \
+    -H "Content-Type: application/json" \
+    -d "{
+      \"model\": \"${model_name}\",
+      \"messages\": [{\"role\": \"user\", \"content\": \"Say hello\"}],
+      \"max_tokens\": 10,
+      \"temperature\": 0.1
+    }" > /dev/null
+  if [ $? -eq 0 ]; then
+    echo "${model_name} warm-up complete."
+  else
+    echo "Warning: ${model_name} warm-up failed, but model may still work."
+  fi
+}
 
-echo "Loading ai response model..."
-load_model "qwen2.5-coder:7b" &           # ai response model (loads in background)
+# Load ONLY 2 models total (one SQL generator + one AI response generator / judge model).
+echo "Loading SQL generator model..."
+load_model "distil-qwen3-4b:latest"
 
-echo "Model loading initiated in background. Continuing setup..."
-# Give models a moment to start loading
-sleep 5
+echo "Loading AI response/judge model..."
+load_model "qwen2.5-coder:7b"
 
-# Step 5: Verify VRAM usage (optional)
+echo "Waiting for models to fully initialize in VRAM..."
+sleep 10
+
+# Step 5: Warm up models with actual requests
+echo "Warming up models to prevent first-request truncation..."
+warmup_model "distil-qwen3-4b:latest"
+warmup_model "qwen2.5-coder:7b"
+
+# Step 6: Verify VRAM usage
 echo "Current VRAM usage:"
 docker compose exec ollama nvidia-smi | grep "MiB /" | head -1
 
-# Step 6A: 1st time setup only: Run database setup 
-# npm run setup
-
-# Step 6B: Subsequent starting app (after database already set up, backend, models)
-# do NOT use --watch flag since it'll interfere with judge evaluation step
+# Step 7: Start the backend (without --watch flag)
+echo "Starting backend services..."
 docker compose up -d
+
+echo "Setup complete! Models are loaded and warmed up."

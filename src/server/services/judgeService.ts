@@ -103,39 +103,51 @@ CRITICAL RULES:
             // Clean the response first
             const cleaned = this.cleanLLMResponse(rawResponse);
 
+            // Remove any "Assistant:" or similar prefixes
+            const withoutPrefix = cleaned.replace(/^(Assistant:|AI:|Model:|<|im_start|>:)\s*/i, '');
+
             // Try to parse as JSON
-            const parsed = JSON.parse(cleaned);
+            const parsed = JSON.parse(withoutPrefix);
 
             // Validate we have the required fields
             if (typeof parsed.score === 'number' && typeof parsed.explanation === 'string') {
+                // Clean up the explanation - remove extra whitespace and artifacts
+                const cleanExplanation = parsed.explanation
+                    .replace(/\|\|/g, '')                    // REMOVE || characters        
+                    .replace(/\n\s*,?\s*\n/g, '\n')  // Remove lines with just commas
+                    .replace(/\s+/g, ' ')            // Normalize whitespace
+                    .trim();
+
                 return {
                     score: Math.min(5, Math.max(1, parsed.score)),
-                    explanation: parsed.explanation.trim()
+                    explanation: cleanExplanation
                 };
             }
         } catch (e) {
             // If JSON parsing fails, try to extract score from text
             const scoreMatch = rawResponse.match(/[1-5]/);
             if (scoreMatch) {
+                // Extract explanation by removing score and cleaning
+                let explanation = rawResponse
+                    .replace(/\|\|/g, '') // remove separators ||
+                    .replace(/```json|```/g, '')
+                    .replace(/[{}"]/g, '')
+                    .replace(/score:\s*\d+/i, '')
+                    .replace(/explanation:/i, '')
+                    .replace(/Assistant:|AI:|Model:|<|im_start|>:/gi, '')  // Remove prefixes
+                    .replace(/\n\s*,?\s*\n/g, ' ')           // Clean up newlines with commas
+                    .replace(/\s+/g, ' ')                    // Normalize spaces
+                    .trim();
+
                 return {
                     score: parseInt(scoreMatch[0], 10),
-                    explanation: rawResponse
-                        .replace(/```json|```/g, '')
-                        .replace(/[{}"]/g, '')
-                        .replace(/score:\s*\d+/i, '')
-                        .replace(/explanation:/i, '')
-                        .trim()
-                        .substring(0, 200)
+                    explanation: explanation.substring(0, 500)
                 };
             }
         }
-
         return null;
     }
 
-    /**
-     * LLM evaluation with schema context from constants
-     */
     async evaluateWithLLM(
         userPrompt: string,
         generatedSQL: string,
@@ -169,28 +181,82 @@ SCORING (1-5):
 2 = Poor - Wrong tables or completely wrong logic
 1 = Wrong - Syntax errors, invalid tables/columns
 
-IMPORTANT: Return ONLY a valid JSON object. NO markdown, NO code blocks, NO extra text.
+IMPORTANT: Return ONLY a valid JSON object. NO markdown, NO code blocks, NO extra text, NO separators.
 {
   "score": number,
   "explanation": "brief reason"
 }`;
 
         try {
+            console.log(`Calling judge model at ${this.ollamaUrl} with model ${this.judgeModel}`);
+
             const response = await fetch(this.ollamaUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     model: this.judgeModel,
-                    messages: [{ role: 'user', content: prompt }], 
+                    messages: [
+                        {
+                            role: 'system',
+                            content: 'You are a judge that evaluates SQL queries. Always respond with valid JSON only.'
+                        },
+                        { role: 'user', content: prompt }
+                    ],
                     temperature: 0.1,
-                    max_tokens: 500  
+                    max_tokens: 500
                 })
             });
 
-            const data = await response.json();
-            const llmResponse = data.choices[0].message.content;
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error(`Judge API error (${response.status}):`, errorText);
+                throw new Error(`HTTP error ${response.status}`);
+            }
 
-            // Parse the LLM response so human-readable
+            const data = await response.json();
+
+            // Check if we have the expected structure
+            if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+                console.error('Unexpected API response structure:', JSON.stringify(data).substring(0, 200));
+                return {
+                    score: 3,
+                    explanation: 'Unexpected API response format'
+                };
+            }
+
+            const llmResponse = data.choices[0].message.content;
+            console.log('Raw judge response:', llmResponse);
+
+            // If response is empty, try one more time with a simpler prompt
+            if (!llmResponse || llmResponse.trim() === '') {
+                console.log('Empty response received, retrying with simplified prompt...');
+
+                // Retry with a much simpler prompt
+                const simplePrompt = `Score this SQL (1-5) and explain briefly in JSON: 
+SQL: ${generatedSQL}
+User: ${userPrompt}
+Return: {"score": number, "explanation": "reason"}`;
+
+                const retryResponse = await fetch(this.ollamaUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        model: this.judgeModel,
+                        messages: [{ role: 'user', content: simplePrompt }],
+                        temperature: 0.1,
+                        max_tokens: 300
+                    })
+                });
+
+                const retryData = await retryResponse.json();
+                const retryContent = retryData.choices?.[0]?.message?.content;
+                if (retryContent) {
+                    const parsed = this.parseLLMResponse(retryContent);
+                    if (parsed) return parsed;
+                }
+            }
+
+            // Parse the LLM response
             const parsed = this.parseLLMResponse(llmResponse);
 
             if (parsed) {
@@ -201,6 +267,7 @@ IMPORTANT: Return ONLY a valid JSON object. NO markdown, NO code blocks, NO extr
             }
 
             // Fallback if parsing fails
+            console.warn('Could not parse judge response, using fallback');
             return {
                 score: 3,
                 explanation: 'Could not parse LLM response'
@@ -210,7 +277,7 @@ IMPORTANT: Return ONLY a valid JSON object. NO markdown, NO code blocks, NO extr
             console.error('LLM evaluation failed:', error);
             return {
                 score: 3,
-                explanation: 'Evaluation service unavailable'
+                explanation: `Evaluation error: ${error instanceof Error ? error.message : 'Unknown error'}`
             };
         }
     }

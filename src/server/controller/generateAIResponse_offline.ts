@@ -1,4 +1,4 @@
-import { type AIResponseInput, type AIResponseOutput} from "../types"
+import { type AIResponseInput, type AIResponseOutput } from "../types"
 
 const modelUrl = process.env.MODEL_URL || 'http://ollama:11434/v1/chat/completions';
 const modelName = process.env.AI_RESPONSE_MODEL || 'qwen2.5-coder:7b';
@@ -13,19 +13,19 @@ export async function generateAIResponse({
 
   // Determine which data to use
   const data = databaseQueryResult || searchResults || [];
-  
+
   if (!data || data.length === 0) {
     return {
       response: 'Answer not found at this time. Please try rephrasing your question',
       found: false,
-      source, 
+      source,
       sqlQuery,
     };
   }
 
   // Build context with source information
   let context = '';
-  
+
   if (source === 'ai') {
     context = 'Database query results (raw data):\n' + JSON.stringify(data, null, 2);
   } else {
@@ -61,62 +61,96 @@ ${context}
 
 Provide a helpful, direct answer:`;
 
-  try {
-    const response = await fetch(modelUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: modelName,
-        messages: [{ role: 'user', content: responsePrompt }],
-        temperature: 0.7,
-        max_tokens: 300
-      })
-    });
+  // RETRY LOGIC 
+  const maxRetries = 3;
+  let lastError: Error | null = null;
+  let delay = 100; // Start with 100ms delay
 
-    console.log('Ollama response status:', response.status);
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`Attempt ${attempt}/${maxRetries} to call Ollama...`);
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Ollama error response:', errorText);
-      throw new Error(`Ollama API error: ${response.status} - ${errorText}`);
+      const response = await fetch(modelUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: modelName,
+          messages: [{ role: 'user', content: responsePrompt }],
+          temperature: 0.2,
+          max_tokens: 500,
+          stop: []  
+        })
+      });
+
+      console.log('Ollama response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Ollama error response (attempt ${attempt}):`, errorText);
+        throw new Error(`Ollama API error: ${response.status} - ${errorText}`);
+      }
+
+      const responseData = await response.json();
+      console.log('Ollama response received');
+
+      let aiResponse = responseData.choices?.[0]?.message?.content?.trim();
+
+      // Check if we got a valid response
+      if (!aiResponse) {
+        throw new Error('Empty response from model');
+      }
+
+      // Clean any special tokens
+      aiResponse = aiResponse
+        .replace(/<\|im_start\|>/g, '')
+        .replace(/<\|im_end\|>/g, '')
+        .replace(/<\|[^|]+\|>/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      // Success - Return the response
+      return {
+        response: aiResponse,
+        found: true,
+        source,
+        sqlQuery,
+        rawData: data,
+      };
+
+    } catch (error) {
+      lastError = error as Error;
+      console.error(`Attempt ${attempt} failed:`, error);
+
+      if (attempt < maxRetries) {
+        console.log(`Retrying in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        delay *= 2; // Exponential backoff: 100ms, 200ms, 400ms
+      }
     }
-
-    const responseData = await response.json();
-    console.log('Ollama response received');
-    
-    const aiResponse = responseData.choices?.[0]?.message?.content?.trim();
-
-    return {
-      response: aiResponse || 'I found relevant information but encountered an issue formulating a response. Please try again.',
-      found: true,
-      source,  
-      sqlQuery,
-      rawData: data,
-    };
-
-  } catch (error) {
-    console.error('Error generating AI response:', error);
-
-    // Generic fallback
-    const fallbackResponse = data
-      .map((item) => {
-        // For search results with title/description
-        if (item.title && item.description) {
-          return `${item.title}: ${item.description}`;
-        }
-        // For any other structure
-        return Object.entries(item)
-          .map(([key, value]) => `${key}: ${value}`)
-          .join(', ');
-      })
-      .join('\n\n');
-
-    return {
-      response: fallbackResponse || 'No results found.',
-      found: true,
-      source, 
-      sqlQuery,
-      rawData: data,
-    };
   }
+
+  // If we get here, all retries failed
+  console.error('All retries failed. Last error:', lastError);
+
+  // Generic fallback
+  const fallbackResponse = data
+    .map((item) => {
+      // For search results with title/description
+      if (item.title && item.description) {
+        return `${item.title}: ${item.description}`;
+      }
+      // For any other structure
+      return Object.entries(item)
+        .map(([key, value]) => `${key}: ${value}`)
+        .join(', ');
+    })
+    .join('\n\n');
+
+  return {
+    response: fallbackResponse || 'No results found.',
+    found: true,
+    source,
+    sqlQuery,
+    rawData: data,
+  };
 }

@@ -1,0 +1,16 @@
+{
+  "id": "f2116721-92a4-4fe6-a7f9-546f9b17fba1",
+  "timestamp": "2026-02-23T03:34:55.445Z",
+  "naturalLanguageQuery": "what is the average response time for the data security team",
+  "generatedSQL": "SELECT AVG(\"responseTimeHours\") FROM \"allTeams\" WHERE \"category\" ILIKE 'Data Security';",
+  "expectedSQL": "SELECT AVG(\"responseTimeHours\") as average_response_time FROM \"allTeams\" WHERE \"category\" ILIKE 'Data Security' AND \"isActive\" = true;",
+  "resultsCount": 1,
+  "expectedCount": 1,
+  "passed": true,
+  "score": 5,
+  "explanation": "Count OK: got 1, expected 1",
+  "source": "ai",
+  "executionTime": 494,
+  "sqlModel": "distil-qwen3-4b:latest",
+  "judgeModel": "qwen2.5-coder:7b"
+}

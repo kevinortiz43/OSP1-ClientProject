@@ -1,6 +1,6 @@
 import { AIService } from '../services/aiService';
 import db from '../sql_db/db_connect_agnostic';
-import { dataService } from '../caching/dataService';
+import { dataService } from '../services/dataService';
 import { createError } from '../errorHandler';
 import { generateSchemaDescription } from '../sql_db/schemas-helper';
 import { type QueryResult, type OfflineAIOutput } from '../types';
@@ -180,7 +180,7 @@ async function fastTextSearch(query: string): Promise<{
 }
 
 function createQueryResult(
-  source: string,
+  source: 'cache' | 'ai' | 'search-cache' | 'search-db',
   results: any[],
   formatted: string,
   sql: string | null = null,
@@ -214,7 +214,7 @@ export async function queryOfflineOpenAI(
     const executionTime = `${Date.now() - cacheStartTime}ms`;
     console.log('CACHE HIT - returning cached results');
     console.log('Cache retrieval execution time:', executionTime);
-    
+
     return {
       queryResult: createQueryResult(
         'cache',
@@ -234,7 +234,7 @@ export async function queryOfflineOpenAI(
 
   // Step 2: Fast text search with smart path selection
   console.log('Fast path: Searching searchText...');
-  const { results: searchResults, source: searchSource, shouldUseAI, executionTime: searchExecutionTime } = 
+  const { results: searchResults, source: searchSource, shouldUseAI, executionTime: searchExecutionTime } =
     await fastTextSearch(normalizedQuery);
 
   if (shouldUseAI) {
@@ -245,13 +245,22 @@ export async function queryOfflineOpenAI(
     console.log('Fast text search execution time:', searchExecutionTime);
 
     const formattedResults = formatSearchResults(searchResults);
-    const resultData = {
-      results: searchResults,
-      formatted: formattedResults,
-      timestamp: new Date().toISOString(),
-    };
 
-    await dataService.setCachedSearch(normalizedQuery, resultData);
+    // prevent caching of incomplete or echo responses
+    if (formattedResults.length > 100 &&
+      !formattedResults.toLowerCase().includes('list all') &&
+      !formattedResults.toLowerCase().includes(normalizedQuery)) {
+
+      console.log('Caching results');
+      const resultData = {
+        results: searchResults,
+        formatted: formattedResults,
+        timestamp: new Date().toISOString(),
+      };
+      await dataService.setCachedSearch(normalizedQuery, resultData);
+    } else {
+      console.log('Not caching - response may be partial or echoing question');
+    }
 
     return {
       queryResult: createQueryResult(searchSource, searchResults, formattedResults, null, false),
@@ -267,7 +276,7 @@ export async function queryOfflineOpenAI(
   } else {
     console.log('No direct matches found, falling back to AI path...');
   }
-  
+
   console.log('Fast text search execution time:', searchExecutionTime);
   console.log('AI path: Generating schema from type definitions...');
   const aiStartTime = Date.now();
@@ -288,6 +297,6 @@ export async function queryOfflineOpenAI(
     queryResult: createQueryResult('ai', [], '', sqlQuery, false),
     databaseQuery: sqlQuery,
     executionTime,
-    sqlResults: null, 
+    sqlResults: null,
   };
 }

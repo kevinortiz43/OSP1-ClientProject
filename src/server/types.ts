@@ -135,14 +135,14 @@ export interface AIResponseInput {
   naturalLanguageQuery: string;
   databaseQueryResult?: DBResult[];  // For AI path (raw DB results)
   searchResults?: any[];              // For fastTextSearch path (formatted search results)
-  source: 'ai' | 'search-cache' | 'search-db' | 'cache';  // possible sources
+  source?: 'ai' | 'search-cache' | 'search-db' | 'cache' | string;  // possible sources
   sqlQuery?: string;         // SQL might not exist for search paths
 }
 
 export interface AIResponseOutput {
   response: string;
   found: boolean;
-  source?:  'ai' | 'search-cache' | 'search-db' | 'cache'; 
+  source?:  'ai' | 'search-cache' | 'search-db' | 'cache' | string; 
   sqlQuery?: string;
   rawData?: DBResult[] | any[];
 }
