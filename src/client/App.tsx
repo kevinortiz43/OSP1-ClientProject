@@ -5,7 +5,8 @@ import TrustCenter from "./components/TrustCenter/TrustCenter";
 import "./components/darktheme.css";
 import MultiSelect from "./components/Searchbar/MultiSelect";
 import Interface from "./components/Chatbot/Interface";
-import ArchitectureDiagram from "./components/ArchitectureDiagram/ArchitectureDiagram";
+import ArchitectureDiagram from "./components/ArchitectureDiagram/OnlineAI-Diagram/ArchitectureDiagram";
+import OfflineDiagram from "./components/ArchitectureDiagram/OfflineAI-Diagram/OfflineDiagram";
 export default function App() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
@@ -41,6 +42,10 @@ export default function App() {
     window.location.pathname === "/diagram-onlineAI"
   ) {
     return <ArchitectureDiagram />;
+  }
+
+  if (window.location.pathname === "/diagram-offlineAI") {
+    return <OfflineDiagram />;
   }
 
   return (

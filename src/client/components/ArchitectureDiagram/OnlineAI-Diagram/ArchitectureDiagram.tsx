@@ -95,12 +95,12 @@ const CONTAINERS: ContainerItem[] = [
     name: "AI Service",
     tech: "HuggingFace Inference",
     tags: [
-      { label: "GPT-OSS 120B", color: "purple" },
+      { label: "Kimi-K2-Instruct-0905", color: "purple" },
       { label: "Chatbot", color: "purple" },
       { label: "REST API", color: "purple" },
     ],
     tooltip:
-      "Model: openai/gpt-oss-120b\nProvider: HuggingFace Inference\nAuth: Bearer AI_APIKEY\nEndpoint: api-inference.huggingface.co\nCall: Backend → HF API → Model",
+      "Model: Kimi-K2-Instruct-0905\nProvider: HuggingFace Inference\nAuth: Bearer AI_APIKEY\nEndpoint: api-inference.huggingface.co\nCall: Backend → HF API → Model",
   },
   {
     id: "db",
@@ -176,14 +176,14 @@ const AI_STEPS: AiStep[] = [
     icon: "🌐",
     title: "HF Inference API",
     desc: "HTTP POST to HuggingFace Inference endpoint",
-    code: "api-inference.huggingface.co/models/\nopenai/gpt-oss-120b",
+    code: "api-inference.huggingface.co/models/\nKimi-K2-Instruct-0905",
   },
   {
     num: "step 05",
     icon: "🧠",
     title: "Model Inference",
-    desc: "GPT-OSS 120B parameter model runs inference on HF infrastructure",
-    code: "openai/gpt-oss-120b\n120B params · HF hosted",
+    desc: "Kimi-K2-Instruct-0905 parameter model runs inference on HF infrastructure",
+    code: "Kimi-K2-Instruct-0905\n1t params · HF hosted",
   },
   {
     num: "step 06",
@@ -228,7 +228,7 @@ const INFRA_ITEMS: InfraItem[] = [
     icon: "🤗",
     label: "AI Provider",
     name: "HuggingFace",
-    desc: "Inference API · openai/gpt-oss-120b · Bearer token auth",
+    desc: "Inference API · Kimi-K2-Instruct-0905 · Bearer token auth",
   },
 ];
 
