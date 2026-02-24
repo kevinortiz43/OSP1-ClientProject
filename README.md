@@ -5,8 +5,8 @@
 # Executing "bun run devo" command for application startup
 
 
-#Required Disclaimer (paste exactly):
-#This prototype was built as part of a client-student partnership through Codesmith’s Future Code program. It explores solutions to a real-world case study provided by an external partner. #This work does not represent employment or contracting with the partner. All intellectual property belongs to the partner. This is a time-boxed MVP and not a production system.
+# Required Disclaimer (paste exactly):
+# This prototype was built as part of a client-student partnership through Codesmith’s Future Code program. It explores solutions to a real-world case study provided by an external partner. # This work does not represent employment or contracting with the partner. All intellectual property belongs to the partner. This is a time-boxed MVP and not a production system.
 
 1. Make sure Docker Engine is running either through Docker Engine itself or with an active Docker Desktop
 2. In the root directory (e.g C:\username\Project) execute command "npm run devo" which will execute "npm install" which will install all necessary node modules and dev dependencies. Then it will execute "docker compose up -d" in the command line interface (CLI) which will build and start all services defined in the docker-compose.yml file (including frontend, backend, and database), install dependencies as specified in the Dockerfile during the build process.
