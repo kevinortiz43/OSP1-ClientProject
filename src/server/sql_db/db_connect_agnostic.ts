@@ -1,7 +1,7 @@
 import { Pool } from "pg";
 import type { QueryResult } from "pg";
 
-// Use OS-agnostic host resolution
+
 const isRunningInDocker =
   process.env.RUNNING_IN_DOCKER === "true" ||
   process.env.DB_HOST === "db" ||

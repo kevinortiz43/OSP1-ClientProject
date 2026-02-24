@@ -13,7 +13,6 @@ router.get("test", ({ set }) => {
   return "Testing HTTP /api/tests";
 });
 
-
 router.get("/trustControls", async ({ set }) => {
   try {
     const result = await dataService.getControls();
@@ -42,7 +41,6 @@ router.post(
   "/ai-online",
   async ({ body, set }) => {
     try {
-      // Step 1: Convert natural language to SQL
       const { naturalLanguageQuery } = body;
       const { cleanSQL } = await QueryOpenAI({
         naturalLanguageQuery,
@@ -54,10 +52,8 @@ router.post(
         return { error: "Failed to generate SQL query" };
       }
 
-      // Step 2: Run the SQL against the database
       const { rows } = await databaseQuery(cleanSQL);
 
-      // Step 3: Generate AI response from DB results
       return await generateAIResponse({
         naturalLanguageQuery,
         databaseQueryResult: rows,
