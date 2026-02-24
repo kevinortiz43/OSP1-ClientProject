@@ -8,35 +8,28 @@ const isRunningInDocker =
   process.env.DB_HOST === "docker";
 
 const dockerPool = new Pool({
-  host: process.env.DB_HOST || 'localhost', // 'db' inside Docker, 'localhost' outside
-  port: parseInt(process.env.DB_PORT || '5432'),
-  database: process.env.DB_NAME || 'test_db',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || 'root',
+  host: process.env.DB_HOST || "localhost",
+  port: parseInt(process.env.DB_PORT || "5432"),
+  database: process.env.DB_NAME || "test_db",
+  user: process.env.DB_USER || "root",
+  password: process.env.DB_PASSWORD || "root",
 });
 
-// const dockerPool = new Pool({
-//   connectionString:
-//     "postgresql://postgres.kgdlviaqzszogrdtktma:cl13ntPr0j12345!@aws-0-us-west-2.pooler.supabase.com:6543/postgres",
-// });
-
-dockerPool.connect((err, client, release) => {
-  if (err) {
-    console.error("Error connecting to Docker PostgreSQL:", err.message);
+dockerPool.connect((error, _client, release) => {
+  if (error) {
+    console.error("Error connecting to Docker PostgreSQL:", error.message);
     console.error("Connection details:", {
       host: process.env.DB_HOST || (isRunningInDocker ? "db" : "localhost"),
       port: parseInt(process.env.DB_PORT || "5432"),
       database: process.env.DB_NAME || "test_db",
     });
   } else {
-    console.log("Successfully connected to Docker PostgreSQL");
     release();
   }
 });
 
 export default {
   query: (text: string, params?: any[]): Promise<QueryResult<any>> => {
-    console.log("executed query", text);
     return dockerPool.query(text, params);
   },
 };

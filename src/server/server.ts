@@ -3,16 +3,13 @@ import { Elysia } from "elysia";
 import "dotenv/config";
 import { router } from "./router/router";
 const PORT = 3000;
-
 const app = new Elysia({ prefix: "/api" });
-
 const corsOptions = {
   origin: "http://localhost:5173",
   optionsSuccessStatus: 200,
 };
 
 app.use(cors(corsOptions));
-
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
 });

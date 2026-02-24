@@ -112,8 +112,6 @@ CRITICAL: Remember to quote "searchText" - it MUST be "searchText" not searchTex
 
     if (!cleanSql?.endsWith(";")) cleanSql += ";";
 
-    console.log("Final cleaned SQL:", cleanSql);
-
     return { databaseQuery: sqlQuery, cleanSQL: cleanSql };
   } catch (error) {
     console.error("Error generating SQL query:", error);

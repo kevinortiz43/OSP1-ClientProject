@@ -1,75 +1,3 @@
-// import React from "react";
-// import { useState } from "react";
-// import ChatbotIcon from "./ChatbotIcon";
-// import { FaArrowDown, FaArrowUp, FaComments } from "react-icons/fa";
-// import "./interface.css";
-
-// export default function Interface() {
-//   const [isOpen, setIsOpen] = useState(false);
-
-//   const toggleChatbot = () => {
-//     setIsOpen(!isOpen);
-//   };
-
-//   return (
-//     <div className="container-chatbot">
-//       {/* Floating chatbot button */}
-//       {!isOpen && (
-//         <button className="chatbot-toggle-btn" onClick={toggleChatbot}>
-//           <FaComments />
-//         </button>
-//       )}
-
-//       {/* chatbot popup */}
-//       {isOpen && (
-//         <div className="chatbot_popup">
-//           {/* chatbot header */}
-//           <div className="chat_header">
-//             <div className="header_info">
-//               <ChatbotIcon />
-//               <h2 className="logo_text">Chatbot</h2>
-//               <button onClick={toggleChatbot}>
-//                 <FaArrowDown />
-//               </button>
-//             </div>
-//           </div>
-
-//           {/* chat body */}
-//           <div className="chat-body">
-//             <div className="message bot-message">
-//               <ChatbotIcon />
-//               <p className="message-text">
-//                 Hey there 👋 <br /> How can I help you today?
-//               </p>
-//             </div>
-//             <div className="message user-message">
-//               <p className="message-text">
-//                 Lorem ipsum dolor sit amet consectetur adipisicing.
-//               </p>
-//             </div>
-//           </div>
-
-//           {/* chat footer */}
-//           <div className="chat-footer">
-//             <form action="#" className="chat-form">
-//               <input
-//                 type="text"
-//                 placeholder="Message..."
-//                 className="message-input"
-//                 required
-//               />
-//               <button type="submit">
-//                 <FaArrowUp />
-//               </button>
-//             </form>
-//           </div>
-//         </div>
-//       )}
-//     </div>
-//   );
-// }
-
-import React from "react";
 import { useState } from "react";
 import ChatbotIcon from "./ChatbotIcon";
 import { FaArrowDown, FaArrowUp, FaComments } from "react-icons/fa";
@@ -85,14 +13,14 @@ export default function Interface() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "bot",
-      text: "Hey there 👋 How can I help you today?",
+      text: "How can I help you today?",
     },
   ]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (error: { preventDefault: () => void }) => {
+    error.preventDefault();
     const query = inputValue.trim();
     if (!query || isLoading) return;
 
@@ -106,17 +34,14 @@ export default function Interface() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ naturalLanguageQuery: query }),
       });
-      console.log(`${response.body}`);
+
       if (!response.ok) throw new Error("Server error");
 
       const data = await response.json();
-      setMessages((prev) => [
-        ...prev,
-
-        { role: "bot", text: data.response },
-      ]);
+      setMessages((prev) => [...prev, { role: "bot", text: data.response }]);
       setIsLoading(false);
-    } catch (err) {
+    } catch (error) {
+      console.log(`${error}`);
       setMessages((prev) => [
         ...prev,
         { role: "bot", text: "Sorry, something went wrong. Please try again." },
@@ -131,17 +56,14 @@ export default function Interface() {
 
   return (
     <div className="container-chatbot">
-      {/* Floating chatbot button */}
       {!isOpen && (
         <button className="chatbot-toggle-btn" onClick={toggleChatbot}>
           <FaComments />
         </button>
       )}
 
-      {/* chatbot popup */}
       {isOpen && (
         <div className="chatbot_popup">
-          {/* chatbot header */}
           <div className="chat_header">
             <div className="header_info">
               <ChatbotIcon />
@@ -152,7 +74,6 @@ export default function Interface() {
             </div>
           </div>
 
-          {/* chat body */}
           <div className="chat-body">
             {messages.map((msg, i) => (
               <div key={i} className={`message ${msg.role}-message`}>
@@ -168,7 +89,6 @@ export default function Interface() {
             )}
           </div>
 
-          {/* chat footer */}
           <div className="chat-footer">
             <form className="chat-form" onSubmit={handleSubmit}>
               <input
@@ -176,7 +96,7 @@ export default function Interface() {
                 placeholder="Message..."
                 className="message-input"
                 value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
+                onChange={(event) => setInputValue(event.target.value)}
                 disabled={isLoading}
               />
               <button type="submit" disabled={isLoading}>

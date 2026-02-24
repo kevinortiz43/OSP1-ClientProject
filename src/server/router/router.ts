@@ -4,22 +4,23 @@ import { getCacheStats } from "../caching/cache";
 import { databaseQuery } from "../controller/AI_Controller/databaseController";
 import { generateAIResponse } from "../controller/AI_Controller/generateAIResponse";
 import { QueryOpenAI } from "../controller/AI_Controller/onlineAIController";
-export const router = new Elysia();
 
+export const router = new Elysia();
 router.get("/", () => "Test");
 
-router.get("test", ({ _body, set }) => {
-  console.log("test");
+router.get("test", ({ set }) => {
   set.status = 201;
-  return "test";
+  return "Testing HTTP /api/tests";
 });
 
-router.get("/trustControls", async ({ error }) => {
+
+router.get("/trustControls", async ({ set }) => {
   try {
     const result = await dataService.getControls();
 
     if (!result) {
-      return error(404, { message: "No Trust Controls data found" });
+      set.status = 404;
+      return { message: "No Trust Controls data found" };
     }
 
     return {
@@ -32,13 +33,14 @@ router.get("/trustControls", async ({ error }) => {
     console.error(
       `Error in Trust Controls route: ${err instanceof Error ? err.message : "Unknown error"}`,
     );
-    return error(500, { err: "Failed to retrieve Trust Controls data" });
+    set.status = 500;
+    return { error: "Failed to retrieve Trust Controls data" };
   }
 });
 
 router.post(
   "/ai-online",
-  async ({ body, error }) => {
+  async ({ body, set }) => {
     try {
       // Step 1: Convert natural language to SQL
       const { naturalLanguageQuery } = body;
@@ -48,7 +50,8 @@ router.post(
       });
 
       if (!cleanSQL) {
-        return error(500, { err: "Failed to generate SQL query" });
+        set.status = 500;
+        return { error: "Failed to generate SQL query" };
       }
 
       // Step 2: Run the SQL against the database
@@ -60,8 +63,9 @@ router.post(
         databaseQueryResult: rows,
         sqlQuery: cleanSQL,
       });
-    } catch (err) {
-      return error(500, { err: "Failed to process AI query" });
+    } catch (_error) {
+      set.status = 500;
+      return { error: "Failed to process AI query" };
     }
   },
   {
@@ -71,12 +75,13 @@ router.post(
   },
 );
 
-router.get("/allTeams", async ({ error }) => {
+router.get("/allTeams", async ({ set }) => {
   try {
     const result = await dataService.getTeams();
 
     if (!result) {
-      return error(404, { message: "No All Teams data found" });
+      set.status = 404;
+      return { message: "No All Teams data found" };
     }
 
     return {
@@ -89,16 +94,18 @@ router.get("/allTeams", async ({ error }) => {
     console.error(
       `Error in Trust Controls route: ${err instanceof Error ? err.message : "Unknown error"}`,
     );
-    return error(500, { err: "Failed to retrieve All Teams data" });
+    set.status = 500;
+    return { error: "Failed to retrieve All Teams data" };
   }
 });
 
-router.get("/trustFaqs", async ({ error }) => {
+router.get("/trustFaqs", async ({ set }) => {
   try {
     const result = await dataService.getFaqs();
 
     if (!result) {
-      return error(404, { message: "No FAQs data found" });
+      set.status = 404;
+      return { message: "No FAQs data found" };
     }
 
     return {
@@ -111,7 +118,8 @@ router.get("/trustFaqs", async ({ error }) => {
     console.error(
       `Error in Trust Controls route: ${err instanceof Error ? err.message : "Unknown error"}`,
     );
-    return error(500, { err: "Failed to retrieve FAQs data" });
+    set.status = 500;
+    return { error: "Failed to retrieve FAQs data" };
   }
 });
 

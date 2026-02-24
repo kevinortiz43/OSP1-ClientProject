@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 
-import allTrustControls from "../../server/data/allTrustControls.json";
-import allTrustFaqs from "../../server/data/allTrustFaqs.json";
+import allTrustControls from "../../../server/data/allTrustControls.json";
+import allTrustFaqs from "../../../server/data/allTrustFaqs.json";
 
 type Control = { id: string; short?: string; long?: string };
 type Category = { id: string; label: string; items: Control[] };
@@ -69,7 +69,7 @@ function App({ data: initialData, fetchUrl }: AppProps) {
 
     const nodes =
       Array.isArray(edges) && edges.length && edges[0].node
-        ? edges.map((e: any) => e.node)
+        ? edges.map((event: any) => event.node)
         : edges;
 
     for (const node of nodes) {
@@ -102,14 +102,18 @@ function App({ data: initialData, fetchUrl }: AppProps) {
       console.error("error parsing local controls", parseError);
     }
   }, [initialData, fetchUrl]);
-  useEffect(() => {
+  const parsedFaqCategories = useMemo(() => {
     try {
-      const parsedFaqCategories = parseFaqs(allTrustFaqs);
-      setFaqCategories(parsedFaqCategories);
-    } catch (err) {
-      console.error("error parsing local faqs", err);
+      return parseFaqs(allTrustFaqs);
+    } catch (error) {
+      console.error("error parsing local faqs", error);
+      return [];
     }
   }, []);
+
+  useEffect(() => {
+    setFaqCategories(parsedFaqCategories);
+  }, [parsedFaqCategories]);
 
   useEffect(() => {
     if (!fetchUrl) return;

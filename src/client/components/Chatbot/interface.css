@@ -6,29 +6,25 @@ body[data-theme="dark"],
   color-scheme: dark;
 
   --background: #262836;
-  /* --header:; */
+
   --header-text: #ffffff;
-  
-  
+
   --header-info-button: #262836;
   --header-info-arrow: #ffffff;
   --header-info-hover: #003c55;
-  
-  
+
   --body-text-ai-background: #ffffff;
   --body-text-ai-text: #262836;
   --body-text-user-text: #262836;
   --message-input-border: #acc0c4;
   --message-input-placeholder: #e5eff0;
-  
+
   --body-text-user-background: #ffffff;
-  
-  
-  
+
   --chatbot-message-button: #262836;
   --chat-footer-color: #ffffff;
-  --chatbot-header: #12A888;
-  --chatbot-footer: #12A888;
+  --chatbot-header: #12a888;
+  --chatbot-footer: #12a888;
 }
 * {
   margin: 0;
@@ -53,10 +49,8 @@ body[data-theme="dark"],
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
   display: flex;
   flex-direction: column;
-  /* overflow: hidden; */
 }
 
-/* Header Styles */
 .chat_header {
   background: var(--chatbot-header);
   padding: 20px;
@@ -97,7 +91,7 @@ body[data-theme="dark"],
   display: flex;
   align-items: center;
   justify-content: center;
-  /* color: white; */
+
   background-color: var(--header-info-button);
   transition: background 0.3s ease;
   font-size: 0;
@@ -115,7 +109,6 @@ body[data-theme="dark"],
   background: var(--header-info-hover);
 }
 
-/* Chat Body */
 .chat-body {
   flex: 1;
   padding: 24px;
@@ -198,7 +191,6 @@ body[data-theme="dark"],
   margin-left: auto;
 }
 
-/* Chat Footer */
 .chat-footer {
   padding: 20px;
   background: var(--chatbot-footer);
@@ -247,7 +239,7 @@ body[data-theme="dark"],
 }
 
 .chat-form button:hover {
-  background: linear-gradient(135deg, #7ba3d9 0%, #5b8bc9 100%);
+  background: var(--chatbot-footer);
   transform: scale(1.05);
   box-shadow: 0 4px 12px rgba(123, 163, 217, 0.5);
 }
@@ -262,16 +254,13 @@ body[data-theme="dark"],
   height: 18px;
 }
 
-/* Add this to your existing interface.css */
-
-/* Floating chatbot button */
 .chatbot-toggle-btn {
   position: fixed;
   bottom: 30px;
   right: 30px;
   width: 60px;
   height: 60px;
-  background: linear-gradient(135deg, #7ba3d9 0%, #5b8bc9 100%);
+  background: var(--chatbot-footer);
   border: none;
   border-radius: 50%;
   cursor: pointer;
@@ -298,7 +287,6 @@ body[data-theme="dark"],
   transform: scale(0.95);
 }
 
-/* Responsive Design */
 @media (max-width: 480px) {
   .chatbot_popup {
     width: 100%;

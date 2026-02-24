@@ -1,20 +1,14 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
-import AppComponent from "./components/client-components-dropdown";
-import allTrustControls from "../server/data/allTrustControls.json";
-import allTrustFaqs from "../server/data/allTrustFaqs.json";
 import Faqs from "./components/Faqs/Faqs";
-import SearchBar from "./components/Searchbar/SearchBar";
 import TrustCenter from "./components/TrustCenter/TrustCenter";
 import "./components/darktheme.css";
 import MultiSelect from "./components/Searchbar/MultiSelect";
 import Interface from "./components/Chatbot/Interface";
-
+import ArchitectureDiagram from "./components/ArchitectureDiagram/ArchitectureDiagram";
 export default function App() {
-  // track selected categories - managed at App level
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
-  // handler for filter changes from MultiSelect
   const handleFilterChange = (categories: string[]) => {
     setSelectedCategories(categories);
   };
@@ -22,7 +16,7 @@ export default function App() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const mq = window.matchMedia?.("(prefers-color-scheme: dark)");
+    const mediaQuery = window.matchMedia?.("(prefers-color-scheme: dark)");
 
     const applyTheme = (isDark: boolean) => {
       document.documentElement.setAttribute(
@@ -31,20 +25,27 @@ export default function App() {
       );
     };
 
-    applyTheme(Boolean(mq?.matches));
-    const onChange = (e: MediaQueryListEvent) => applyTheme(e.matches);
+    applyTheme(Boolean(mediaQuery?.matches));
+    const onChange = (event: MediaQueryListEvent) => applyTheme(event.matches);
 
-    if (mq?.addEventListener) mq.addEventListener("change", onChange);
+    if (mediaQuery?.addEventListener)
+      mediaQuery.addEventListener("change", onChange);
     return () => {
-      if (mq?.removeEventListener) mq.removeEventListener("change", onChange);
+      if (mediaQuery?.removeEventListener)
+        mediaQuery.removeEventListener("change", onChange);
     };
   }, []);
 
+  if (
+    typeof window !== "undefined" &&
+    window.location.pathname === "/diagram-onlineAI"
+  ) {
+    return <ArchitectureDiagram />;
+  }
+
   return (
     <div className="trustFaqs_page">
-      {/* <SearchBar /> */}
       <MultiSelect onFilterChange={handleFilterChange} />
-
       <div className="trustFaqs_grid">
         <section className="trustFaqs_col" aria-label="Trust Center">
           <TrustCenter selectedCategories={selectedCategories} />

@@ -1,4 +1,4 @@
-/* TrustCenter.css */
+
 .trusts_container {
   display: flex;
   flex-direction: column;
@@ -27,11 +27,7 @@
   font-family: Arial, sans-serif;
 }
 
-/* .trusts_list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-} */
+
 
 .trusts_list {
   display: grid;
@@ -150,7 +146,6 @@
   }
 }
 
-/* Responsive */
 @media (max-width: 768px) {
   .trusts_header {
     padding: 24px;

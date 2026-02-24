@@ -20,39 +20,31 @@ interface Trust {
   updatedBy?: string;
 }
 
-
 interface TrustCenterProps {
   selectedCategories: string[];
 }
 
-
-// pass down selectedCategories from parent App.tsx
 const TrustCenter: React.FC<TrustCenterProps> = ({ selectedCategories }) => {
-  const [trusts, setTrusts] = useState<Trust[]>([]); //state to hold fetched Trust Controls
-  const [filteredTrusts, setFilteredTrusts] = useState<Trust[]>([]); // state to filter Trusts list
-  const [expandedId, setExpandedId] = useState<string | null>(null); //state to track expanded Trust Control (starts as null)
-  const [loading, setLoading] = useState(true); //state to track loading status (starts as true)
-  const [error, setError] = useState<string | null>(null); //state to track error status (starts as null which means no error)
+  const [trusts, setTrusts] = useState<Trust[]>([]);
+  const [filteredTrusts, setFilteredTrusts] = useState<Trust[]>([]);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-// fetch all data on component mount
   useEffect(() => {
     const fetchTrusts = async () => {
       try {
         const response = await fetch("http://localhost:3000/api/trustControls");
-        // console.log('Fetching Trust Controls from API:', response);
         if (!response.ok) throw new Error("Failed to fetch Trust Controls");
 
         const infoObj = await response.json();
 
-        console.log("infoObj: ", infoObj);
-
-
         setTrusts(infoObj.data);
-        setFilteredTrusts(infoObj.data); // init with all data
+        setFilteredTrusts(infoObj.data); 
         setLoading(false);
-      } catch (err) {
-        if (err && err.message) {
-          setError(err.message);
+      } catch (error) {
+        if (error instanceof Error && error.message) {
+          setError(error.message);
         } else {
           setError("An error occurred");
         }
@@ -63,26 +55,24 @@ const TrustCenter: React.FC<TrustCenterProps> = ({ selectedCategories }) => {
     fetchTrusts();
   }, []);
 
-  // filter trusts when selectedCategories change
   useEffect(() => {
     if (selectedCategories.length === 0) {
-      setFilteredTrusts(trusts); // show all if no filters
+      setFilteredTrusts(trusts); 
     } else {
-      const filtered = trusts.filter(trust => 
-        selectedCategories.includes(trust.category)
+      const filtered = trusts.filter((trust) =>
+        selectedCategories.includes(trust.category),
       );
       setFilteredTrusts(filtered);
     }
-  }, [selectedCategories, trusts]); // re-run when filters or data changes
+  }, [selectedCategories, trusts]); 
 
-  //when clicking on Trust Control, toggle its expanded state
   const toggleTrust = (id: string) => {
     setExpandedId(expandedId === id ? null : id);
   };
 
   if (loading)
-    return <div className="trusts_container">Loading Trust Controls...</div>; //conditional render loading state
-  if (error) return <div className="trusts_container">Error: {error}</div>; //conditional render error state
+    return <div className="trusts_container">Loading Trust Controls...</div>; 
+  if (error) return <div className="trusts_container">Error: {error}</div>; 
 
   return (
     <div className="trusts_container">
@@ -90,7 +80,7 @@ const TrustCenter: React.FC<TrustCenterProps> = ({ selectedCategories }) => {
         <h1 className="trusts_title">Trust Controls</h1>
       </div>
 
-           {/* Show filter status */}
+      {/* Show filter status */}
       {selectedCategories.length > 0 && filteredTrusts.length === 0 ? (
         <div className="no-results">
           No Trust Controls match the selected categories.
