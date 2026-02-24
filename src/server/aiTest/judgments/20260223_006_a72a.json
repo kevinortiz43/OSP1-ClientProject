@@ -1,0 +1,14 @@
+{
+  "id": "2100c8f7-6fdf-461a-8d57-b228d64da72a",
+  "timestamp": "2026-02-23T23:02:28.432Z",
+  "naturalLanguageQuery": "what controls involve data encryption?",
+  "generatedSQL": "SELECT \"short\", \"long\" FROM \"allTrustControls\" WHERE \"searchText\" ILIKE '%encryption%';",
+  "resultsCount": 2,
+  "passed": false,
+  "score": 3,
+  "explanation": "|| 3 The SQL query is well-formed and retrieves the relevant columns from the specified table. However, it does not include any sorting or limiting of results, which could be useful for a user looking to quickly find specific controls involving data encryption. explanation: The SQL query is well-formed and retrieves the relevant columns from the specified table. However, it does not include any sorting or limiting of results, which could be useful for a user looking to quickly find specific cont",
+  "source": "ai",
+  "executionTime": 4762,
+  "sqlModel": "arctic-text2sql:latest",
+  "judgeModel": "qwen2.5-coder:7b"
+}

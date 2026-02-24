@@ -34,32 +34,33 @@ services:
 
   # --- AI Model Service (Ollama) --
   ollama:
-    image: ollama/ollama:latest
-    # image: ollama/ollama:0.15.5-rc2  # if want to test Qwen3-coder-next (requires this pre-release beta version). Would have to npm run tear and re-install ollama which will take time
-    container_name: ollama-4090
+    image: ollama/ollama:latest # This official Docker ollama image includes all necessary CUDA libraries for GPU support.
+    #  You can try lightweight but unofficial CPU-only version alpine/ollama ((https://hub.docker.com/r/alpine/ollama) which is only around 70 MB. 
+    # image: ollama/ollama:0.15.5-rc2  # Pre-release beta ollama version, if you want to test model Qwen3-coder-next
+    container_name: ollama-4090 # rename as needed
     ports:
       - "11434:11434"
     volumes:
-      - ollama_models:/root/.ollama
-    runtime: nvidia
-    init: true
+      - ollama_models:/root/.ollama # persists downloaded models
+    runtime: nvidia # enables NVIDIA GPU (legacy syntax - both this and deploy.resources work)
+    init: true # handles zombie processes, recommended for containers
     environment:
-      - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_HOST=0.0.0.0 # listen on all interfaces
       - OLLAMA_PORT=11434
-      - OLLAMA_NUM_PARALLEL=4
-      - OLLAMA_MAX_LOADED_MODELS=2 # keep 2 models loaded
-      - OLLAMA_KEEP_ALIVE=-1 # keep both models loaded forever
+      - OLLAMA_NUM_PARALLEL=4 # number of parallel requests the model can handle
+      - OLLAMA_MAX_LOADED_MODELS=2 # max models kept in memory simultaneously
+      - OLLAMA_KEEP_ALIVE=-1 # keep models loaded forever (-1 = infinite)
       - OLLAMA_DEBUG=0
-      - OLLAMA_CONTEXT_LENGTH=8192 
-      - NVIDIA_VISIBLE_DEVICES=all
-      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - OLLAMA_CONTEXT_LENGTH=8192 # max context window size in tokens (affects VRAM)
+      - NVIDIA_VISIBLE_DEVICES=all # which GPUs to expose to container
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility # required GPU capabilities
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD", "ollama", "list" ]
+      test: [ "CMD", "ollama", "list" ] # checks if Ollama is responding
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 20s
+      start_period: 20s # gives Ollama time to start up
     networks:
       - app-network
 
@@ -81,12 +82,12 @@ services:
       - DB_NAME=test_db
       - DB_USER=root
       - DB_PASSWORD=root
-      - MODEL_URL=${MODEL_URL:-http://ollama:11434/v1/chat/completions}
-      # - TEXT2SQL_MODEL=${TEXT2SQL_MODEL:-arctic-text2sql} # change model here, also in .env
-      - TEXT2SQL_MODEL=${TEXT2SQL_MODEL:-distil-qwen3-4b:latest}
-      - AI_RESPONSE_MODEL=${AIRESP_MODEL:-qwen2.5-coder:7b}
-      - JUDGE_MODEL=${JUDGE_MODEL:-qwen2.5-coder:7b}
-      # - JUDGE_MODEL=${JUDGE_MODEL:-qwen2.5-coder:14b}
+      - MODEL_URL=${MODEL_URL:-http://ollama:11434/v1/chat/completions} # Ollama OpenAI-compatible endpoint
+      # - TEXT2SQL_MODEL=${TEXT2SQL_MODEL:-arctic-text2sql} # alternative model option
+      - TEXT2SQL_MODEL=${TEXT2SQL_MODEL:-distil-qwen3-4b:latest} # model for text-to-SQL tasks
+      - AI_RESPONSE_MODEL=${AIRESP_MODEL:-qwen2.5-coder:7b} # main AI response model 
+      - JUDGE_MODEL=${JUDGE_MODEL:-qwen2.5-coder:7b} # model for evaluating/validating responses
+      # - JUDGE_MODEL=${JUDGE_MODEL:-qwen2.5-coder:14b} # larger judge model option (needs more VRAM)
       - MODEL_REGISTRY_URL=http://ollama:11434/api/tags
       - HARDWARE_TIER=4090-workstation
       - PG_URI=postgresql://postgres.kgdlviaqzszogrdtktma:cl13ntPr0j12345!@aws-0-us-west-2.pooler.supabase.com:6543/postgres

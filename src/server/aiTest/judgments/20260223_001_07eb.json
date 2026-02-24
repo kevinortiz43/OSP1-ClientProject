@@ -1,0 +1,14 @@
+{
+  "id": "c49673b9-e826-4cae-9252-1b2d72b607eb",
+  "timestamp": "2026-02-23T22:58:08.863Z",
+  "naturalLanguageQuery": "data security incident",
+  "generatedSQL": "SELECT t.\"firstName\", t.\"lastName\", t.\"email\", t.\"role\", t.\"category\", c.\"short\", c.\"long\" \nFROM \"allTeams\" t \nJOIN \"allTrustControls\" c ON t.\"category\" = c.\"category\" \nWHERE c.\"category\" ILIKE 'Data Security' \nAND (t.\"role\" ILIKE '%security%' OR t.\"searchText\" ILIKE '%incident%' OR c.\"searchText\" ILIKE '%incident%');",
+  "resultsCount": 0,
+  "passed": false,
+  "score": 1,
+  "explanation": "Query returned no results - not enough data to tell if correct or not",
+  "source": "ai",
+  "executionTime": 881,
+  "sqlModel": "distil-qwen3-4b:latest",
+  "judgeModel": "qwen2.5-coder:7b"
+}

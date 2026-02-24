@@ -1,0 +1,14 @@
+{
+  "id": "3332286c-0c32-48cb-818e-1f6fd55672bd",
+  "timestamp": "2026-02-23T23:39:54.639Z",
+  "naturalLanguageQuery": "24 hours",
+  "generatedSQL": "SELECT \"firstName\", \"lastName\", \"email\", \"role\", \"category\", \"responseTimeHours\" \nFROM \"allTeams\" \nWHERE \"responseTimeHours\" = 24;",
+  "resultsCount": 0,
+  "passed": false,
+  "score": 1,
+  "explanation": "Query returned no results - not enough data to tell if correct or not",
+  "source": "ai",
+  "executionTime": 479,
+  "sqlModel": "distil-qwen3-4b:latest",
+  "judgeModel": "qwen2.5-coder:7b"
+}

@@ -1,0 +1,14 @@
+{
+  "id": "36eebe09-48cc-4b9a-ad4c-a8b75739af53",
+  "timestamp": "2026-02-24T00:16:26.388Z",
+  "naturalLanguageQuery": "tell me about controls that mention privacy",
+  "generatedSQL": "SELECT \"short\", \"long\", \"category\" FROM \"allTrustControls\" WHERE \"searchText\" ILIKE '%privacy%';",
+  "resultsCount": 2,
+  "passed": false,
+  "score": 3,
+  "explanation": "|| 3 The SQL query is straightforward and retrieves specific columns from a table based on a condition. However, it does not provide any context or information about the purpose of the query or the expected output. It simply selects data that matches a certain pattern in the searchText column. explanation: The SQL query is straightforward and retrieves specific columns from a table based on a condition. However, it does not provide any context or information about the purpose of the query or the",
+  "source": "ai",
+  "executionTime": 473,
+  "sqlModel": "distil-qwen3-4b:latest",
+  "judgeModel": "qwen2.5-coder:7b"
+}

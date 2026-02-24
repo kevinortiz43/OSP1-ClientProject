@@ -1,0 +1,14 @@
+{
+  "id": "ca9ea2ab-0a0e-4e8e-b43f-221090f4b298",
+  "timestamp": "2026-02-23T23:40:09.468Z",
+  "naturalLanguageQuery": "24/7",
+  "generatedSQL": "SELECT \"firstName\", \"lastName\", \"email\", \"role\", \"category\" FROM \"allTeams\" WHERE \"role\" ILIKE '%24/7%' OR \"searchText\" ILIKE '%24/7%';",
+  "resultsCount": 0,
+  "passed": false,
+  "score": 1,
+  "explanation": "Query returned no results - not enough data to tell if correct or not",
+  "source": "ai",
+  "executionTime": 517,
+  "sqlModel": "distil-qwen3-4b:latest",
+  "judgeModel": "qwen2.5-coder:7b"
+}

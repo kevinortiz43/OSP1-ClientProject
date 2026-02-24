@@ -1,0 +1,14 @@
+{
+  "id": "289fd253-cff4-4d57-a99a-972d97e350d1",
+  "timestamp": "2026-02-23T23:06:14.202Z",
+  "naturalLanguageQuery": "what's the total number of faqs and trust controls?",
+  "generatedSQL": "SELECT COUNT(*) FROM \"allTrustFaqs\" UNION SELECT COUNT(*) FROM \"allTrustControls\";",
+  "resultsCount": 2,
+  "passed": false,
+  "score": 3,
+  "explanation": "|| 3 The SQL query is correct but it does not provide the total number of FAQs and Trust Controls. It only provides the count of each separately. To get the total number, you would need to add the two counts together or use a different approach. , explanation: The SQL query is correct but it does not provide the total number of FAQs and Trust Controls. It only provides the count of each separately. To get the total number, you would need to add the two counts together or use a different approach",
+  "source": "ai",
+  "executionTime": 390,
+  "sqlModel": "distil-qwen3-4b:latest",
+  "judgeModel": "qwen2.5-coder:7b"
+}

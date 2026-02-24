@@ -1,0 +1,14 @@
+{
+  "id": "61f48fc4-50ba-4694-afe4-f8e07bc7fa27",
+  "timestamp": "2026-02-23T22:59:05.296Z",
+  "naturalLanguageQuery": "how many people have leadership roles",
+  "generatedSQL": "SELECT COUNT(*) FROM \"allTeams\" WHERE \"role\" ILIKE '%leader%' OR \"role\" ILIKE '%director%' OR \"role\" ILIKE '%manager%' OR \"role\" ILIKE '%VP%' OR \"role\" ILIKE '%executive%';",
+  "resultsCount": 1,
+  "passed": false,
+  "score": 3,
+  "explanation": "Could not parse LLM response",
+  "source": "ai",
+  "executionTime": 525,
+  "sqlModel": "distil-qwen3-4b:latest",
+  "judgeModel": "qwen2.5-coder:7b"
+}

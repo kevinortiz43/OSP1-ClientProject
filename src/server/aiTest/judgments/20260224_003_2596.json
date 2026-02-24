@@ -1,0 +1,14 @@
+{
+  "id": "990c0b37-c767-42c0-83d2-4a3d81752596",
+  "timestamp": "2026-02-24T00:16:45.310Z",
+  "naturalLanguageQuery": "are there controls or faqs that mention compliance?",
+  "generatedSQL": "SELECT \"category\", \"short\", \"long\", \"question\", \"answer\" \nFROM \"allTrustControls\" \nWHERE \"searchText\" ILIKE '%compliance%' \nUNION \nSELECT \"category\", NULL, NULL, \"question\", \"answer\" \nFROM \"allTrustFaqs\" \nWHERE \"searchText\" ILIKE '%compliance%';",
+  "resultsCount": 0,
+  "passed": false,
+  "score": 1,
+  "explanation": "Query returned no results - not enough data to tell if correct or not",
+  "source": "ai",
+  "executionTime": 687,
+  "sqlModel": "distil-qwen3-4b:latest",
+  "judgeModel": "qwen2.5-coder:7b"
+}

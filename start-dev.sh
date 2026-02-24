@@ -98,18 +98,18 @@ warmup_model() {
 
 # Load ONLY 2 models total (one SQL generator + one AI response generator / judge model).
 echo "Loading SQL generator model..."
-load_model "distil-qwen3-4b:latest"
+load_model "distil-qwen3-4b:latest" # Model 1: txt2SQL model
 
 echo "Loading AI response/judge model..."
-load_model "qwen2.5-coder:7b"
+load_model "qwen2.5-coder:7b" # Model 2: ai response generator & judge model
 
 echo "Waiting for models to fully initialize in VRAM..."
 sleep 10
 
 # Step 5: Warm up models with actual requests
 echo "Warming up models to prevent first-request truncation..."
-warmup_model "distil-qwen3-4b:latest"
-warmup_model "qwen2.5-coder:7b"
+warmup_model "distil-qwen3-4b:latest"  # Model 1: txt2SQL model
+warmup_model "qwen2.5-coder:7b" # Model 2: ai response generator & judge model
 
 # Step 6: Verify VRAM usage
 echo "Current VRAM usage:"

@@ -22,7 +22,7 @@ export function setCache<T>(key: string, data: T, ttl?: number): boolean {
   return cache.set(key, data, Number(ttl));
 }
 
-// NOTE: This is still buggy (only fix if enough time)
+
 // check cache stats (for monitoring)
 // {"hits":0,"misses":0,"keys":0,"ksize":0,"vsize":0}
 export function getCacheStats() {
@@ -38,13 +38,18 @@ export function getCacheStats() {
 }
 
 // delete specific cache or clear all - use for CREATE, UPDATE, DELETE operations (not yet written)
-export function clearCache(key?: string) {
+export function clearCache(key?: string | string[]) {
   if (key) {
     cache.del(key);
+    if (Array.isArray(key)) {
+      console.log(`Deleted ${key.length} specific keys`);
+    } else {
+      console.log(`Deleted key: ${key}`);
+    }
     getCacheStats();
-
   } else {
     cache.flushAll();
+    console.log('All cache flushed');
     getCacheStats();
   }
 }

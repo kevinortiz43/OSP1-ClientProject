@@ -13,12 +13,12 @@ show_usage() {
   echo "Usage: ./switch-model.sh [arctic|qwen7b|distil]"
   echo ""
   echo "Options:"
-  echo "  arctic   - Switch to Arctic-Text2SQL (4.7GB) + qwen2.5-coder:14b judge"
-  echo "  qwen7b   - Switch to qwen2.5:7b + qwen2.5-coder:14b judge"
-  echo "  distil   - Switch to distil-qwen3-4b:latest + qwen2.5-coder:14b judge"
+  echo "  arctic   - Switch to Arctic-Text2SQL (4.7GB) + qwen2.5-coder:7b judge"
+  echo "  qwen7b   - Switch to qwen2.5-coder:7b for all tasks (single model)"
+  echo "  distil   - Switch to distil-qwen3-4b:latest + qwen2.5-coder:7b judge"
   echo ""
   echo "Current models in Ollama:"
-  ollama list | grep -E "arctic|qwen|distil|sqlcoder|phi" || echo "  (run 'ollama list' to see all)"
+  docker compose exec ollama ollama list | grep -E "arctic|qwen|distil|sqlcoder|phi" || echo "  (no matching models found)"
 }
 
 if [ $# -eq 0 ]; then
@@ -29,34 +29,35 @@ fi
 case "$1" in
   "arctic")
     cat > .env << 'ENV_CONTENT'
-# Arctic Text2SQL + qwen2.5-coder:14b Judge
+# Arctic Text2SQL + qwen2.5-coder:7b AI response / Judge
 TEXT2SQL_MODEL=arctic-text2sql:latest
 AI_RESPONSE_MODEL=qwen2.5-coder:7b
 JUDGE_MODEL=qwen2.5-coder:7b
 MODEL_URL=http://ollama:11434/v1/chat/completions
 ENV_CONTENT
-    echo -e "${GREEN}✓ Switched to Arctic model (judge: qwen2.5-coder:14b)${NC}"
+    echo -e "${GREEN}✓ Switched to Arctic model (judge: qwen2.5-coder:7b)${NC}"
     ;;
 
   "qwen7b")
     cat > .env << 'ENV_CONTENT'
-# qwen2.5:7b Text2SQL + qwen2.5-coder:14b Judge
-TEXT2SQL_MODEL=qwen2.5:7b
+# qwen2.5-coder:7b as Text2SQL and AI response / Judge (1 model performs all tasks)
+TEXT2SQL_MODEL=qwen2.5-coder:7b
 AI_RESPONSE_MODEL=qwen2.5-coder:7b
 JUDGE_MODEL=qwen2.5-coder:7b
 MODEL_URL=http://ollama:11434/v1/chat/completions
 ENV_CONTENT
-    echo -e "${GREEN}✓ Switched to qwen2.5:7b model (judge: qwen2.5-coder:14b)${NC}"
+    echo -e "${GREEN}✓ Switched to qwen2.5-coder:7b model (all tasks)${NC}"
     ;;
 
   "distil")
     cat > .env << 'ENV_CONTENT'
-# distil-qwen3-4b:latest Text2SQL + qwen2.5-coder:14b Judge
+# distil-qwen3-4b:latest Text2SQL + qwen2.5-coder:7b AI response / Judge
 TEXT2SQL_MODEL=distil-qwen3-4b:latest
 AI_RESPONSE_MODEL=qwen2.5-coder:7b
 JUDGE_MODEL=qwen2.5-coder:7b
 MODEL_URL=http://ollama:11434/v1/chat/completions
-    echo -e "${GREEN}✓ Switched to distil-qwen3-4b:latest model (judge: qwen2.5-coder:14b)${NC}"
+ENV_CONTENT
+    echo -e "${GREEN}✓ Switched to distil-qwen3-4b:latest model (judge: qwen2.5-coder:7b)${NC}"
     ;;
 
   *)
@@ -77,9 +78,9 @@ TEXT2SQL_MODEL=$(grep TEXT2SQL_MODEL .env | cut -d '=' -f2)
 JUDGE_MODEL=$(grep JUDGE_MODEL .env | cut -d '=' -f2)
 
 # Check if models exist using EXACT names
-if ! ollama list | grep -q "$TEXT2SQL_MODEL"; then
+if ! docker compose exec ollama ollama list | grep -q "$TEXT2SQL_MODEL"; then
   echo "Pulling $TEXT2SQL_MODEL (first time only)..."
-  ollama pull $TEXT2SQL_MODEL
+  docker compose exec ollama ollama pull $TEXT2SQL_MODEL
   if [ $? -eq 0 ]; then
     echo "$TEXT2SQL_MODEL pulled successfully"
   else
@@ -90,9 +91,9 @@ else
   echo "$TEXT2SQL_MODEL already exists"
 fi
 
-if ! ollama list | grep -q "$JUDGE_MODEL"; then
+if ! docker compose exec ollama ollama list | grep -q "$JUDGE_MODEL"; then
   echo "Pulling $JUDGE_MODEL (first time only)..."
-  ollama pull $JUDGE_MODEL
+  docker compose exec ollama ollama pull $JUDGE_MODEL
   if [ $? -eq 0 ]; then
     echo "$JUDGE_MODEL pulled successfully"
   else
@@ -103,7 +104,7 @@ else
   echo "$JUDGE_MODEL already exists"
 fi
 
-# Restart just the backend
+# Restart just the backend (ollama stays running)
 echo -e "\n${YELLOW}Restarting backend container...${NC}"
 docker compose up -d backend --no-deps
 
