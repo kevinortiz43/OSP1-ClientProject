@@ -1,0 +1,10 @@
+img {
+  display: flex;
+  justify-content: start;
+  margin: 0 auto;
+  padding: 0%;
+  text-align: center;
+
+  left: 0%;
+  bottom: 0%;
+}

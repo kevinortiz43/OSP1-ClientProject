@@ -437,7 +437,7 @@ function FlowStep({ step, isLast }: { step: FlowStep; isLast: boolean }) {
   );
 }
 
-// ─── Main component ───────────────────────────────────────────────────────────
+
 
 export default function OfflineDiagram() {
   return (

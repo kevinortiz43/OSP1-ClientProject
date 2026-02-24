@@ -7,6 +7,9 @@ import MultiSelect from "./components/Searchbar/MultiSelect";
 import Interface from "./components/Chatbot/Interface";
 import ArchitectureDiagram from "./components/ArchitectureDiagram/OnlineAI-Diagram/ArchitectureDiagram";
 import OfflineDiagram from "./components/ArchitectureDiagram/OfflineAI-Diagram/OfflineDiagram";
+
+import Flowchart from "./components/ArchitectureDiagram/Flowchart/Flowchart";
+
 export default function App() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
@@ -46,6 +49,10 @@ export default function App() {
 
   if (window.location.pathname === "/diagram-offlineAI") {
     return <OfflineDiagram />;
+  }
+
+  if (window.location.pathname === "/diagram-offlineAIChart") {
+    return <Flowchart />;
   }
 
   return (
