@@ -1,73 +1,43 @@
-# React + TypeScript + Vite
+# React + TypeScript + Vite + Docker + PostgreSQL
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## This template provides a minimal setup to get the dockerized application running.
+## Requirement: Install Bun
+# Executing "bun run devo" command for application startup
 
-Currently, two official plugins are available:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+# Required Disclaimer (paste exactly):
+# This prototype was built as part of a client-student partnership through Codesmith’s Future Code program. It explores solutions to a real-world case study provided by an external partner. # This work does not represent employment or contracting with the partner. All intellectual property belongs to the partner. This is a time-boxed MVP and not a production system.
 
-## React Compiler
+1. Make sure Docker Engine is running either through Docker Engine itself or with an active Docker Desktop
+2. In the root directory (e.g C:\username\Project) execute command "bun run devo" which will execute "bun install" which will install all necessary node modules and dev dependencies. Then it will execute "docker compose up -d" in the command line interface (CLI) which will build and start all services defined in the docker-compose.yml file (including frontend, backend, and database), install dependencies as specified in the Dockerfile during the build process.
+3. The following scripts will automatically execute in the CLI:
+4. First it will execute bun install which will install all necessary modules
+   a. "bun run csv-agno" which runs src/server/sql_db/convertData_agnostic.ts file that converts all JSON files in src/server/data folder to [originalFileName].csv files
+   b. "bun run seed-agno" which runs src/server/sql_db/seed_agnostic.ts that seeds the local postgreSQL database on port 5432 with data from all converted .csv files.
+   c. "bun run types-agno" which runs src/server/sql_db/types-agno that generates Typescript schemas from database data
+5. The docker container monitor for file changes to automatically sync updates to running containers without manual rebuilds.
+6. If you run into an error during Step #2 due to postgres already occupying port 5432, make sure to stop postgres to free up port 5432. Then run "bun run devo" again. (On Linux, you might have to run "sudo systemctl stop postgresql" to free up port 5432. If you get "Error connecting to Docker PostgreSQL: ECONNRESET" after freeing up port 5432, run "bun run devo" again.)
+7. To see all scripts, see package.json file.
+8. You can visit http://localhost:5173/ to view the frontend, i.e. active application, which shows Trust Controls and FAQs with the appropriate data fetched from the offline postgreSQL database.
+9. A simple keyword search is displayed at the top of the page, and it should be used for filtering categories.
+10. Visit http://localhost:3000/api/[endpoint] to view the backend (see router.ts for all endpoints.)
+11. Visit http://localhost:5050/browser to view pgAdmin (local postgreSQL database).
+12. Note: Original data has been modified to include category fields for every table.
 
-The React Compiler is currently not compatible with SWC. See [this issue](https://github.com/vitejs/vite-plugin-react/issues/428) for tracking the progress.
+# Executing "bun run tear" command for docker container teardown
 
-## Expanding the ESLint configuration
+12. This will run "docker compose down" in the CLI.
+13. Then it will run "docker system prune –all --volumes –force"  which removes all unused containers, networks, images (both dangling and unused), and optionally, volumes.
+    **IMPORTANT: If you have other Docker containers and volumes present for other projects, be very careful when using this command since it will delete ALL docker containers regardless of project.**
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+       # Docker + Bun + Online AI Diagram
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+    <img width="1723" height="902" alt="image" src="https://github.com/user-attachments/assets/ddcaaee4-2499-4ce4-a6a5-fc1497eeed52" />
+    <img width="1695" height="723" alt="image" src="https://github.com/user-attachments/assets/70fe367a-3df9-4dc5-a4da-f01c65b96fe1" />
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+       # Docker + Bun + Offline AI Diagram
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+    <img width="1189" height="856" alt="image" src="https://github.com/user-attachments/assets/299462ea-8efa-474b-9629-1f46325ffec9" />
+<img width="1173" height="704" alt="image" src="https://github.com/user-attachments/assets/186312ca-0eaa-4fa2-af25-875da24bcde9" />
+<img width="1181" height="448" alt="image" src="https://github.com/user-attachments/assets/d59718f4-092c-43ab-8b91-9d82c12efbdd" />
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
