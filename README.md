@@ -30,9 +30,14 @@
 13. Then it will run "docker system prune –all --volumes –force"  which removes all unused containers, networks, images (both dangling and unused), and optionally, volumes.
     **IMPORTANT: If you have other Docker containers and volumes present for other projects, be very careful when using this command since it will delete ALL docker containers regardless of project.**
 
-   # Docker + Bun + Online AI Diagram
-   
+       # Docker + Bun + Online AI Diagram
+
     <img width="1723" height="902" alt="image" src="https://github.com/user-attachments/assets/ddcaaee4-2499-4ce4-a6a5-fc1497eeed52" />
     <img width="1695" height="723" alt="image" src="https://github.com/user-attachments/assets/70fe367a-3df9-4dc5-a4da-f01c65b96fe1" />
 
+       # Docker + Bun + Offline AI Diagram
+
+    <img width="1189" height="856" alt="image" src="https://github.com/user-attachments/assets/299462ea-8efa-474b-9629-1f46325ffec9" />
+<img width="1173" height="704" alt="image" src="https://github.com/user-attachments/assets/186312ca-0eaa-4fa2-af25-875da24bcde9" />
+<img width="1181" height="448" alt="image" src="https://github.com/user-attachments/assets/d59718f4-092c-43ab-8b91-9d82c12efbdd" />
 
