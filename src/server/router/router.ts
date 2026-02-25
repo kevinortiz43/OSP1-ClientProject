@@ -6,7 +6,6 @@ import { generateAIResponse } from "../controller/AI_Controller/generateAIRespon
 import { QueryOpenAI } from "../controller/AI_Controller/onlineAIController";
 
 export const router = new Elysia();
-router.get("/", () => "Test");
 
 router.get("test", ({ set }) => {
   set.status = 201;
