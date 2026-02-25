@@ -46,6 +46,7 @@ services:
       - DB_NAME=test_db
       - DB_USER=root
       - DB_PASSWORD=root
+      # Enter the AI API Key HERE
       - AI_process.env=
       - AI_APIKEY=
 
