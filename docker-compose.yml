@@ -46,8 +46,8 @@ services:
       - DB_NAME=test_db
       - DB_USER=root
       - DB_PASSWORD=root
-      - AI_process.env=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
-      - AI_APIKEY=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
+      - AI_process.env=
+      - AI_APIKEY=
 
     command: ["bun", "run", "server"]
     develop:
