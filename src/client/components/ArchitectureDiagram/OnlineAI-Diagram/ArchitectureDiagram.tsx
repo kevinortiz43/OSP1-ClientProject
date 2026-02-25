@@ -279,9 +279,20 @@ export default function ArchitectureDiagram() {
       <div className="arch-wrapper">
         <header className="arch-header">
           <h1 className="arch-title">
-            Core <span className="arch-title-accent">Tech Stack</span>
+             <span className="arch-title-accent">Online AI Model</span>
           </h1>
         </header>
+
+             <div className="arch-problem-box">
+          <div className="arch-problem-label">
+            <span className="arch-problem-dot" />
+            Core Problem
+          </div>
+          <p className="arch-problem-text">
+            Users need to easily retrieve accurate information about compliance and cybersecurity as quickly as possible.
+          </p>
+        </div>
+
 
         <div className="arch-diagram">
           <div className="arch-clients-col arch-panel">

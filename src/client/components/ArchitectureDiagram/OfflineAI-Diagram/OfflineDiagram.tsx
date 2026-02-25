@@ -190,7 +190,7 @@ const MODELS: ModelDef[] = [
     numClass: "m1",
     numLabel: "Model #1",
     icon: "🔤",
-    name: "distil-qwen3",
+    name: "distil-qwen3 (can be swapped)",
     hfId: "distil-labs/distil-qwen3-4b-text2sql-gguf-4bit",
     hfUrl:
       "https://huggingface.co/distil-labs/distil-qwen3-4b-text2sql-gguf-4bit",
@@ -274,7 +274,7 @@ const EVAL_CARDS: EvalCard[] = [
     cardClass: "output",
     icon: "💬",
     title: "Human Response",
-    desc: "Model #2 (or an optionally swapped generator model) produces a readable natural language answer from the SQL results.",
+    desc: "Model #2  produces a readable natural language answer from the SQL results.",
     tags: [
       { label: "NL response", color: "green" },
       { label: "swappable", color: "cyan" },
@@ -437,8 +437,6 @@ function FlowStep({ step, isLast }: { step: FlowStep; isLast: boolean }) {
   );
 }
 
-
-
 export default function OfflineDiagram() {
   return (
     <div className="off-root">
@@ -453,6 +451,19 @@ export default function OfflineDiagram() {
             Ollama
           </p>
         </header>
+
+
+        
+        <div className="arch-problem-box">
+          <div className="arch-problem-label">
+            <span className="arch-problem-dot" />
+            Core Problem
+          </div>
+          <p className="arch-problem-text">
+            Users need to easily retrieve accurate information about compliance
+            and cybersecurity as quickly as possible.
+          </p>
+        </div>
 
         <div className="off-diagram">
           <div className="off-clients-col off-panel">

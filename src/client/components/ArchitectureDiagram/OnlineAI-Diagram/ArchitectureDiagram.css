@@ -81,6 +81,45 @@
   text-shadow: 0 0 20px rgba(0, 229, 255, 0.4);
 }
 
+.arch-problem-box {
+  border: 1px solid rgba(0, 229, 255, 0.25);
+  border-left: 3px solid var(--cyan);
+  border-radius: 6px;
+  padding: 16px 20px;
+  background: rgba(0, 229, 255, 0.04);
+  margin-bottom: 24px;
+  animation: arch-fadeUp 0.65s ease 0.05s both;
+}
+
+.arch-problem-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--cyan);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.arch-problem-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 8px var(--cyan);
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.arch-problem-text {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.6;
+  margin: 0;
+}
+
 .arch-subtitle {
   margin-top: 10px;
   font-family: var(--mono);
