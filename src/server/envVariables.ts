@@ -1,5 +1,6 @@
 import "dotenv/config";
 
+// This file is for the online AI
 // export const { PG_URI } = process.env;
 
 export const { PG_URI } = process.env
@@ -8,12 +9,12 @@ export const { AI_APIKEY } = process.env;
 export const model  = "Qwen/Qwen2.5-Coder-7B-Instruct:nscale";
 
 
-// for offline bunOllama locally-run AI branch
+// for offline bunOllama locally-run AI branch -> need to add here instead of .env? Or just look at .env.example
 
-export const { TEXT2SQL_MODEL } = process.env;
-export const { AI_RESPONSE_MODEL } = process.env;
-export const { JUDGE_MODEL } = process.env;
-export const { MODEL_URL } = process.env;
+// export const { TEXT2SQL_MODEL } = process.env;
+// export const { AI_RESPONSE_MODEL } = process.env;
+// export const { JUDGE_MODEL } = process.env;
+// export const { MODEL_URL } = process.env;
 
 
 // TEXT2SQL_MODEL=distil-qwen3-4b:latest

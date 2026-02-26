@@ -5,6 +5,8 @@ import { fileURLToPath } from "url";
 
 // Note: This script auto-generates TypeScript interfaces based on PostgreSQL data types. It will auto-create a schemas-agnostic.ts file in sql_db folder.
 // Currently, this script is unused, but it could be useful if further functionality were added to this project.
+// LIMITATIONS: It does not cover all data types
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // generate TypeScript types from Docker PostgreSQL database schema
