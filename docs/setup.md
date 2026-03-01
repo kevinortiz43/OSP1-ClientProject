@@ -197,6 +197,7 @@ Save the file and exit the editor (in nano, press Ctrl+O, then Enter, then Ctrl+
 `.env `- Set your model preferences
 `docker-compose.yml` - Adjust GPU/CPU settings if needed
 `start-dev.sh` and `switch-model.sh` (optional)
+**Manually** create judgments folder inside of aiTest (if not present). It probably should automatically create a judgments folder when an evaluation is made, but I have not yet tested  this.
 
 **Run initial setup** (installs dependencies, creates containers, seeds database):
 `bun i && bun run setup`
