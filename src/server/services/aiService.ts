@@ -13,10 +13,9 @@ import { TABLE_NAMES, COLUMN_NAMES, CATEGORY_VALUES } from "../sql_db/schemas-he
  * - Mock the behavior of a text-to-SQL system
  * 
  * Limitations:
- * - Prompt tailored to specific mock data
+ * - Prompt tailored to specific mock data and weaker AI model
  * - Applies post-processing fixes that mask model errors
  * - Uses ILIKE for simplicity (not performance-optimized)
- * 
  */
 
 export class AIService {

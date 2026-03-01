@@ -2,6 +2,21 @@ import { getCache, setCache, clearCache, clearCacheByPattern } from '../caching/
 import db from '../sql_db/db_connect_agnostic';
 import { type CachedSearchResult } from '../types';
 
+
+/**
+ * CACHE SERVICE
+ * 
+ * A DEVELOPMENT TOOL designed for rapid prototyping, NOT production use.
+ * 
+ * Purpose:
+ * - Provide quick in-memory caching (not heavy Redis implementation)
+ * - Test workflow integration before implementing proper caching strategies
+ * - Mock the behavior of a caching system
+ * 
+ * Limitations:
+ * - Works only with small datasets
+ */
+
 export const CacheKeys = {
   TEAMS_ALL: 'teams:all',
   CONTROLS_ALL: 'controls:all',
@@ -70,7 +85,7 @@ export const dataService = {
     setCache(key, data, SEARCH_CACHE_TTL);
   },
 
-  // FIXED: Added explicit return type and ensured return statement exists
+  // Added explicit return type and ensured return statement exists
   searchCachedData(keywords: string[]): Array<{
     source: 'trust_control' | 'trust_faq' | 'team';
     id: number;

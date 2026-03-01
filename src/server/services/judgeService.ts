@@ -5,6 +5,31 @@ import { type Judgment } from '../types'
 import { randomUUID } from 'crypto';
 import { TABLE_NAMES, COLUMN_NAMES, CATEGORY_VALUES } from "../sql_db/schemas-helper"
 
+
+/**
+ * JUDGE SERVICE
+ * 
+ * A DEVELOPMENT TOOL designed for rapid prototyping, NOT production use.
+ * 
+ * Purpose:
+ * - Enable rapid evaluation of text-to-SQL outputs during development and prompt engineering
+ * - Provide immediate feedback on SQL generation quality using lightweight open-source judge models
+ * - Support hybrid validation strategy:
+ *   a) Match results count comparison when test set contains ground truth
+ *   b) LLM-as-judge evaluation for ad-hoc queries without predefined expectations
+ * - Mock the behavior of a production evaluation system for testing workflows
+ * -Saves logs under aiTest/judgements folder 
+ * 
+ * Core Limitations:
+ * - Result count comparison only validates row volume, not data correctness or quality
+ *   (e.g., correct count but wrong records would pass validation)
+ * - LLM-as-judge accuracy is bounded by the judge model's capabilities:
+ *   * Smaller models may miss subtle semantic differences
+ *   * No guaranteed consistency in evaluation criteria
+ *   * Potential bias based on model training data
+ * - Lacks calibration against human expert judgments
+*/
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
