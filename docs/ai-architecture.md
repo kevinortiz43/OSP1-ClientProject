@@ -41,7 +41,7 @@ All results paths converge at the AI_RESPONSE_MODEL:
 
 The response model converts raw data into human-friendly format before returning to the frontend chatbot.
 
-NOTE: If this flow were to be improved, I would set cache AFTER AI response generation so the AI response generation step would not have to run for the 'cached query results' path.
+NOTE: This flow could be improved if cache were set AFTER human-friendly responses were generated and validated, so valid responses could immediately be returned to the user and responses would not need to be generated every time. However, a more robust validation step would be necessary to prevent invalid responses from being cached.
 
 ### 5. Non-Blocking Evaluation
 The JUDGE_MODEL operates asynchronously, not blocking user response:
