@@ -1,0 +1,14 @@
+{
+  "id": "c3261c6a-a200-4bfe-b081-23779a97a5c2",
+  "timestamp": "2026-02-25T14:25:22.512Z",
+  "naturalLanguageQuery": "\"find all privacy controls that mention data retention",
+  "generatedSQL": "SELECT \"short\", \"long\" FROM \"allTrustControls\" WHERE \"category\" ILIKE 'Privacy' AND \"searchText\" ILIKE '%data retention%';",
+  "resultsCount": 1,
+  "passed": false,
+  "score": 3,
+  "explanation": "Could not parse LLM response",
+  "source": "ai",
+  "executionTime": 545,
+  "sqlModel": "distil-qwen3-4b:latest",
+  "judgeModel": "qwen2.5-coder:7b"
+}

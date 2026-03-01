@@ -1,0 +1,14 @@
+{
+  "id": "5242d467-ec42-4c89-aa95-9198e3b46752",
+  "timestamp": "2026-02-25T18:34:48.947Z",
+  "naturalLanguageQuery": "what's the average response time of the team",
+  "generatedSQL": "SELECT AVG(\"responseTimeHours\") FROM \"allTeams\";",
+  "resultsCount": 1,
+  "passed": true,
+  "score": 4,
+  "explanation": "The SQL query is correct and efficiently calculates the average response time in hours for all teams. It uses the AVG function to compute the mean of the 'responseTimeHours' column from the 'allTeams' table. The question asked is clear and relevant, and the answer provided accurately reflects the purpose of the SQL query.",
+  "source": "ai",
+  "executionTime": 415,
+  "sqlModel": "distil-qwen3-4b:latest",
+  "judgeModel": "qwen2.5-coder:7b"
+}

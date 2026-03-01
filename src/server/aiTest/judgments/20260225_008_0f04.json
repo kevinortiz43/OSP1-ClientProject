@@ -1,0 +1,16 @@
+{
+  "id": "eca5dff3-82e8-410a-9796-f5aa7ae40f04",
+  "timestamp": "2026-02-25T16:44:27.059Z",
+  "naturalLanguageQuery": "list controls that mention both aws and data",
+  "generatedSQL": "SELECT \"short\", \"long\" FROM \"allTrustControls\" WHERE \"searchText\" ILIKE '%aws%' AND \"searchText\" ILIKE '%data%';",
+  "expectedSQL": "SELECT * FROM \"allTrustControls\" WHERE \"searchText\" ILIKE '%aws%' AND \"searchText\" ILIKE '%data%';",
+  "resultsCount": 1,
+  "expectedCount": ">=1",
+  "passed": true,
+  "score": 5,
+  "explanation": "Count OK: got 1, expected >=1",
+  "source": "ai",
+  "executionTime": 585,
+  "sqlModel": "distil-qwen3-4b:latest",
+  "judgeModel": "qwen2.5-coder:7b"
+}

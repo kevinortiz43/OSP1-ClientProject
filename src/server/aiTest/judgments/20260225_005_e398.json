@@ -1,0 +1,16 @@
+{
+  "id": "16c9a728-4e61-4aba-8b7a-b01f9ee5e398",
+  "timestamp": "2026-02-25T14:24:56.850Z",
+  "naturalLanguageQuery": "which team members are responsible for cloud security",
+  "generatedSQL": "SELECT \"firstName\", \"lastName\", \"email\", \"role\", \"category\" FROM \"allTeams\" WHERE \"category\" ILIKE 'Cloud Security';",
+  "expectedSQL": "SELECT * FROM \"allTeams\" WHERE \"category\" ILIKE 'Cloud Security' AND \"isActive\" = true;",
+  "resultsCount": 1,
+  "expectedCount": ">=1",
+  "passed": true,
+  "score": 5,
+  "explanation": "Count OK: got 1, expected >=1",
+  "source": "ai",
+  "executionTime": 485,
+  "sqlModel": "distil-qwen3-4b:latest",
+  "judgeModel": "qwen2.5-coder:7b"
+}

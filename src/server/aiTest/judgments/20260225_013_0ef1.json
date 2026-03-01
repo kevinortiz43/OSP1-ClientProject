@@ -1,0 +1,14 @@
+{
+  "id": "828e2f8d-bbd2-42a8-8a22-039105de0ef1",
+  "timestamp": "2026-02-25T16:52:52.055Z",
+  "naturalLanguageQuery": "find all privacy controls that mention data retention",
+  "generatedSQL": "SELECT \"short\", \"long\" FROM \"allTrustControls\" WHERE \"category\" ILIKE 'Privacy' AND \"searchText\" ILIKE '%data retention%';",
+  "resultsCount": 1,
+  "passed": true,
+  "score": 4,
+  "explanation": "The SQL query is well-structured and effectively retrieves the desired information. It uses the ILIKE operator for case-insensitive matching, which is appropriate for searching text fields. The query filters by category 'Privacy' and searchText containing 'data retention', ensuring that only relevant controls are returned.",
+  "source": "ai",
+  "executionTime": 576,
+  "sqlModel": "distil-qwen3-4b:latest",
+  "judgeModel": "qwen2.5-coder:7b"
+}
