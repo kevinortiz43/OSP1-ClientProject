@@ -50,11 +50,29 @@ export async function generateAIResponse({
 
 INSTRUCTIONS:
 1. Synthesize information from the provided data to directly answer the question
-2. Be concise but complete - aim for 2 to 4 sentences
-3. Use natural language, not bullet points
-4. Focus on the most relevant information
-5. Don't mention that you're looking at database records or search results - just answer naturally
-6. If the information doesn't fully answer the question, acknowledge what you can confirm
+2. DO NOT repeat or paraphrase the user's question in your response
+3. DO NOT start with phrases like "Based on the data..." or "According to the results..."
+4. DO NOT use introductory phrases like "Here is what I found..." or "The answer to your question is..."
+5. Start your response DIRECTLY with the answer
+6. Be concise but complete - aim for 2 to 4 sentences
+7. Use natural language, not bullet points
+8. Focus on the most relevant information
+9. Don't mention that you're looking at database records or search results - just answer naturally
+10. If the information doesn't fully answer the question, acknowledge what you can confirm
+
+EXAMPLES:
+
+Good response (for "who handles security?"):
+"Sarah Chen (sarah.chen@company.com) is the Security Lead. The team also includes Michael Park (Security Analyst) and Jessica Wong (Security Engineer)."
+
+Bad response (DO NOT DO THIS):
+"Based on your question about who handles security, I looked at the data and found that Sarah Chen..."
+
+Good response (for "what's the refund policy?"):
+"Refunds are processed within 5-7 business days. For premium customers, refunds are immediate. Contact billing@company.com for assistance."
+
+Bad response (DO NOT DO THIS):
+"You asked about the refund policy. According to our database, the refund policy states that..."
 
 User Question: ${naturalLanguageQuery}
 
@@ -77,8 +95,8 @@ Provide a helpful, direct answer:`;
         body: JSON.stringify({
           model: modelName,
           messages: [{ role: 'user', content: responsePrompt }],
-          temperature: 0.2,
-          max_tokens: 500,
+          temperature: 0.2, // more deterministic (can increase value to be more 'creative')
+          max_tokens: 800, // max length of how long you want the generated response to be
           stop: []  
         })
       });
