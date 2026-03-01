@@ -30,6 +30,7 @@ export async function generateAIResponse({
     context = 'Database query results (raw data):\n' + JSON.stringify(data, null, 2);
   } else {
     // For search paths, we have formatted results with titles/descriptions
+    // We can do the same for other fields (not everything is added in here. Hard-coding acts more like placeholder for better code to dynamically retrieve fields)
     context = 'Search results from knowledge base:\n\n';
     data.forEach((item, index) => {
       if (item.title && item.description) {
@@ -61,7 +62,7 @@ ${context}
 
 Provide a helpful, direct answer:`;
 
-  // RETRY LOGIC 
+  // Retry logic 
   const maxRetries = 3;
   let lastError: Error | null = null;
   let delay = 100; // Start with 100ms delay

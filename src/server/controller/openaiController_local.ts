@@ -7,7 +7,7 @@ import { type QueryResult, type OfflineAIOutput } from '../types';
 
 const aiService = new AIService();
 
-// ── Constants ────────────────────────────────────────────────────────────────
+// Constants
 
 const STOP_WORDS = new Set([
   'what', 'who', 'where', 'when', 'why', 'how',
@@ -48,7 +48,7 @@ const PHRASE_PATTERNS = [
   /\beither .* or .*\b/i
 ];
 
-// ── Helper Functions (unchanged) ─────────────────────────────────────────────
+// Helper Functions
 
 function normalizeQuery(query: string): string {
   return query
@@ -192,7 +192,7 @@ function createQueryResult(
   return result;
 }
 
-// ── Main Function ───────────────────────────────────────────────────────────
+// Main Function
 
 export async function queryOfflineOpenAI(
   naturalLanguageQuery: string

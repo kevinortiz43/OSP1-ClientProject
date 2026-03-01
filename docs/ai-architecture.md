@@ -34,11 +34,14 @@ If the TEXT2SQL_MODEL is required:
 4. Proceed to response generation
 
 ### 4. Response Generation
-Two result paths converge at the AI_RESPONSE_MODEL:
+All results paths converge at the AI_RESPONSE_MODEL:
 - **Keyword search results**
 - **AI-generated query results**
+-**Cached query results**
 
 The response model converts raw data into human-friendly format before returning to the frontend chatbot.
+
+NOTE: If this flow were to be improved, I would set cache AFTER AI response generation so the AI response generation step would not have to run for the 'cached query results' path.
 
 ### 5. Non-Blocking Evaluation
 The JUDGE_MODEL operates asynchronously, not blocking user response:
