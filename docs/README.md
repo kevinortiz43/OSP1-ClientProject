@@ -18,7 +18,7 @@ This prototype was built as part of a client-student partnership through Codesmi
 
 This is the offline local AI branch of OSP1-ClientProject. The goal was building a responsive AI chatbot using only free, open-source models running locally. Free models aren't as powerful as paid ones. Many of them on HuggingFace have no inference providers available so can only be run if downloaded directly. The question was: how useful could they be?
 
-### Model Architecture
+## Model Architecture
 
 The offline AI setup uses 2 models:
 
@@ -27,7 +27,7 @@ The offline AI setup uses 2 models:
   - Generates human-friendly responses from returned results
   - Evaluates result quality
 
-### Performance Optimization
+## Performance Optimization
 
 This setup includes a preloading script for seamless model switching. Both models warm up when the application starts. If they load during a user request, the delay could be 83% to 430% longer.
 
@@ -61,7 +61,9 @@ The flow implements a cache-aside pattern:
 2. **Keyword search**: Simple text matching (also cache-first)
 3. **AI path**: Complex query handling via model inference
 
-**Disclaimer**: This AI flow merely mimics a more robust pipeline. Developed in under two weeks, it's not production-ready but merely demonstrates architectural patterns.    
+```
+Disclaimer: This AI flow merely mimics a more robust pipeline. Developed in under two weeks, it's not production-ready but merely demonstrates architectural patterns.    
+```
 
 ### Dynamic Database Seeding
 
