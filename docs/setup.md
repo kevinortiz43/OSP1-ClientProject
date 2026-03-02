@@ -245,8 +245,11 @@ Alternatively, you can configure your application to use a different port by mod
 ## Running the application
 
 If you have GPU capacity (see model VRAM requirements), it is recommended to run:
+
 `./start-dev.sh` to preload and warm 2 models and start the application
+
 You can switch `TEXT2SQL_MODEL` as such:
+
 `./switch-model.sh arctic` # switch to arctic model
 
 Otherwise, run `docker compose up -d`
