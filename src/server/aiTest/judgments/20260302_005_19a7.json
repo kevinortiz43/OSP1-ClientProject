@@ -1,0 +1,14 @@
+{
+  "id": "63cc7301-698f-4462-b6ff-9076ae9e19a7",
+  "timestamp": "2026-03-02T13:38:33.975Z",
+  "naturalLanguageQuery": "find team members whose last name starts with H",
+  "generatedSQL": "SELECT \"firstName\", \"lastName\", \"email\", \"role\" FROM \"allTeams\" WHERE \"lastName\" ILIKE 'H%';",
+  "resultsCount": 2,
+  "passed": true,
+  "score": 4,
+  "explanation": "The SQL query is well-structured and effectively retrieves team members whose last names start with 'H'. The use of ILIKE for case-insensitive matching is appropriate. However, the table name 'allTeams' might be too generic; a more specific name could improve readability.",
+  "source": "ai",
+  "executionTime": 504,
+  "sqlModel": "distil-qwen3-4b:latest",
+  "judgeModel": "qwen2.5-coder:7b"
+}
