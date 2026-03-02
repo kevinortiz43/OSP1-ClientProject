@@ -1,0 +1,16 @@
+{
+  "id": "6a94f7cf-ac0e-4de8-be7e-220d1d5067e4",
+  "timestamp": "2026-03-02T13:32:23.596Z",
+  "naturalLanguageQuery": "how many controls are in each category",
+  "generatedSQL": "SELECT \"category\", COUNT(*) FROM \"allTrustControls\" GROUP BY \"category\";",
+  "expectedSQL": "SELECT \"category\", COUNT(*) as control_count FROM \"allTrustControls\" GROUP BY \"category\";",
+  "resultsCount": 6,
+  "expectedCount": ">=6",
+  "passed": true,
+  "score": 5,
+  "explanation": "Count OK: got 6, expected >=6",
+  "source": "ai",
+  "executionTime": 248,
+  "sqlModel": "distil-qwen3-4b:latest",
+  "judgeModel": "qwen2.5-coder:7b"
+}
