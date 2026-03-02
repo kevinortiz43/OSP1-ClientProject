@@ -16,11 +16,7 @@ This prototype was built as part of a client-student partnership through Codesmi
 
 ## Overview
 
-This is my fork of OSP1-ClientProject. The original project can be found at: [https://github.com/kevinortiz43/OSP1-ClientProject](https://github.com/kevinortiz43/OSP1-ClientProject)
-
-I architected the offline/local AI branch feature (backend), drove the project's cache-aside strategy, and orchestrated its OS-agnostic ETL pipeline for dynamically seeding the PostgreSQL database.
-
-The goal was building a responsive AI chatbot using only free, open-source models running locally. Free models aren't as powerful as paid ones. Many of them on HuggingFace have no inference providers available so can only be run if downloaded directly. The question was: how useful could they be?
+This is the offline local AI branch of OSP1-ClientProject. The goal was building a responsive AI chatbot using only free, open-source models running locally. Free models aren't as powerful as paid ones. Many of them on HuggingFace have no inference providers available so can only be run if downloaded directly. The question was: how useful could they be?
 
 ### Model Architecture
 
@@ -58,14 +54,14 @@ This setup includes a preloading script for seamless model switching. Both model
 
 ### AI Implementation
 
-Refer to AI flow chart in [AI Architecture Deep Dive](ai-architecture.md) for a visual representation of the request flow from user prompt to response generation, including the non-blocking evaluation step that scores and logs SQL query quality.
+Refer to AI flow chart in [AI Architecture Deep Dive](ai-architecture.md) for a visual representation of the request flow from user prompt to response generation, including the non-blocking evaluation step.
 
 The flow implements a cache-aside pattern:
 1. **Cache check**: Prioritize cached responses
 2. **Keyword search**: Simple text matching (also cache-first)
 3. **AI path**: Complex query handling via model inference
 
-**Note**: This flow prototypes a more robust pipeline. Developed in under one month, it's not production-ready but demonstrates core concepts.
+**Disclaimer**: This AI flow merely mimics a more robust pipeline. Developed in under two weeks, it's not production-ready but merely demonstrates architectural patterns.    
 
 ### Dynamic Database Seeding
 
